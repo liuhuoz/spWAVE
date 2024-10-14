@@ -11,4 +11,18 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Suggests: 
-    renv
+    renv,
+    tradeSeq,
+    viridis
+Imports: 
+    circlize,
+    ComplexHeatmap,
+    ggsci,
+    igraph,
+    magrittr,
+    Matrix,
+    matrixStats,
+    pbapply,
+    Seurat
+Depends: 
+    tidyverse
