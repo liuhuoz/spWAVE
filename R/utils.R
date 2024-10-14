@@ -71,3 +71,51 @@ pairwised_mat_subtract <- function(source,target){
   vec_list <- lapply(target_list, function(x) source-x)
   return(vec_list)
 }
+
+
+
+#' FUNCTION_TITLE
+#'
+#' load database from built-in data
+#'
+#' @param db_source database source, including "CellChat" and "CellPhoneDB".
+#' @param db_species species,including "human", "mouse", and "zebrafish".
+#' @param filter_type kept LR type in result, including "Contact","ECM","Secreted". Default is "None", and all would be kept.
+#'
+#' @return return a data.frame after filtered
+#' @examples
+#' # ADD_EXAMPLES_HERE
+load_database <- function(
+  db_source=c("CellChat","CellPhoneDB"),
+  db_species=c("human","mouse","zebrafish"),
+  filter_type="None"
+){
+  if(db_source=="CellPhoneDB" & db_species=="zebrafish"){
+    warning(
+      "CellPhoneDB does not contain database of zebrafish, using CellChat database instead."
+      )
+    db_source <- "CellChat"
+  }
+  db_source <- match.arg(db_source)
+  db_species <- match.arg(db_species)
+  db_source <- ifelse(db_source=="CellPhoneDB","cpdb","cellchat")
+
+  db_attr <- paste(db_source,db_species,sep="_")
+  db <- get(db_attr)
+
+  if(!(filter_type %in% c("Contact","ECM","Secreted","None"))){
+    warning("filter_type not found in crurated type, using default 'None' instead.")
+    filter_type <- "None"
+  }
+
+    if(filter_type=="None"){
+      filter_type <- c("Contact","ECM","Secreted")
+    }
+  #** filter out same ligand and receptor which is not considered
+  temp <- which(db$Ligand==db$Receptor)
+  db <- db[-temp,]
+  #print(filter_type)
+  db_ft <- db %>%
+    filter(Type2 %in% c(filter_type))
+  return(db_ft)
+}
