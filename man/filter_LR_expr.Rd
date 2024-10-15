@@ -2,8 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{filter_LR_expr}
 \alias{filter_LR_expr}
-\title{extract expression matrix from Seurat object, and filtered
-by ligand and receptor genes in database with expression level}
+\title{Filter Ligand and Receptor expression}
 \usage{
 filter_LR_expr(
   db,
@@ -23,17 +22,14 @@ filter_LR_expr(
 
 \item{min_expr}{minimum expression. default 0.1}
 
-\item{min_n_cell}{minimum number of cell expressing a gene. default NULL.}
+\item{min_n_cell}{minimum number of cell expressing a gene. default NULL. This arg will mask 'min_pct_cell'.}
 
-\item{min_pct_cell}{minmum percentage of cell expressing a gene.}
+\item{min_pct_cell}{minimum percentage of cell expressing a gene.}
 }
 \value{
 filtered expression matrix
 }
 \description{
-extract expression matrix from Seurat object, and filtered
-by ligand and receptor genes in database with expression level
-}
-\examples{
-# ADD_EXAMPLES_HERE
+Extract expression matrix from Seurat object, and filtered
+by ligand and receptor genes in database with expression level.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{load_database}
 \alias{load_database}
-\title{FUNCTION_TITLE}
+\title{Load Ligand and Receptor Database}
 \usage{
 load_database(
   db_source = c("CellChat", "CellPhoneDB"),
@@ -21,8 +21,8 @@ load_database(
 return a data.frame after filtered
 }
 \description{
-load database from built-in data
+load database from built-in data, and filter specific type LR pairs.
 }
 \examples{
-# ADD_EXAMPLES_HERE
+# cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
 }

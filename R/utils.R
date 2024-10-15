@@ -28,7 +28,8 @@ get_spatial_expr <- function(SrtObj,gene,assay="RNA"){
   return(spatial_expr)
 }
 
-
+#' spa_vectorized_pdist
+#' 
 #' from an excellent post: https://www.r-bloggers.com/2013/05/pairwise-distances-in-r/
 #' this function is called by other functions to quickly compute the distance between
 #' cells to grid points, or between grid points
@@ -55,6 +56,8 @@ spa_vectorized_pdist <- function(source,target){
 }
 
 
+#' pairwised_mat_subtract
+#' 
 #' pairwise calculate 2 matrix subtraction by row between
 #' cells to grid points, or between grid points,and return a list of each target row.
 #' The result would be source subtracted by target.
@@ -74,9 +77,9 @@ pairwised_mat_subtract <- function(source,target){
 
 
 
-#' FUNCTION_TITLE
+#' Load Ligand and Receptor Database
 #'
-#' load database from built-in data
+#' load database from built-in data, and filter specific type LR pairs.
 #'
 #' @param db_source database source, including "CellChat" and "CellPhoneDB".
 #' @param db_species species,including "human", "mouse", and "zebrafish".
@@ -84,7 +87,7 @@ pairwised_mat_subtract <- function(source,target){
 #'
 #' @return return a data.frame after filtered
 #' @examples
-#' # ADD_EXAMPLES_HERE
+#' # cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
 load_database <- function(
   db_source=c("CellChat","CellPhoneDB"),
   db_species=c("human","mouse","zebrafish"),
@@ -117,4 +120,68 @@ load_database <- function(
   db_ft <- db %>%
     filter(Type2 %in% c(filter_type))
   return(db_ft)
+}
+
+
+#' Filter Ligand and Receptor expression 
+#' 
+#' Extract expression matrix from Seurat object, and filtered
+#' by ligand and receptor genes in database with expression level.
+#'
+#' @param db database data.frame.
+#' @param SrtObj Seurat object.
+#' @param assay assay slot in Seurat object. default "RNA".
+#' @param min_expr minimum expression. default 0.1
+#' @param min_n_cell minimum number of cell expressing a gene. default NULL. This arg will mask 'min_pct_cell'.
+#' @param min_pct_cell minimum percentage of cell expressing a gene. 
+#'
+#' @return filtered expression matrix
+
+filter_LR_expr <- function(
+  db,
+  SrtObj,
+  assay="RNA",
+  min_expr=0.1,
+  min_n_cell=NULL,
+  min_pct_cell=0.01
+){
+  expr_mat <- GetAssayData(SrtObj,assay=assay)
+  db_all_genes <- 
+    c(db$Ligand,str_split(db$Receptor,pattern = "_")) %>% 
+    unlist() %>% unique()
+
+  #filterd by database
+  intersect_genes <- intersect(db_all_genes,rownames(expr_mat))
+  expr_mat <- expr_mat[intersect_genes,]
+  
+  #fitlerd by expr
+  expr_mat_ft <- filter_expr_by_cutoff(expr_mat,
+    min_expr=min_expr,
+    min_n_cell=min_n_cell,
+    min_pct_cell=min_pct_cell
+  )
+  return(expr_mat_ft)
+}
+
+#' filter_expr_by_cutoff
+#' filter expression matrix by expression level
+#'
+#' @param expr_mat expression matrix.
+#' @param min_expr minimum expression.
+#' @param min_n_cell minimum number of cell expressing a gene. This arg will mask 'min_pct_cell'.
+#' @param min_pct_cell minimum percentage of cell expressing a gene. 
+#' @return filtered expression matrix.
+
+filter_expr_by_cutoff <- function(
+  expr_mat,min_expr=0.1,
+  min_n_cell=NULL,
+  min_pct_cell=0.01
+){
+  min_n_cell <- ifelse(is.null(min_n_cell),min_pct_cell*ncol(expr_mat),min_n_cell)
+  expr_mat_binary <- expr_mat %>% as.matrix()
+  expr_mat_binary[expr_mat_binary < min_expr] <- 0
+  expr_mat_binary[expr_mat_binary >= min_expr] <- 1
+  kept_genes <- rowSums(expr_mat_binary) >= min_n_cell
+  expr_mat_ft <- expr_mat[kept_genes,]
+  return(expr_mat_ft)
 }

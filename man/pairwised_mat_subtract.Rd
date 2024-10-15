@@ -2,9 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{pairwised_mat_subtract}
 \alias{pairwised_mat_subtract}
-\title{pairwise calculate 2 matrix subtraction by row between
-cells to grid points, or between grid points,and return a list of each target row.
-The result would be source subtracted by target.}
+\title{pairwised_mat_subtract}
 \usage{
 pairwised_mat_subtract(source, target)
 }

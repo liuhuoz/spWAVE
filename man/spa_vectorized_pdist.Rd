@@ -2,9 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{spa_vectorized_pdist}
 \alias{spa_vectorized_pdist}
-\title{from an excellent post: https://www.r-bloggers.com/2013/05/pairwise-distances-in-r/
-this function is called by other functions to quickly compute the distance between
-cells to grid points, or between grid points}
+\title{spa_vectorized_pdist}
 \usage{
 spa_vectorized_pdist(source, target)
 }

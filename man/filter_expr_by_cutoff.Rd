@@ -2,7 +2,8 @@
 % Please edit documentation in R/utils.R
 \name{filter_expr_by_cutoff}
 \alias{filter_expr_by_cutoff}
-\title{filter expression matrix by expression level}
+\title{filter_expr_by_cutoff
+filter expression matrix by expression level}
 \usage{
 filter_expr_by_cutoff(
   expr_mat,
@@ -16,7 +17,7 @@ filter_expr_by_cutoff(
 
 \item{min_expr}{minimum expression.}
 
-\item{min_n_cell}{minimum number of cell expressing a gene.}
+\item{min_n_cell}{minimum number of cell expressing a gene. This arg will mask 'min_pct_cell'.}
 
 \item{min_pct_cell}{minimum percentage of cell expressing a gene.}
 }
@@ -24,8 +25,6 @@ filter_expr_by_cutoff(
 filtered expression matrix.
 }
 \description{
+filter_expr_by_cutoff
 filter expression matrix by expression level
-}
-\examples{
-# ADD_EXAMPLES_HERE
 }
