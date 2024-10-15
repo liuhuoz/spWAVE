@@ -185,3 +185,55 @@ filter_expr_by_cutoff <- function(
   expr_mat_ft <- expr_mat[kept_genes,]
   return(expr_mat_ft)
 }
+
+
+#' Generate Receptor Complex Expression 
+#'
+#' Generate receptor complex expression by expression of each sub-unit of the complex. 
+#' And aggregate the expression and database result for next step.
+#'
+#' @param db LR database dataframe
+#' @param expr_mat gene expression matrix
+#' @param complex_min_cell minimum number of cell expressing complex
+#' 
+#' @details The receptor complex expression are calculated using 
+#' \deqn{R_{complex} = \prod_{i \in R} R_i ^{1/n_{R}}} where 
+#' R is the expression of each sub-unit and n_{R} is the number of sub-units in
+#' the complex.
+#' 
+#' @return Ruturn a list including filtered database, LR expression list, and merged LR expression dataframe.
+
+generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
+  expr_df <- expr_mat %>% as.matrix() %>% t() %>% as.data.frame()
+  expr_LR_list <- list()
+  kept_db_index <- c()
+  for(i in seq_len(nrow(db))){
+    lig <- db$Ligand[i]
+    rec_complex <- db$Receptor[i]
+    rec <- str_split_1(rec_complex,pattern = "_")
+    if(all(c(lig,rec) %in% colnames(expr_df))){ #filter out not-exist in expr LR_pair
+      LR_complex_df <- expr_df[,c(lig,rec)]
+      temp <- rowProds(LR_complex_df[,c(rec)] %>% as.matrix())^(1/length(rec))
+      if(length(which(temp!=0))>=complex_min_cell){ #filter out low expr LR_pair
+        LR_complex_df$complex <- temp
+        colnames(LR_complex_df)[length(c(lig,rec,1))] <- rec_complex
+        expr_LR_list[[i]] <- LR_complex_df
+        kept_db_index[i] <- i
+      }else{
+        next
+      }
+    }else{
+      next
+    }
+  }
+  expr_LR_list <- expr_LR_list[!sapply(expr_LR_list,is.null)]
+
+  temp_df <- do.call(cbind, expr_LR_list)
+  dup_cols <- duplicated(colnames(temp_df))
+  expr_LR_df <- temp_df[, !dup_cols]
+
+  kept_db_index <- kept_db_index[!is.na(kept_db_index)]
+  kept_db <- db[kept_db_index,]
+  kept_db$id <- paste(kept_db$Ligand,kept_db$Receptor,sep=".")
+  return(list(kept_db=kept_db,expr_LR_list=expr_LR_list,expr_LR_df=expr_LR_df))
+}
