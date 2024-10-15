@@ -237,3 +237,88 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   kept_db$id <- paste(kept_db$Ligand,kept_db$Receptor,sep=".")
   return(list(kept_db=kept_db,expr_LR_list=expr_LR_list,expr_LR_df=expr_LR_df))
 }
+
+
+#' Concentrate Coordinates and Expression
+#' 
+#' concentrate expression matrix and coordinates by barcode 
+#'
+#' @param expr expression matrix.
+#' @param genes select genes.
+#' @param coord_info spot coordinates, 2 cols with x and y.
+#'
+#' @return return dataframe include barcode, spot coordinates, and selected genes expression values.
+
+concentrate_coord_expr <- function(expr,genes,coord_info){
+  expr_df <- expr[,genes,FALSE]
+  check_result <- check_row_order(rownames(expr_df),rownames(coord_info))
+  if(check_result){
+    merge_df <- cbind(coord_info,expr_df)
+  }else{
+    expr_df$barcode <- rownames(expr_df)
+    merge_df <- left_join(coord_info,expr_df,by="barcode")
+    rownames(merge_df) <- merge_df$barcode
+    merge_df <- merge_df[rownames(coord_info),]
+  }
+  return(merge_df)
+}
+
+
+
+#' Cluster Info Identifier
+#'
+#' Retrieve cluster info from idents or metadata in Seurat object, or merge the info from given data.frame.
+#'
+#' @param seurat_obj Seurat object.
+#' @param cluster cluster info. Default is NULL and will using active.ident in Seurat object. 
+#' Accepted data format is data.frame or character. See detailed for more explain.
+#'
+#' @return return dataframe include barcode and cluster id.
+#' @details The default 'cluster' is NULL and will using active.ident in Seurat object. 
+#' If a character is given, it must be the column name in Seurat metadata, and the column will be used as cluster. 
+#' If a data.frame is given, the column names should be 'cluster' and 'barcode', respectively.
+
+cluster_info_identifier <- function(seurat_obj,cluster=NULL){
+  if(is.null(cluster)){
+    cluster_key <- "ident"
+  }else if(is.data.frame(cluster)){
+    cluster_key <- "df"
+  }else if(is.character(cluster)){
+    cluster_key <- "char"
+  }else{
+    stop("Invalid cluster argument")
+  }
+
+  switch(cluster_key,
+    ident={
+      cluster_df <- seurat_obj@active.ident
+      cluster_df %<>% as.data.frame()
+      cluster_df$barcode <- rownames(cluster_df)
+      colnames(cluster_df) <- c("cluster","barcode")
+    },
+
+    df={
+      res1 <- "cluster" %in% colnames(cluster)
+      res2 <- "barcode" %in% colnames(cluster)
+      if(res1 & res2){
+          cluster_df <- cluster
+        }else{
+          stop("Invalid data.frame format, check colnames")
+        }
+    },
+
+    char={
+      if(cluster %in% colnames(seurat_obj@meta.data)){
+        meta <- seurat_obj@meta.data
+        meta$barcode <- rownames(meta)
+        cluster_df <- meta[,c("barcode",cluster)]
+        colnames(cluster_df) <- c("barcode","cluster")
+      }else{
+        stop("Cluster not detected")
+      }
+    }
+  )
+
+  return(cluster_df)
+}
+
