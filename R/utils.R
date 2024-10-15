@@ -108,81 +108,13 @@ load_database <- function(
     filter_type <- "None"
   }
 
-    if(filter_type=="None"){
+  if(filter_type=="None"){
       filter_type <- c("Contact","ECM","Secreted")
     }
   #** filter out same ligand and receptor which is not considered
   temp <- which(db$Ligand==db$Receptor)
-  db <- db[-temp,]
-  #print(filter_type)
+  if(length(temp)>0){db <- db[-temp,]}
   db_ft <- db %>%
     filter(Type2 %in% c(filter_type))
   return(db_ft)
-}
-
-
-
-
-#' extract expression matrix from Seurat object, and filtered
-#' by ligand and receptor genes in database with expression level
-#'
-#' @param db database data.frame.
-#' @param SrtObj Seurat object.
-#' @param assay assay slot in Seurat object. default "RNA".
-#' @param min_expr minimum expression. default 0.1
-#' @param min_n_cell minimum number of cell expressing a gene. default NULL.
-#' @param min_pct_cell minmum percentage of cell expressing a gene.
-#'
-#' @return filtered expression matrix
-#' @examples
-#' # ADD_EXAMPLES_HERE
-filter_LR_expr <- function(
-  db,
-  SrtObj,
-  assay="RNA",
-  min_expr=0.1,
-  min_n_cell=NULL,
-  min_pct_cell=0.01
-){
-  expr_mat <- GetAssayData(SrtObj,assay=assay)
-  db_all_genes <- 
-    c(db$Ligand,str_split(db$Receptor,pattern = "_")) %>% 
-    unlist() %>% unique()
-
-  #filterd by database
-  intersect_genes <- intersect(db_all_genes,rownames(expr_mat))
-  expr_mat <- expr_mat[intersect_genes,]
-  
-  #fitlerd by expr
-  expr_mat_ft <- filter_expr_by_cutoff(expr_mat,
-    min_expr=min_expr,
-    min_n_cell=min_n_cell,
-    min_pct_cell=min_pct_cell
-  )
-  return(expr_mat_ft)
-}
-
-
-
-#' filter expression matrix by expression level
-#'
-#' @param expr_mat expression matrix.
-#' @param min_expr minimum expression.
-#' @param min_n_cell minimum number of cell expressing a gene.
-#' @param min_pct_cell minimum percentage of cell expressing a gene.
-#' @return filtered expression matrix.
-#' @examples
-#' # ADD_EXAMPLES_HERE
-filter_expr_by_cutoff <- function(
-  expr_mat,min_expr=0.1,
-  min_n_cell=NULL,
-  min_pct_cell=0.01
-){
-  min_n_cell <- ifelse(is.null(min_n_cell),min_pct_cell*ncol(expr_mat),min_n_cell)
-  expr_mat_binary <- expr_mat %>% as.matrix()
-  expr_mat_binary[expr_mat_binary < min_expr] <- 0
-  expr_mat_binary[expr_mat_binary >= min_expr] <- 1
-  kept_genes <- rowSums(expr_mat_binary) >= min_n_cell
-  expr_mat_ft <- expr_mat[kept_genes,]
-  return(expr_mat_ft)
 }
