@@ -3,7 +3,7 @@ Title: spatial Whole Area Vector Estimates (spWAVE) (One Line, Title Case)
 Version: 0.0.0.9000 alpha
 Authors@R: 
     person("Kai", "Li", , "likai711@mail.ustc.edu.cn", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0009-0005-0147-7200"))
 Description: What the package does (one paragraph).
 License: GPL (>= 3)
 Encoding: UTF-8
@@ -22,8 +22,8 @@ Imports:
     Matrix,
     matrixStats,
     pbapply,
-    Seurat (>= 5.1)
 Depends: 
     R (>= 4.0),
-    tidyverse
+    tidyverse,
+    Seurat (>= 5.1.0)
 LazyData: true

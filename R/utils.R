@@ -548,3 +548,100 @@ assign_clu_col_lite <- function(C2C_score_df){
 
   return(clu_col)
 }
+
+
+#' Check color matching cluster info
+#'
+#' Check the given color is matching with cluster info
+#'
+#' @param color named vector, the values are colors and the names are cluster.
+#' @param C2C_score_df dataframe contain cluster, score, and LR pair.
+#' @param source_use the cluster will be used as source, which should be kept in return
+#' @param target_use the cluster will be used as target, which should be kept in return
+#' 
+#' @return return a named filtered color vector.
+check_cluster_color <- function(color,C2C_score_df,source_use,target_use){
+  all_cluster <- c(C2C_score_df$Source,C2C_score_df$Target) %>% unique()
+  if(is.null(names(color))){
+    stop("cluster color should be a named vector")
+  }else if(!all(names(color) %in% c(source_use,target_use,all_cluster))){
+    stop("cluster color names should be same as cluster names")
+  }
+  if(any(duplicated(color))){
+    warning("colors are not unique")
+  }
+  return(color)
+}
+
+
+#' Prepare matrix for heatmap and dot plot
+#'
+#' Filter and pre-process matrix for heatmap and dot plot
+#'
+#' @param C2C_score_df C2C score dataframe contain cluster, score, and LR pair.
+#' @param LR_pair filter LR pair display in plot.
+#' @param LR_family filter LR family display in plot.
+#' @param source_use filter cluster as `Source`
+#' @param target_use filter cluster as `Target`
+#' @param method_use Statistical method to aggregate the C2C score.
+#' Only support "count" and "strength". Default is "count".
+#' The 'count' reflect the number of interactions,
+#' and 'strength' reflect the sum of C2C score.
+#'
+#' @return return a filtered matrix which column as Target and row as Source,
+#' and the value based on `method_use`.
+
+prep_plot_matrix <- function(
+  C2C_score_df,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  method_use=c("count","strength")
+){
+  ht_df <- 
+    C2C_score_df %>%
+      prep_C2C_plot_df( 
+        LR_pair=LR_pair,
+        LR_family=LR_family,
+        source_use=source_use,
+        target_use=target_use,
+        scale=FALSE
+      ) %>%
+      filter(p_value<0.05)
+
+  method_use=match.arg(method_use)
+  method_use <-ifelse(method_use=="count","length","sum")
+
+  ht_mat <- 
+  ht_df[,c(1:3)] %>%
+    pivot_wider(
+      id_cols = Source,
+      names_from = Target,
+      values_from = raw_score,
+      values_fn = list(raw_score = method_use)) %>%
+      as.data.frame()
+  ht_mat[is.na(ht_mat)] <- 0
+
+  rownames(ht_mat) <- ht_mat$Source
+  ht_mat <- ht_mat[,-1,FALSE] %>% as.matrix()
+
+  #** extend matrix to include non-filtered but 0 interaction cluster
+  kept_row <- filter_cat_keyword(C2C_score_df,"Source",source_use)
+  kept_col <- filter_cat_keyword(C2C_score_df,"Target",target_use)
+
+  temp <- which(!(kept_row %in% rownames(ht_mat)))
+  temp_mat <- matrix(0,nrow = length(temp),ncol = ncol(ht_mat))
+  rownames(temp_mat) <- kept_row[temp]
+  colnames(temp_mat) <- colnames(ht_mat)
+  ht_mat <- rbind(ht_mat,temp_mat)
+
+  temp <- which(!(kept_col %in% colnames(ht_mat)))
+  temp_mat <- matrix(0,nrow = nrow(ht_mat),ncol = length(temp))
+  rownames(temp_mat) <- rownames(ht_mat)
+  colnames(temp_mat) <- kept_col[temp]
+  ht_mat <- cbind(ht_mat,temp_mat)
+
+  ht_mat <- ht_mat[kept_row,kept_col]
+  return(ht_mat)
+}
