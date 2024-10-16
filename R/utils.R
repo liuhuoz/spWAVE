@@ -645,3 +645,81 @@ prep_plot_matrix <- function(
   ht_mat <- ht_mat[kept_row,kept_col]
   return(ht_mat)
 }
+
+
+
+#' Extract LR field result form results list
+#'
+#' Extract certain LR field form complex list and aggregate into a dataframe
+#'
+#' @param database_result database result list from spWAVE.
+#' @param LR LR pair or family. LR pair must be format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".
+#' @param kept_db The database used in results list.
+#'
+#' @return return a dataframe contain cluster, coordinates, 
+#' expression of each ligand and receptor and field estimate result including direction and strength.
+#' @examples
+#' # extract NOTCH family field result
+#' hgin_notch <- extract_LR_field_result(
+#'    database_result = hgin_db_res, 
+#'    LR = "NOTCH", 
+#'    kept_db = hgin_complex$kept_db)
+#' 
+#' # extract TGFB1.TGFBR1-TGFBR2 LR complex pair field result
+#' hgin_TGFB1 <- extract_LR_field_result(
+#'    database_result = hgin_db_res, 
+#'    LR = "TGFB1.TGFBR1_TGFBR2", 
+#'    kept_db = hgin_complex$kept_db)
+extract_LR_field_result <- function(database_result,LR,kept_db){
+  db_res <- database_result
+  LR_pool <- c(db_res$LR_family_field_list,db_res$LR_pair_field_list)
+  
+  if(!(LR %in% names(LR_pool))){
+    stop("LR not found!")
+  }else{
+    LR_field <- LR_pool[[LR]]
+  }
+
+  #** 分开获取LR的名字，方便后面进行加减
+  L_info <- 
+    kept_db %>% 
+      filter(Family==LR | id ==LR) %>%
+      pull(Ligand) %>%
+      unique()
+  R_info <- 
+    kept_db %>% 
+      filter(Family==LR | id ==LR) %>%
+      pull(Receptor) %>%
+      unique()
+
+  LR_expr_list <-  db_res$single_mol_field_list[c(L_info,R_info)]
+  #** 数据库计算的单分子向量场结果df内，基因表达量都在第4列，所以这里直接提取第4列就行
+  LR_expr_df <- do.call(cbind,lapply(LR_expr_list,function(x) x[,4,F]))
+
+  df <- cbind.data.frame(LR_field,LR_expr_df)
+  df %<>% 
+    mutate(Rel_LR_Exp=
+      rowSums(across(all_of(L_info)))-
+      rowSums(across(all_of(R_info)))
+    )
+  return(df)
+}
+
+
+#' Get slide aspect ratio
+#'
+#' calculate the aspect ratio of a subset image from Seurat object
+#'
+#' @param SeuObj subset Seurat object.
+#'
+#' @return return aspect ratio 
+#' @examples
+#' SpatialDimPlot(Srt_obj_subset, pt.size.factor = 250,label=T) + 
+#'  theme(aspect.ratio = subset_ratio(Srt_obj_subset))
+subset_ratio <- function(SeuObj){
+  coord <- GetTissueCoordinates(SeuObj)
+  # calculate the aspect ratio of rows to columns
+  ratio <- (max(coord$imagerow) - min(coord$imagerow)) / (max(coord$imagecol) - min(coord$imagecol))
+  # force the image into the right aspect ratio
+  return(ratio)
+}
