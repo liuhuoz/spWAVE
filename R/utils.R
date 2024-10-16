@@ -480,7 +480,7 @@ filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
 #' @param C2C_score_df C2C score dataframe contain cluster in column "Source".
 #' 
 #' @details The color will be assigned by the order of "Source" and "Target" seprately in C2C_score_df, and specifically used in the chord plot. 
-#' Typically, the input dataframe is unfiltered and contains all cluster in "Source". For more information, please refer to \code{\link{aggregate_C2C_score}}
+#' Typically, the input dataframe is unfiltered and contains all cluster in "Source". For more information, please refer to \code{\link{aggregate_C2C_score}}.
 #' To keep the color consistent crossing the clusters, this function only using Source to assign the color.
 #' This function return 2 side result of cluster labelled by Source and Target.
 #' For more universal color assignment, please use \code{\link{assign_clu_col_lite}}.
@@ -488,8 +488,8 @@ filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
 #' @return return a named and ordered vector of colors of both Source and Target, seprately. The names are cluster id with prefix "S@" and "R@".
 #' 
 #' @examples
-#'#' C2C_score_df <- 
-#     aggregate_C2C_score(db_C2C_score_list,kept_db)
+#' C2C_score_df <- 
+#'    aggregate_C2C_score(db_C2C_score_list,kept_db)
 #' grid_col <- assign_cluster_color(C2C_score_df)
 #' 
 assign_cluster_color <- function(C2C_score_df){
@@ -529,14 +529,14 @@ assign_cluster_color <- function(C2C_score_df){
 #' 
 #' @details The color will be assigned by the order of "Source" in C2C_score_df.
 #' Typically, the input dataframe is unfiltered and contains all cluster in "Source". For more information, please refer to \code{\link{aggregate_C2C_score}}
-#' To keep the color consistent crossing the clusters, this function only using Source to assign the color
+#' To keep the color consistent crossing the clusters, this function only using Source to assign the color.
 #' This function only return one side result of cluster which will not distinguish the Source or Target.
 #' 
 #' @return return a named vector of colors, the names are cluster id.
 #' 
 #' @examples
-#'#' C2C_score_df <- 
-#     aggregate_C2C_score(db_C2C_score_list,kept_db)
+#' C2C_score_df <- 
+#'     aggregate_C2C_score(db_C2C_score_list,kept_db)
 #' grid_col <- assign_clu_col_lite(C2C_score_df)
 assign_clu_col_lite <- function(C2C_score_df){
   clu_name <- 
