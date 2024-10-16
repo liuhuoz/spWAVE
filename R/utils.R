@@ -322,3 +322,229 @@ cluster_info_identifier <- function(seurat_obj,cluster=NULL){
   return(cluster_df)
 }
 
+
+#' Concentrate LR expression and field estimate result
+#'
+#' Concentrate LR expression and field estimate result for each spot or cell
+#'
+#' @param db_field_result field estimate result of LR in database .
+#' @param ligand Ligand genes.
+#' @param receptor Receptor genes or complex.
+#'
+#' @return return dataframe include barcode, spot coordinates, genes and complex expression and field estimate result.
+
+concentrate_LR_field_info <- function(db_field_result,ligand,receptor){
+  single_mol_field_list <- db_field_result$single_mol_field_list
+  LR_pair_field_list <- db_field_result$LR_pair_field_list
+  LR_pair <- paste(ligand,receptor,sep=".")
+
+  merge_df <- cbind(
+      LR_pair_field_list[[LR_pair]],
+      single_mol_field_list[[ligand]][,ligand,FALSE],
+      single_mol_field_list[[receptor]][,receptor,FALSE]
+      )
+  return(merge_df)
+}
+
+
+#' Generate Shuffle Cluster List
+#'
+#' Generate shuffle list of barcode and cluster,for downstream permutation test
+#'
+#' @param cluster_info a dataframe with columns "barcode" and "cluster"
+#' @param shuffle_iter Integer, number of shuffle iterations
+#'
+#' @return List of dataframe, each dataframe contains shuffled barcode and cluster
+#' and the length of list will be equal to shuffle_iter
+
+generate_shuffle_list <- function(cluster_info,shuffle_iter=500){
+  clu_shuf_list <- list()
+  for (i in 1:shuffle_iter){
+    clu_shuffle <- 
+    data.frame(
+      index=sample(1:nrow(cluster_info)),
+      cluster=cluster_info$cluster
+    )
+    clu_shuf_list[[i]] <- split(clu_shuffle$index,clu_shuffle$cluster)
+  }
+  names(clu_shuf_list) <- seq_len(shuffle_iter)
+  return(clu_shuf_list)
+}
+
+
+#' Aggregate C2C_score form list 
+#'
+#' Aggregate C2C_score summaries from field estimate results list, for plotting.
+#'
+#' @param db_C2C_score_list The list of C2C_score field estimate results. 
+#' @param kept_db filtered database, should be match the C2C_score_list.
+#' 
+#' @details This function extract C2C_score summary dataframe from the list of C2C_score field estimate results.
+#' And do not filter anything and all value will be kept, including the no significant p value and minus value of C2C_score which often considered as reverse signal direcetion.
+#' 
+#' @return return a dataframe contain cluster id and C2C_score of each LR pair or family.
+aggregate_C2C_score <- function(db_C2C_score_list,kept_db){
+  db_prep_list <- lapply(db_C2C_score_list,function(x) x$summary)
+  db_prep_list <- 
+    lapply(db_prep_list,function(db){
+      db %<>% 
+        #filter(p_value<0.05) %>%
+        arrange(desc(raw_score))
+      return(db)
+    })
+
+  iter <- seq_len(length(db_C2C_score_list))
+  for(i in iter){
+    db_prep_list[[i]]$id <- names(db_C2C_score_list)[i]
+  }
+  aggregate_df <- do.call(rbind,db_prep_list)
+
+  aggregate_df %<>% 
+    arrange(desc(raw_score)) %>% 
+    left_join(kept_db[,c("id","Family")],by="id")
+  return(aggregate_df)
+} #** for plot
+
+
+
+#' Prepare C2C score dataframe for plotting
+#'
+#' Filter C2C score dataframe by certain keyword and pre-process the data for plotting
+#'
+#' @param C2C_score_df aggregated C2C score dataframe from aggregate_C2C_score. Contain cluster id and score of each LR pair or family.
+#' @param LR_pair filter LR pair.
+#' @param LR_family filter LR family.
+#' @param source_use filter cluster id as source (sender).
+#' @param target_use filter cluster id as target (receiver).
+#' @param scale scale the C2C score. Default is TRUE.
+#'
+#' @return filtered C2C score dataframe.
+
+prep_C2C_plot_df <- function(
+  C2C_score_df,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  scale=TRUE
+){
+  LR_pair <- filter_cat_keyword(C2C_score_df,"id",LR_pair)
+  LR_family <- filter_cat_keyword(C2C_score_df,"Family",LR_family)
+  source_use <- filter_cat_keyword(C2C_score_df,"Source",source_use)
+  target_use <- filter_cat_keyword(C2C_score_df,"Target",target_use)
+
+  filtered_df <- 
+    C2C_score_df %>%
+      filter(
+        id %in% LR_pair,
+        Family %in% LR_family,
+        Source %in% source_use,
+        Target %in% target_use
+      )
+  
+  if(scale){
+    filtered_df$scale_score <- 
+      scale(filtered_df$raw_score,center=TRUE,scale=TRUE)
+  }
+
+  return(filtered_df)
+}
+
+#' Filter category by keyword
+#' 
+#' Filter dataframe by category and keyword
+#' 
+#' @param df Dataframe to be filtered.
+#' @param filter_cat The category to be filtered. Must be a colname of the dataframe.
+#' @param filter_key the keyword to be filtered, should be found in the category. 
+#' Default is NULL. If NULL, all result will be kept.
+#'
+#' @return Dataframe filtered by category and respective keyword.
+
+filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
+  all_key <- table(df[[filter_cat]]) %>% names
+  if(is.null(filter_key)){
+    filter_key <- all_key
+  }else if(!all(filter_key %in% all_key)){
+    stop(paste0("Filter keywords not found in ",filter_cat))
+  }
+  return(filter_key)
+}
+
+
+
+#' Assign colors to cluster for chord plot
+#'
+#' Assign color to cluster for chord plot with built-in Material Design color palette.
+#' 
+#' @param C2C_score_df C2C score dataframe contain cluster in column "Source".
+#' 
+#' @details The color will be assigned by the order of "Source" and "Target" seprately in C2C_score_df, and specifically used in the chord plot. 
+#' Typically, the input dataframe is unfiltered and contains all cluster in "Source". For more information, please refer to \code{\link{aggregate_C2C_score}}
+#' To keep the color consistent crossing the clusters, this function only using Source to assign the color.
+#' This function return 2 side result of cluster labelled by Source and Target.
+#' For more universal color assignment, please use \code{\link{assign_clu_col_lite}}.
+#' 
+#' @return return a named and ordered vector of colors of both Source and Target, seprately. The names are cluster id with prefix "S@" and "R@".
+#' 
+#' @examples
+#'#' C2C_score_df <- 
+#     aggregate_C2C_score(db_C2C_score_list,kept_db)
+#' grid_col <- assign_cluster_color(C2C_score_df)
+#' 
+assign_cluster_color <- function(C2C_score_df){
+  pic_df <- 
+    C2C_score_df %>%
+      #filter(p_value<0.05) %>%
+      #filter(Source!=Target) %>%
+      mutate(Source = paste0("S@",Source),Target = paste0("R@",Target))
+
+  clu_name <- 
+    C2C_score_df$Source %>%
+    table() %>% names() 
+
+  chord_order <- 
+    c(
+      paste0(rep("S@",length(clu_name)),clu_name),
+      paste0(rep("R@",length(clu_name)),rev(clu_name))
+    )
+  grid_col <- 
+    c(MD2_color_picker(length(clu_name)), 
+      rev(MD2_color_picker(length(clu_name))))
+  names(grid_col) <- chord_order
+
+  temp <- which(chord_order %in% c(pic_df$Source,pic_df$Target))
+  chord_order <- chord_order[temp]
+  grid_col <- grid_col[temp]
+
+  return(grid_col)
+}
+
+
+#' Universal assign colors to cluster for plot
+#'
+#' Assign color to cluster for plot with built-in Material Design color palette.
+#'
+#' @param C2C_score_df C2C score dataframe contain cluster in column "Source".
+#' 
+#' @details The color will be assigned by the order of "Source" in C2C_score_df.
+#' Typically, the input dataframe is unfiltered and contains all cluster in "Source". For more information, please refer to \code{\link{aggregate_C2C_score}}
+#' To keep the color consistent crossing the clusters, this function only using Source to assign the color
+#' This function only return one side result of cluster which will not distinguish the Source or Target.
+#' 
+#' @return return a named vector of colors, the names are cluster id.
+#' 
+#' @examples
+#'#' C2C_score_df <- 
+#     aggregate_C2C_score(db_C2C_score_list,kept_db)
+#' grid_col <- assign_clu_col_lite(C2C_score_df)
+assign_clu_col_lite <- function(C2C_score_df){
+  clu_name <- 
+    C2C_score_df$Source %>%
+    table() %>% names() 
+
+  clu_col <- MD2_color_picker(length(clu_name))
+  names(clu_col) <- clu_name
+
+  return(clu_col)
+}
