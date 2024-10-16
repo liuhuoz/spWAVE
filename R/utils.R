@@ -192,8 +192,8 @@ filter_expr_by_cutoff <- function(
 #' Generate receptor complex expression by expression of each sub-unit of the complex. 
 #' And aggregate the expression and database result for next step.
 #'
-#' @param db LR database dataframe
-#' @param expr_mat gene expression matrix
+#' @param db dataframe of LR database.
+#' @param expr_mat gene expression matrix.
 #' @param complex_min_cell minimum number of cell expressing complex
 #' 
 #' @details The receptor complex expression are calculated using 
@@ -213,7 +213,7 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
     rec <- str_split_1(rec_complex,pattern = "_")
     if(all(c(lig,rec) %in% colnames(expr_df))){ #filter out not-exist in expr LR_pair
       LR_complex_df <- expr_df[,c(lig,rec)]
-      temp <- rowProds(LR_complex_df[,c(rec)] %>% as.matrix())^(1/length(rec))
+      temp <- matrixStats::rowProds(LR_complex_df[,c(rec)] %>% as.matrix())^(1/length(rec))
       if(length(which(temp!=0))>=complex_min_cell){ #filter out low expr LR_pair
         LR_complex_df$complex <- temp
         colnames(LR_complex_df)[length(c(lig,rec,1))] <- rec_complex

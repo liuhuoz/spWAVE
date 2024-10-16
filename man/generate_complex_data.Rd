@@ -7,9 +7,9 @@
 generate_complex_data(db, expr_mat, complex_min_cell = 10)
 }
 \arguments{
-\item{db}{LR database dataframe}
+\item{db}{dataframe of LR database.}
 
-\item{expr_mat}{gene expression matrix}
+\item{expr_mat}{gene expression matrix.}
 
 \item{complex_min_cell}{minimum number of cell expressing complex}
 }
