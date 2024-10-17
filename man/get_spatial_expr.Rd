@@ -4,14 +4,14 @@
 \alias{get_spatial_expr}
 \title{get_spatial_expr}
 \usage{
-get_spatial_expr(SrtObj, gene, assay = "RNA")
+get_spatial_expr(SrtObj, gene, assay = "SCT")
 }
 \arguments{
 \item{SrtObj}{Seurat object.}
 
 \item{gene}{one or more gene names in Seurat object.}
 
-\item{assay}{assay name in slot of Seurat object. Default="RNA"}
+\item{assay}{assay name in slot of Seurat object. Default="SCT"}
 }
 \value{
 return a data.frame containing coordinates, barocdes, and expression values.
@@ -19,6 +19,13 @@ return a data.frame containing coordinates, barocdes, and expression values.
 \description{
 Exract coordinates and expression values from Seurat object
 }
-\examples{
-# ADD_EXAMPLES_HERE
+\details{
+Right now this function only test on Xenium and Visium.
+The unit of return coordinate is micrometer after scaling.
+For scale factor of Visium, please see \url{https://github.com/satijalab/seurat/issues/6980} \cr
+To keep the consistent between plot systems of Seurat and directly using ggplot2,
+the coordiantes were rotated differently based on the ST techniques.
+For more infos, please see: \cr
+Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
+Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
 }

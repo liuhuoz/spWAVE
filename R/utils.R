@@ -4,27 +4,50 @@
 #'
 #' @param SrtObj Seurat object.
 #' @param gene one or more gene names in Seurat object.
-#' @param assay assay name in slot of Seurat object. Default="RNA"
+#' @param assay assay name in slot of Seurat object. Default="SCT"
 #'
 #' @return return a data.frame containing coordinates, barocdes, and expression values.
-#' @examples
-#' # ADD_EXAMPLES_HERE
-get_spatial_expr <- function(SrtObj,gene,assay="RNA"){
-  coord_info <- Seurat::GetTissueCoordinates(SrtObj)
-  coord_info$imagerow <- 
-    max(coord_info$imagerow) - coord_info$imagerow + min(coord_info$imagerow)
-  coord_info$barcode <- rownames(coord_info)
+#' 
+#' @details Right now this function only test on Xenium and Visium. 
+#' The unit of return coordinate is micrometer after scaling. 
+#' For scale factor of Visium, please see \url{https://github.com/satijalab/seurat/issues/6980} \cr
+#' To keep the consistent between plot systems of Seurat and directly using ggplot2,
+#' the coordiantes were rotated differently based on the ST techniques.
+#' For more infos, please see: \cr
+#' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
+#' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
+get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
+  if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
+    coord_info <- Seurat::GetTissueCoordinates(SrtObj,scale=NULL)
+    scale_spot <- SrtObj@images$slice1@scale.factors$spot
+    scale_micrometer <- 65/scale_spot
+    coord_info$imagerow <-
+      max(coord_info$imagerow) - coord_info$imagerow + min(coord_info$imagerow)
+    coord_info <- coord_info * scale_micrometer
+    coord_info$barcode <- rownames(coord_info)
+    colnames(coord_info) <- c("y","x","barcode")
+    #** scale the image coordinate unit pixel to real world length unit micrometer
+    #** for more info, see https://github.com/satijalab/seurat/issues/6980
+    #** rotation of coordinate because of the plot consistent using ggplot2 and Seurat plot
+    #** for more info, see https://github.com/satijalab/seurat/issues/2702
+  }else if(class(SrtObj@images[[1]]) %in% c("FOV")){
+    coord_info <- Seurat::GetTissueCoordinates(SrtObj)
+    colnames(coord_info) <- c("y","x","barcode")
+    #** here we exchange x and y as coord_flip, which was introduced by Seurat
+    #** which will refine the plot direction in ggplot2.
+    #** for more info, see https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788
+  }
 
   expr_mat <- Seurat::GetAssayData(SrtObj,assay=assay)
-  select_gene <- 
+  select_gene <-
     expr_mat %>% as.matrix() %>% t() %>%
-    as.data.frame() %>% 
+    as.data.frame() %>%
     select(all_of(gene))
   colnames(select_gene) <- gene
   select_gene$barcode <- rownames(select_gene)
 
   spatial_expr <- dplyr::full_join(coord_info,select_gene,by="barcode")
-  colnames(spatial_expr) <- c("y","x","barcode",gene)
+  #colnames(spatial_expr) <- c("y","x","barcode",gene)
   return(spatial_expr)
 }
 
