@@ -15,6 +15,9 @@ spa_vectorized_pdist(source, target)
 returns pairwise-distances
 }
 \description{
+spa_vectorized_pdist
+}
+\details{
 from an excellent post: https://www.r-bloggers.com/2013/05/pairwise-distances-in-r/
 this function is called by other functions to quickly compute the distance between
 cells to grid points, or between grid points
