@@ -53,7 +53,7 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
 
 #' spa_vectorized_pdist
 #' 
-#' from an excellent post: https://www.r-bloggers.com/2013/05/pairwise-distances-in-r/
+#' @details from an excellent post: https://www.r-bloggers.com/2013/05/pairwise-distances-in-r/
 #' this function is called by other functions to quickly compute the distance between
 #' cells to grid points, or between grid points
 #'
@@ -81,7 +81,7 @@ spa_vectorized_pdist <- function(source,target){
 
 #' pairwised_mat_subtract
 #' 
-#' pairwise calculate 2 matrix subtraction by row between
+#' @details pairwise calculate 2 matrix subtraction by row between
 #' cells to grid points, or between grid points,and return a list of each target row.
 #' The result would be source subtracted by target.
 #'
@@ -260,6 +260,8 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   kept_db$id <- paste(kept_db$Ligand,kept_db$Receptor,sep=".")
   return(list(kept_db=kept_db,expr_LR_list=expr_LR_list,expr_LR_df=expr_LR_df))
 }
+#** 发现expr_LR_list中会存在colnames 重复的情况，不过考虑到一个部分后面不会用到，先不考虑特别处理。
+#** 甚至后续可以把这一项删除。
 
 
 #' Concentrate Coordinates and Expression
