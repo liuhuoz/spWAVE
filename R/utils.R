@@ -331,6 +331,19 @@ concentrate_coord_expr <- function(expr,genes,coord_info){
 }
 
 
+#' Check Rownames Order Consistent
+#'
+#' Check rownaems are same with standard rownames
+#'
+#' @param check_row rownames to be checked.
+#' @param standrad_row rownames as standard.
+#'
+#' @return logical TRUE or FALSE
+check_row_order <- function(check_row,standrad_row){
+  row_result <- ifelse(check_row==standrad_row,TRUE,FALSE)
+  check_result <- all(row_result)
+  return(check_result)
+}
 
 #' Cluster Info Identifier
 #'
