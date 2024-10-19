@@ -85,6 +85,7 @@ get_coordinates <- function(SrtObj,gene,assay="SCT"){
   }else if(class(SrtObj@images[[1]]) %in% c("FOV")){
     coord_info <- Seurat::GetTissueCoordinates(SrtObj)
     colnames(coord_info) <- c("y","x","barcode")
+    rownames(coord_info) <- coord_info$barcode
     #** here we exchange x and y as coord_flip, which was introduced by Seurat
     #** which will refine the plot direction in ggplot2.
     #** for more info, see https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788
