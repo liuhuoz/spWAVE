@@ -21,15 +21,15 @@ plot_field_direction(
 )
 }
 \arguments{
-\item{arrow_df}{data.frame,contain barcode, coordinates, field vector, expression and other quantity.
-Usually using the output from \code{\link{extract_LR_field_result}}}
+\item{arrow_df}{data.frame, contain barcode, coordinates, field vector, expression and other quantities.
+Usually using the output from \code{\link{extract_LR_field_result}}.}
 
 \item{seurat_obj}{Seurat object, used to extract image.}
 
-\item{mode}{arrow show in each point(spot) or in grid.
+\item{mode}{arrow show in each point (spot) or in grid.
 Only support "point" or "grid", default is "point".}
 
-\item{point}{point(spot) value to show, must be in colnames of arrow_df.}
+\item{point}{point (spot) value to show, must be in colnames of arrow_df.}
 
 \item{show_arrow}{logical, whether to show arrow, default is TRUE.}
 
@@ -37,7 +37,7 @@ Only support "point" or "grid", default is "point".}
 
 \item{line_sf}{arrow line size scale factor, smaller value means larger line size.}
 
-\item{grid_density}{grid density of arrow, smaller value means sparser arrow over image,default is 0.5.}
+\item{grid_density}{grid density of arrow, smaller value means sparser arrow over image, default is 0.5.}
 
 \item{image}{image type, "blank" or "HE" or "cluster", default is "blank".}
 
@@ -69,24 +69,24 @@ plot_field_direction(arrow_df=brain_smad3_str, point = "Sox2", mode='grid')
 plot_field_direction(mouse_fgfr_str,seurat_obj = brain, image="HE",mode='grid')
 
 # plot field projection over HE image with passing args to SpatialPlot of Seurat
-plot_field_direction(hgin_IGF,lze22_hgin,lze22_hgin,
- pt.size.factor=100,alpha=0.7, #pt.size.factor and alpha are passed to SpatialPlot
- image="cluster",mode="grid",
- show_arrow = T,arrow_color = "cyan2")
+plot_field_direction(hgin_IGF,lze22_hgin,
+  pt.size.factor=100,alpha=0.7, #pt.size.factor and alpha are passed to SpatialPlot
+  image="cluster",mode="grid",
+  show_arrow = T,arrow_color = "cyan2")
  
 # plot field projection over cluster image with custom arrow color
-# cluster info was extracted from \code{\link{seurat_obj@active.ident}}
+# cluster info was extracted from seurat_obj@active.ident
 plot_field_direction(mouse_fgfr_str,seurat_obj = brain,
- image="cluster",mode='grid',arrow_color="cyan2")
+  image="cluster",mode='grid',arrow_color="cyan2")
 
 # plot field with custom point fill color indicating quantity in spot
-plot_field_direction(temp,lze22_nor,point = "E_strength",mode="grid",
- line_sf = 0.3,arrow_sf = 0.05,
- point_color="salmon3",arrow_color = "black",show_arrow = F)
+plot_field_direction(nor_IGF,lze22_nor,point = "E_strength",mode="grid",
+  line_sf = 0.3,arrow_sf = 0.05,
+  point_color="salmon3",arrow_color = "black")
 
 # plot field with custom triple colors indicating quantity in spot
 plot_field_direction(temp,lze22_nor,point = "Rel_LR_Exp",mode="grid",
- line_sf = 0.3,arrow_sf = 0.05,arrow_color = "firebrick4",show_arrow = F) +
-   scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
+  line_sf = 0.3,arrow_sf = 0.05,arrow_color = "firebrick4",show_arrow = F) +
+scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
 
 }
