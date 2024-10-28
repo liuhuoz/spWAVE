@@ -787,6 +787,32 @@ extract_LR_field_result <- function(database_result,LR,kept_db){
 }
 
 
+
+#' optimize arrow size for field projection
+#'
+#' optimize arrow size for plot_field_direction function
+#'
+#' @param grid.info coordinates and vector (Ex,Ey) for each point
+#' @param scale.factor sacle.factor, smaller value means larger size.
+#' @param normalize logical default is FALSE. True means all vector length will be 1
+#'
+#' @return return a data.frame with optimize arrow size for plotting.
+optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
+  grid.info$qsum <- sqrt(grid.info$Ex^2 + grid.info$Ey^2)
+  dim.scale <- mean(max(grid.info$x) - min(grid.info$x), 
+                    max(grid.info$y) - min(grid.info$y))
+  #for normalized arrow length using this one, and proper scale.factor=50
+  #nor <- match.arg(normalize,choices=c(FALSE,TRUE))
+  if(normalize){
+      grid.info$sf = (dim.scale/scale.factor)/grid.info$qsum
+    }else{
+      grid.info$sf = (dim.scale/scale.factor)
+    }
+  grid.info$Ex.u <- grid.info$Ex * grid.info$sf
+  grid.info$Ey.u <- grid.info$Ey * grid.info$sf
+  return(grid.info)
+}
+
 #' Get slide aspect ratio
 #'
 #' calculate the aspect ratio of a subset image from Seurat object
