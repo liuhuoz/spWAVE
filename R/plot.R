@@ -275,6 +275,13 @@ plot_field_direction2 <- function(
     }
   }
 
+  if(arrow_normalize){
+    arrow_draw %<>% 
+      mutate(length=sqrt(Ex^2+Ey^2),
+      Ex=Ex/length,
+      Ey=Ey/length
+      )
+  }
   #arrow_draw %<>% 
     #calc_field_strength() %>% 
     #optimize.arrow(normalize = arrow_normalize)
