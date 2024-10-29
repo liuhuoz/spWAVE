@@ -830,3 +830,18 @@ subset_ratio <- function(SeuObj){
   # force the image into the right aspect ratio
   return(ratio)
 }
+
+
+#' check character is color
+#'
+#' check character is color
+#'
+#' @param x character
+#' @details adapted from \code{\link{https://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}}
+#' @return logical
+is.color <- function(x){
+  sapply(x, function(X) {
+      tryCatch(is.matrix(col2rgb(X)), 
+              error = function(e) FALSE)
+      })
+}
