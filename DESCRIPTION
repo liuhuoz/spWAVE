@@ -18,12 +18,13 @@ Imports:
     ComplexHeatmap,
     ggsci,
     igraph,
-    magrittr,
     Matrix,
     matrixStats,
     pbapply,
+    RColorBrewer
 Depends: 
     R (>= 4.0),
     tidyverse,
+    magrittr,
     Seurat (>= 5.1.0)
 LazyData: true
