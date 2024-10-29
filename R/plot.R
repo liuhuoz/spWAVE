@@ -927,3 +927,206 @@ plot_LR_cluster_heatmap <- function(
   #return(ht2)
 }
 
+
+#** adopted from cellchat netVisual_circle
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param igraph_g DESCRIPTION.
+#' @param color.use Colors represent different cell groups
+#' @param main_title character, plot title
+#' @param weight.scale whether scale the weight
+#' @param vertex.weight The weight of vertex: either a scale value or a vector
+#' @param vertex.weight.max the maximum weight of vertex; defualt = max(vertex.weight)
+#' @param vertex.size.max the maximum vertex size for visualization
+#' @param vertex.label.cex The label size of vertex
+#' @param vertex.label.color The color of label for vertex
+#' @param edge.weight.max the maximum weight of edge; defualt = max(net)
+#' @param edge.width.max The maximum edge width for visualization
+#' @param label.edge Whether or not shows the label of edges
+#' @param alpha.edge the transprency of edge
+#' @param edge.label.color The color for single arrow
+#' @param edge.label.cex The size of label for arrows
+#' @param edge.curved Specifies whether to draw curved edges, or not.
+#' @param shape The shape of the vertex
+#' @param layout The layout specification
+#' @param margin The amount of empty space around the plot
+#' @param vertex.size The size of vertex
+#' @param arrow.width The width of arrows
+#' @param arrow.size the size of arrow
+#' @param text.x,text.y the x- and y-coordinates to add the text
+#' 
+#' @import igraph
+#' @details adopted from cellchat netVisual_circle function. More detail please refer to CellChat netVisual_circle
+#' @return return net plot based on igraph 
+plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
+  weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex=1,vertex.label.color= "black",
+  edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6, label.edge = FALSE,edge.label.color='black',edge.label.cex=0.8,
+  edge.curved=0.2,shape='circle',layout=in_circle(), margin=0.5, vertex.size = NULL,
+  arrow.width=1,arrow.size = 0.2,
+  text.x = 0, text.y = 1.5
+){
+  g <- igraph_g
+  edge.start <- igraph::ends(g, es=igraph::E(g), names=FALSE)
+  coords<-layout_(g,layout)
+  if(nrow(coords)!=1){
+    coords_scale=scale(coords)
+  }else{
+    coords_scale<-coords
+  }
+
+  if (is.null(vertex.size.max)) {
+    if (length(unique(vertex.weight)) == 1) {
+      vertex.size.max <- 5
+    } else {
+      vertex.size.max <- 15
+    }
+  }
+
+  if (is.null(vertex.weight.max)) {
+    vertex.weight.max <- max(vertex.weight)
+  }
+  vertex.weight <- vertex.weight/vertex.weight.max*vertex.size.max+5
+
+  loop.angle<-ifelse(coords_scale[igraph::V(g),1]>0,-atan(coords_scale[igraph::V(g),2]/coords_scale[igraph::V(g),1]),pi-atan(coords_scale[igraph::V(g),2]/coords_scale[igraph::V(g),1]))
+  igraph::V(g)$size<-vertex.weight
+  igraph::V(g)$color<-color.use[igraph::V(g)]
+  igraph::V(g)$frame.color <- color.use[igraph::V(g)]
+  igraph::V(g)$label.color <- vertex.label.color
+  igraph::V(g)$label.cex<-vertex.label.cex
+  if(label.edge){
+    igraph::E(g)$label<-igraph::E(g)$weight
+    igraph::E(g)$label <- round(igraph::E(g)$label, digits = 1)
+  }
+  if (is.null(edge.weight.max)) {
+    edge.weight.max <- max(igraph::E(g)$weight)
+  }
+  if (weight.scale == TRUE) {
+    #E(g)$width<-0.3+edge.width.max/(max(E(g)$weight)-min(E(g)$weight))*(E(g)$weight-min(E(g)$weight))
+    igraph::E(g)$width<- 0.3+igraph::E(g)$weight/edge.weight.max*edge.width.max
+  }else{
+    igraph::E(g)$width<- 0.3+edge.width.max*igraph::E(g)$weight
+  }
+
+  igraph::E(g)$arrow.width<-arrow.width
+  igraph::E(g)$arrow.size<-arrow.size
+  igraph::E(g)$label.color<-edge.label.color
+  igraph::E(g)$label.cex<-edge.label.cex
+  igraph::E(g)$color<- grDevices::adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
+  igraph::E(g)$loop.angle <- rep(0, length(igraph::E(g)))
+
+  if(sum(edge.start[,2]==edge.start[,1])!=0){
+    igraph::E(g)$loop.angle[which(edge.start[,2]==edge.start[,1])]<-loop.angle[edge.start[which(edge.start[,2]==edge.start[,1]),1]]
+  }
+  radian.rescale <- function(x, start=0, direction=1) {
+    c.rotate <- function(x) (x + start) %% (2 * pi) * direction
+    c.rotate(scales::rescale(x, c(0, 2 * pi), range(x)))
+  }
+  label.locs <- radian.rescale(x=1:length(igraph::V(g)), direction=-1, start=0)
+  label.dist <- vertex.weight/max(vertex.weight)+2
+  plot(g,main=main_title,
+        edge.curved=edge.curved,vertex.shape=shape,layout=coords_scale,margin=margin, vertex.label.dist=label.dist,
+        vertex.label.degree=label.locs, vertex.label.family="Helvetica", edge.label.family="Helvetica") # "sans"
+}
+
+
+#' Plot clusters level interactions in network
+#'
+#' Plot clusters level interactions in network with number or interaction stregth.
+#'
+#' @param db_C2C_score_list C2C score result list.
+#' @param kept_db database used in results list.
+#' @param cluster_color named vector, the values are colors and the names are cluster.
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".
+#' @param LR_family LR family selected to display.
+#' @param cluster_use cluster selected to display.
+#' @param title character, plot title.
+#' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
+#' refelecting the number of interactions or the sum of strength in C2C scores, respectively.
+#' @param mat_scale logical, whether to scale score matrix, default is FALSE. 
+#' Differ from weight.scale, see details.
+#' @param weight.scale logical, whether to scale edge weight and refelecting in plot, default is FALSE. 
+#' Differ from mat_scale, see details.
+#' @param ... args passing to \code{\link{plot_net_core_function}} which adopted from CellChat netVisual_circle function. 
+#' See details.
+#' 
+#' @details This funcion is wrapper and adopted from CellChat function netVisual_circle.
+#' mat_scale and weight.scale are different argments, 
+#' The mat_scale is used to scale score matrix, and it also refelects in plot but may not be proper visualization.
+#' The weight.scale is used to scale edge weight consdering the edge maximum length in plot. 
+#' Commonly, set mat_scale = TRUE and weight.scale = FALSE is enough to get proper visualization.
+#' However, if the lines in the plot are still too large or too small, we recommond to set both mat_scale and weight.scale = TRUE.
+#' @return network plot based on igraph package.
+#' @examples
+#' plot_LR_cluster_net(
+#'  db_C2C_score_list,complex_data$kept_db,
+#'    LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+#'    #LR_family=c("FGF","TGFb")
+#'    cluster_use=c("1","10","11","2","9","7"),
+#'    method_use = "strength",
+#'    mat_scale = TRUE
+#'  )
+plot_LR_cluster_net <- function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  #C2C_score_df,
+  LR_pair=NULL,
+  LR_family=NULL,
+  cluster_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  mat_scale=FALSE,
+  weight.scale=FALSE,
+  ...
+){
+  require(igraph)
+  C2C_score_df <- 
+      aggregate_C2C_score(db_C2C_score_list,kept_db)
+  if(is.null(cluster_color)){
+    clu_col <- assign_clu_col_lite(C2C_score_df)
+  }else{
+    clu_col <- check_cluster_color(cluster_color,C2C_score_df,source_use=cluster_use,target_use=cluster_use)
+  }
+
+  ht_mat <- 
+    prep_plot_matrix(
+      C2C_score_df,
+      LR_pair=LR_pair,
+      LR_family=LR_family,
+      source_use=cluster_use,
+      target_use=cluster_use,
+      method_use=method_use
+    )
+
+  #** scale matrix
+  if(mat_scale){
+    #ht_mat_mean <- mean(ht_mat)
+    ht_mat_std <- sd(ht_mat)
+    nor_mat <- ht_mat/ht_mat_std
+    ht_mat <- log2(nor_mat+1)
+  }
+
+  #** set title
+  suffix_title <- NULL
+  if(!is.null(LR_family)){suffix_title <- paste0(LR_family," Family Signaling")}
+  if(length(LR_pair)==1){
+    suffix_title <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
+  }
+
+  main_title <- 
+    ifelse(is.null(title),
+      paste0(ifelse(method_use=="count","Number","Strength"),
+            " of ",
+            ifelse(is.null(suffix_title),"Interactions",suffix_title)),
+      title
+    )
+  g <- graph_from_adjacency_matrix(ht_mat, mode = "directed", weighted = T)
+  plot_net_core_function(g,
+    color.use=clu_col,
+    main_title = main_title,
+    weight.scale = weight.scale,
+    ...)
+}
