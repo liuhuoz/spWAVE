@@ -190,7 +190,33 @@ perform_single_LR_spWAVE <- function(
 }
 
 
+#' calculate field strength and other quantities
+#'
+#' calculate field strength and other quantities based on the vector field
+#'
+#' @param vector_df data.frame, 
+#' vector field indicated by "Ex","Ey", and optionally "U".
+#' @param K_constant numeric, the constant of field transmission, default is 1/(4*pi).
+#'
+#' @return extended data.frame of vector_df, added field strength. 
+calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
+    vector_df %<>%
+      mutate(
+        KEx=K_constant*Ex,
+        KEy=K_constant*Ey,
+        E_strength=ifelse(is.infinite(Ex*Ey),Inf,K_constant*sqrt(Ex^2+Ey^2)),
+      )
+    if("U" %in% colnames(vector_df)){
+      vector_df %<>%
+        mutate(KU=K_constant*U)
+    }
+    return(vector_df)
+}
+
 #*****************************
 #** database LR calc Module **
 #*****************************
+#** 目前database 计算模块返回的是情况仍然是各类零散的list，只是为了下一步引入S4对象做准备
+#** 因此暂时不会添加perform_LR_database_spWAVE的整合函数
+
 
