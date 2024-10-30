@@ -4,13 +4,7 @@
 \alias{perform_single_LR_spWAVE}
 \title{perform calculation of single LR pair field estimation}
 \usage{
-perform_single_LR_spWAVE(
-  seurat_obj,
-  assay = "SCT",
-  L_genes,
-  R_genes,
-  K_constant = 1/(4 * pi)
-)
+perform_single_LR_spWAVE(seurat_obj, assay = "SCT", L_genes, R_genes)
 }
 \arguments{
 \item{seurat_obj}{Seurat Object.}
@@ -20,11 +14,9 @@ perform_single_LR_spWAVE(
 \item{L_genes}{Ligand genes.}
 
 \item{R_genes}{Receptor genes.}
-
-\item{K_constant}{constant in vector field. Default is 1/(4*pi)}
 }
 \value{
-RETURN_DESCRIPTION
+return data.frame contain sum-up vector field coordinates, expression, vector field
 }
 \description{
 perform calculation of given single LR pair field estimation directly from seurat object

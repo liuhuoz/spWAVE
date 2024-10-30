@@ -4,18 +4,12 @@
 \alias{single_field_vector}
 \title{Calc single molecular vector field}
 \usage{
-single_field_vector(
-  spatial_expr,
-  gene_name = colnames(spatial_expr)[4],
-  K_constant = 1/(4 * pi)
-)
+single_field_vector(spatial_expr, gene_name = colnames(spatial_expr)[4])
 }
 \arguments{
 \item{spatial_expr}{data.frame, contain spatial coordinate and expression.}
 
 \item{gene_name}{selected gene name.}
-
-\item{K_constant}{constant in vector field. Default is 1/(4*pi)}
 }
 \value{
 data.frame contain, coordinates,expression, vector field

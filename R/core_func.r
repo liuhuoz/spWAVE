@@ -7,13 +7,11 @@
 #'
 #' @param spatial_expr data.frame, contain spatial coordinate and expression.
 #' @param gene_name selected gene name.
-#' @param K_constant constant in vector field. Default is 1/(4*pi)
 #'
 #' @return data.frame contain, coordinates,expression, vector field
 single_field_vector <- function(
     spatial_expr,
-    gene_name=colnames(spatial_expr)[4],
-    K_constant = 1/(4*pi)
+    gene_name=colnames(spatial_expr)[4]
     ){
   col_idx <- which(colnames(spatial_expr)==gene_name)
   colnames(spatial_expr)[col_idx] <- "gene"
@@ -162,15 +160,13 @@ calc_LR_pair_vec <- function(
 #' @param assay assay name in Seurat object. Default is "SCT".
 #' @param L_genes Ligand genes.
 #' @param R_genes Receptor genes.
-#' @param K_constant constant in vector field. Default is 1/(4*pi)
 #'
-#' @return RETURN_DESCRIPTION
+#' @return return data.frame contain sum-up vector field coordinates, expression, vector field
 #' @examples
 #' # ADD_EXAMPLES_HERE
 perform_single_LR_spWAVE <- function(
   seurat_obj,assay="SCT",
-  L_genes,R_genes,
-  K_constant = 1/(4*pi)
+  L_genes,R_genes
 ){
   #extract coordinates and expression
   calc_df <- 
@@ -186,7 +182,7 @@ perform_single_LR_spWAVE <- function(
   }
   #calc single molecular vector
   gene_vec_list <- 
-    lapply(gene_df_list, function(x) single_field_vector(x,K_constant = K_constant))
+    lapply(gene_df_list, function(x) single_field_vector(x))
   names(gene_vec_list) <- names(gene_df_list)
   #calc LR pair vector
   merge_spatial_df <- calc_LR_pair_vec(gene_vec_list,L_genes,R_genes)
@@ -194,6 +190,7 @@ perform_single_LR_spWAVE <- function(
 }
 
 
-#***************************
-#** single LR calc Module **
-#***************************
+#*****************************
+#** database LR calc Module **
+#*****************************
+
