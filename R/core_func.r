@@ -1,4 +1,6 @@
-
+#***************************
+#** single LR calc Module **
+#***************************
 #' Calc single molecular vector field
 #'
 #' Calc single molecular vector field from spatial coordinate and expression
@@ -116,4 +118,37 @@ sum_field_vector <- function(vector_df_list){
     }
   }
   return(sigma_E_vec)
+}
+
+
+#' calculate LR pair vector
+#'
+#' calculate LR pair vector form single molecular field vector list
+#'
+#' @param gene_vec_list list of single molecular field vector
+#' @param L_genes Ligand genes.
+#' @param R_genes Receptor genes.
+#'
+#' @return return data.frame contain sum-up vector field containing coordinates, expression, vector field
+calc_LR_pair_vec <- function(
+  gene_vec_list,
+  L_genes,R_genes
+){
+  #retrive used list
+  L_vec_list <- gene_vec_list[L_genes]
+  R_vec_list <- gene_vec_list[R_genes]
+
+  #分割LR计算后，再计算LR对
+  L_field_vec <- sum_field_vector(L_vec_list)
+  R_field_vec <- sum_field_vector(R_vec_list)
+  LR_field_vec <- L_field_vec - R_field_vec
+
+  merge_spatial_df <- 
+    cbind.data.frame(
+      gene_vec_list[[1]][,c("x","y","barcode")],
+      LR_field_vec
+    )
+  
+  rownames(merge_spatial_df) <- merge_spatial_df$barcode
+  return(merge_spatial_df)
 }
