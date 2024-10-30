@@ -220,3 +220,135 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #** 因此暂时不会添加perform_LR_database_spWAVE的整合函数
 
 
+#' calculate single molecule field in database
+#'
+#' calculate single molecule fields of all genes in database
+#'
+#' @param kept_db  data.frame, LR database.
+#' @param expr expression matrix.
+#' @param coord spatial coordinates. 
+#'
+#' @return list of single molecule field
+#' @examples
+#' #prepare database and expression data
+#' mouse_db <-
+#'   load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
+#' expr_ft_mat <-
+#'   filter_LR_expr(db=mouse_db,brain,assay = "SCT")
+#' complex_data <- generate_complex_data(mouse_db,expr_ft_mat)
+#' #extract coordinates from seurat object
+#' brain_coord <- get_coordinates(brain)
+#' # perform calculation
+#' brain_single_mol_field <- 
+#'  calc_database_single_field(
+#'    kept_db = complex_data$kept_db,
+#'    expr = complex_data$expr_LR_df,
+#'    coord = brain_coord)
+calc_database_single_field <- function(kept_db,expr,coord){ 
+  single_mol_field <- list()
+  #print("Step1. calc single molecule or complex field")
+  pb <- txtProgressBar(min = 0, max = ncol(expr), style = 3)
+  for(i in seq_len(ncol(expr))){
+    spatial_expr <- 
+      concentrate_coord_expr(expr=expr,genes=colnames(expr)[i],coord_info=coord)
+    single_mol_field[[i]] <- 
+      single_field_vector(spatial_expr,gene_name=colnames(expr)[i])
+    setTxtProgressBar(pb, i)
+  }
+  close(pb)
+  names(single_mol_field) <- colnames(expr)
+  return(single_mol_field)
+}
+
+#' calculate LR pair field in database
+#'
+#' calculate LR pair fields by sum-up single molecular field in list and database
+#'
+#' @param kept_db data.frame, LR database, must be same with the database used in single_mol_field
+#' @param single_mol_field list of single molecular field, 
+#' usually the result of calc_database_single_field 
+#'
+#' @return return list of LR pair or family field estimation.
+#' @examples
+#' #upstream step please see calc_database_single_field.
+#' brain_db_field <- 
+#'   calc_database_LR_field(complex_data$kept_db,brain_single_mol_field)
+calc_database_LR_field <- function(kept_db,single_mol_field){
+  LR_pair_field_list <- list()
+  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  for(i in seq_len(nrow(kept_db))){
+    LR_pair_field_list[[i]] <- 
+      calc_LR_pair_vec(single_mol_field,kept_db$Ligand[i],kept_db$Receptor[i])
+    LR_pair_field_list[[i]]$LR_pair <- 
+      paste(kept_db$Ligand[i],kept_db$Receptor[i],sep=".")
+    setTxtProgressBar(pb, i)
+  }
+  close(pb)
+  names(LR_pair_field_list) <- kept_db$id
+
+  family_lig_list <- split(kept_db$Ligand, kept_db$Family)
+  family_rec_list <- split(kept_db$Receptor, kept_db$Family)
+  names(family_lig_list) <- 
+    names(family_rec_list) <- 
+      kept_db$Family %>% unique %>% sort
+
+  family_lig_list %<>% lapply(unique)
+  family_rec_list %<>% lapply(unique)
+
+  LR_family_field_list <- list()
+  pb <- txtProgressBar(min = 0, max = length(family_lig_list), style = 3)
+  for(i in seq_len(length(family_lig_list))){
+    LR_family_field_list[[i]] <- 
+      calc_LR_pair_vec(single_mol_field,family_lig_list[[i]],family_rec_list[[i]])
+    LR_family_field_list[[i]]$Family <- names(family_lig_list)[i]
+    setTxtProgressBar(pb, i)
+  }
+  close(pb)
+  names(LR_family_field_list) <- names(family_lig_list)
+  
+  LR_field_list <- 
+    list(LR_pair_field_list=LR_pair_field_list,
+        LR_family_field_list=LR_family_field_list)
+  return(LR_field_list)
+}
+
+
+#' perform calculation of LR pair or family in database
+#'
+#' perform calculation of LR pair or family in database in 1 step.
+#' An integrated function of calc_database_single_field and calc_database_LR_field
+#'
+#' @param kept_db  data.frame, LR database.
+#' @param expr expression matrix.
+#' @param coord spatial coordinates. 
+#'
+#' @return return list of single molecule field, 
+#' LR pair field and LR family field in 3 separated list.
+#' @examples
+#' #prepare database and expression data
+#' mouse_db <-
+#'   load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
+#' expr_ft_mat <-
+#'   filter_LR_expr(db=mouse_db,brain,assay = "SCT")
+#' complex_data <- generate_complex_data(mouse_db,expr_ft_mat)
+#' #extract coordinates from seurat object
+#' brain_coord <- get_coordinates(brain)
+#' # perform calculation
+#' brain_db_res <- 
+#'  perform_LR_field_calc(
+#'    kept_db = complex_data$kept_db,
+#'    expr = complex_data$expr_LR_df,
+#'    coord = brain_coord)
+perform_LR_field_calc <- function(kept_db,expr,coord){
+  print("Step1. calc single molecule or complex field")
+  single_mol_field <- calc_database_single_field(kept_db,expr,coord)
+  print("Step2. calc LR pair or family field")
+  LR_field_list <- calc_database_LR_field(kept_db,single_mol_field)
+
+  res_list <- list(
+      single_mol_field_list=single_mol_field,
+      LR_pair_field_list=LR_field_list[[1]],
+      LR_family_field_list=LR_field_list[[2]]
+    )
+  return(res_list)
+}
