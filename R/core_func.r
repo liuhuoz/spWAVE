@@ -152,3 +152,48 @@ calc_LR_pair_vec <- function(
   rownames(merge_spatial_df) <- merge_spatial_df$barcode
   return(merge_spatial_df)
 }
+
+
+#' perform calculation of single LR pair field estimation
+#'
+#' perform calculation of given single LR pair field estimation directly from seurat object 
+#'
+#' @param seurat_obj Seurat Object.
+#' @param assay assay name in Seurat object. Default is "SCT".
+#' @param L_genes Ligand genes.
+#' @param R_genes Receptor genes.
+#' @param K_constant constant in vector field. Default is 1/(4*pi)
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+perform_single_LR_spWAVE <- function(
+  seurat_obj,assay="SCT",
+  L_genes,R_genes,
+  K_constant = 1/(4*pi)
+){
+  #extract coordinates and expression
+  calc_df <- 
+    get_spatial_expr(seurat_obj,unlist(c(L_genes,R_genes)),assay = assay) %>%
+    select(c("x","y","barcode"),unlist(c(L_genes,R_genes)))
+  #generate gene expression list and divide into Ligand and Receptor.
+  gene_df_list <- 
+  lapply(calc_df[,-c(1:3)],
+    function(gene) cbind.data.frame(spatial_expr[,c("x","y","barcode")],gene)
+  )
+  for(i in seq_len(length(gene_df_list))){
+    colnames(gene_df_list[[i]])[4] <- names(gene_df_list)[i]
+  }
+  #calc single molecular vector
+  gene_vec_list <- 
+    lapply(gene_df_list, function(x) single_field_vector(x,K_constant = K_constant))
+  names(gene_vec_list) <- names(gene_df_list)
+  #calc LR pair vector
+  merge_spatial_df <- calc_LR_pair_vec(gene_vec_list,L_genes,R_genes)
+  return(merge_spatial_df)
+}
+
+
+#***************************
+#** single LR calc Module **
+#***************************
