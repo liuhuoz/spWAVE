@@ -14,7 +14,8 @@ Suggests:
     tradeSeq,
     viridis,
     future,
-    future.apply
+    future.apply,
+    BiocParallel
 Imports: 
     circlize,
     ComplexHeatmap,
