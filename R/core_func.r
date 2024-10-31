@@ -469,3 +469,204 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
   return(prep_list)
 }
 
+
+
+#' calculation spot2spot interaction force
+#'
+#' calculation spot2spot interaction force of selected LR pair 
+#' based on the distance and LR interaction matrices.
+#'
+#' @param dist_list distance matrix list, the result of prep_S2S_dist_mat
+#' @param LR_mat_list spot2spot interaction matrix list, the result of prep_S2S_LR_mat
+#' @param LR_pair selected LR pair to be calculated.
+#'
+#' @return list of spot2spot interaction force, including force components of x,y and norm
+calc_S2S_force_mat <- function(
+  dist_list,
+  LR_mat_list,
+  LR_pair
+){
+  #** col as receiver, row as sender
+  dist <- dist_list$p_dist
+  sub_x <- dist_list$p_sub_x
+  sub_y <- dist_list$p_sub_y
+  LR_mat <- LR_mat_list[[LR_pair]]
+
+  force_x_mat <- -LR_mat*sub_x/(dist^3)
+  force_y_mat <- -LR_mat*sub_y/(dist^3)
+  force_x_mat[is.na(force_x_mat)] <- 0
+  force_y_mat[is.na(force_y_mat)] <- 0
+  force_norm_mat <- sqrt(force_x_mat^2+force_y_mat^2)
+
+  #force_x_mat %<>% as("dgCMatrix")
+  #force_y_mat %<>% as("dgCMatrix")
+  #force_norm_mat %<>% as("dgCMatrix")
+  force_list <- 
+    list(force_x=force_x_mat,force_y=force_y_mat,force_norm=force_norm_mat)
+
+  return(force_list)
+}
+
+
+#' calculation spot2spot interaction force of database LR pairs
+#'
+#' calculation spot2spot interaction force of database LR pairs
+#'
+#' @param kept_db data.frame, LR database, must be same with the database used in prep_list
+#' @param prep_list list, the result of prep_database_S2S_list
+#'
+#' @return list of each LR pair of spot2spot interaction force.
+calc_database_S2S_force <- function(kept_db,prep_list){
+  dist_list <- prep_list$dist
+  LR_mat_list <- prep_list$q_list
+
+  db_S2S_force_list <- list()
+  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  iter=seq_len(nrow(kept_db))
+  for(i in iter){
+    #tic()
+    db_S2S_force_list[[i]] <- 
+      calc_S2S_force_mat(
+        dist_list,
+        LR_mat_list,
+        kept_db$id[i]
+        )
+    setTxtProgressBar(pb, i)
+    #toc()
+  }
+  close(pb)
+  names(db_S2S_force_list) <- kept_db$id
+
+  return(db_S2S_force_list)
+}
+
+
+#' calculation field-spot interaction force
+#'
+#' calculation field-spot interaction force which 
+#' considered as how the whole field affect the spot
+#'
+#' @param field_df data.frame, contain vector field info.
+#' @param ligand Ligand gene.
+#' @param receptor Receptor gene.
+#'
+#' @return return list of matrices including force component of x,y and force norm.
+calc_field_force_mat <- function(
+  field_df,
+  ligand,receptor
+){
+  #** col as receiver, row as sender
+  ori_field_force <- 
+  field_df %>%
+    #rowwise() %>%
+    mutate(
+      q_net=.data[[ligand]]-.data[[receptor]],
+      Fx=q_net*Ex,
+      Fy=q_net*Ey
+      ) %>% as.data.frame
+    # mutate(
+    #   Fx=.data[[receptor]]*Ex,
+    #   Fy=.data[[receptor]]*Ey
+    #   ) %>% as.data.frame
+
+  #** 这里修改了一下，使用qnet进行计算而不是receptor来计算
+
+  n_row <- rep(1,nrow(field_df)) %>% as.matrix() 
+  
+  field_Fx <- n_row %*% t(ori_field_force$Fx) %>% as("dgCMatrix")
+  field_Fy <- n_row %*% t(ori_field_force$Fy) %>% as("dgCMatrix")
+  field_Fnorm <- sqrt(field_Fx^2+field_Fy^2) %>% as("dgCMatrix")
+
+  field_force <- 
+    list(force_x=field_Fx,force_y=field_Fy,force_norm=field_Fnorm)
+  field_force <- 
+    lapply(field_force,function(mat){
+      rownames(mat) <- colnames(mat) <- rownames(field_df)
+      return(mat)
+    })
+  return(field_force)
+}
+
+
+#' calculation of spot2spot interaction score
+#'
+#' calculation of spot2spot interaction score of database LR pairs
+#'
+#' @param field_force_list field force list, the result of calc_field_force_mat.
+#' @param S2S_force_list S2S force list, the result of calc_S2S_force_mat.
+#' @details the interaction score is calculated by 
+#' the product of components of S2S force on the field force direction and norm of field force.
+#' 算了先用中文写，这一步是计算S2S force 在field force方向上的分量 乘以S2S 的模长得到的，
+#' 在具体代码是线上，是直接使用了向量点乘再除以field force的模长，但两者是等价的。
+#' @return return list of each LR pair of spot2spot interaction score.
+calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
+
+  field_Fx <- field_force_list$force_x
+  field_Fy <- field_force_list$force_y
+  field_Fnorm <- field_force_list$force_norm
+  
+  S2S_Fx <- S2S_force_list$force_x
+  S2S_Fy <- S2S_force_list$force_y
+  S2S_Fnorm <- S2S_force_list$force_norm
+
+  Ta <- S2S_Fx*field_Fx
+  Tb <- S2S_Fy*field_Fy
+  temp <- (Ta+Tb)
+
+  S2S_cos_norm <- temp/field_Fnorm
+  #S2S_cos <- temp/(field_Fnorm*S2S_Fnorm)
+  #df$cos_norm <- (df$Fx*vec$Fx+df$Fy*vec$Fy)/sqrt(vec$Fx^2+vec$Fy^2)
+
+  #** devided by 0 introducing NaN, and change the class into dgeMatrix
+  S2S_cos_norm[is.na(S2S_cos_norm)] <- 0
+  S2S_cos_norm %<>% as("CsparseMatrix")
+
+  #S2S_cos[is.na(S2S_cos)] <- 0
+  #S2S_cos %<>% as("CsparseMatrix")
+
+  return(S2S_cos_norm)
+}
+
+#' calculation of spot2spot interaction score of each LR pair in database
+#'
+#' calculation of spot2spot interaction score of each LR pair in database,
+#' a wrapper of calc_S2S_score_mat
+#'
+#' @param kept_db data.frame, LR database, must be same with the database used in prep_list
+#' @param prep_list list, the result of prep_database_S2S_list
+#' @param db_S2S_force_list list, the result of calc_database_S2S_force
+#'
+#' @return list of spot2spot interaction score of each LR pair in database
+#' @examples
+#' # ADD_EXAMPLES_HERE
+calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
+  dist_list <- prep_list$dist_list
+  LR_mat_list <- prep_list$q_list
+  field_df_list <- prep_list$field_list
+  
+  db_S2S_score_list <- list()
+  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  iter=seq_len(nrow(kept_db))
+  for(i in iter){
+    db_field_force_df <- 
+      calc_field_force_mat(
+        field_df_list[[i]],
+        kept_db$Ligand[i],
+        kept_db$Receptor[i]
+        )
+    #tic()
+    db_S2S_score_list[[i]] <- 
+      calc_S2S_score_mat(
+        db_field_force_df,
+        db_S2S_force_list[[i]]
+        )
+    setTxtProgressBar(pb, i)
+    #toc()
+  }
+  close(pb)
+  names(db_S2S_score_list) <- kept_db$id
+  
+  return(db_S2S_score_list)
+}
+
+#*** Cluster2Cluster Interaction Score
