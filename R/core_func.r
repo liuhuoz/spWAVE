@@ -352,3 +352,120 @@ perform_LR_field_calc <- function(kept_db,expr,coord){
     )
   return(res_list)
 }
+
+#*******************************
+#** Interaction Score  Module **
+#*******************************
+
+#*** Spot2Spot Interaction Score
+
+#' prepare spot2spot distance matrix
+#'
+#' Calc distance between every spot pairs with subtracting coordinates
+#'
+#' @param kept_db data.frame, LR database, must be same with the database used in db_field_result
+#' @param db_field_result list, result of perform_LR_field_calc
+#'
+#' @return list,contains distance matrix and coordinates difference matrix of x and y
+prep_S2S_dist_mat <- function(kept_db,db_field_result){
+  field_df <- concentrate_LR_field_info(
+    db_field_result,
+    kept_db$Ligand[1],kept_db$Receptor[1]
+    )
+  source_mat <- field_df[,c("x","y")] %>% as.matrix()
+  pairwise_dist_mat <- 
+    spa_vectorized_pdist(source_mat,source_mat)
+  pairwise_sub_list <- 
+    pairwised_mat_subtract(source_mat,source_mat)
+
+  p_sub_x_mat <- do.call(cbind, lapply(pairwise_sub_list, function(mat) mat[,"x"]))
+  p_sub_y_mat <- do.call(cbind, lapply(pairwise_sub_list, function(mat) mat[,"y"]))
+  colnames(p_sub_x_mat) <- rownames(p_sub_x_mat)
+  colnames(p_sub_y_mat) <- rownames(p_sub_y_mat)
+  
+  dist_mat_list <- list(p_dist=pairwise_dist_mat,p_sub_x=p_sub_x_mat,p_sub_y=p_sub_y_mat)
+  return(dist_mat_list)
+}
+
+
+#' prepare spot2spot interaction matrix
+#'
+#' Prepare spot2spot interaction info including LR pair expression
+#'
+#' @param field_df data.frame, contain vector field info.
+#' @param ligand Ligand gene.
+#' @param receptor Receptor gene.
+#'
+#' @return return data.frame contain spot2spot interaction matrix
+prep_S2S_LR_mat <- function(
+  field_df,
+  ligand,receptor
+){
+  #** col as receiver, row as sender
+  q2 <- field_df[,receptor] %>% as.matrix()
+  q1 <- field_df[,ligand] %>% as.matrix()
+  q_net <- q1-q2
+  #q_mat <- q1 %*% t(q2)
+  #q_mat <- q_net %*% t(q2)
+  q_mat <- q_net %*% t(q_net)
+  q_mat %<>% as("dgCMatrix")
+  rownames(q_mat) <- colnames(q_mat) <- rownames(field_df)
+
+  #** single directional checking whether the LR interaction exist
+  #** 0: not exist, 1: exist
+  temp <- sign(q_net) %*% t(rep(1,length(q_net)))
+  LR_kept <- temp - t(temp)
+  LR_kept[LR_kept<2] <- 0
+  LR_kept[LR_kept==2] <- 1
+
+  q_mat <- q_mat*LR_kept
+  return(q_mat)
+}
+
+
+#' Prepare spot2spot interaction and distance matrix
+#'
+#' Prepare spot2spot interaction and distance matrix
+#' A wrapper of prep_S2S_dist_mat and prep_S2S_LR_mat
+#'
+#' @param kept_db data.frame, LR database, must be same with the database used in db_field_result
+#' @param db_field_result list, result of perform_LR_field_calc
+#'
+#' @return return list, the result of prep_S2S_dist_mat and prep_S2S_LR_mat
+prep_database_S2S_list <- function(kept_db,db_field_result){
+  #single_mol_field_list <- db_field_result$single_mol_field_list
+  #LR_pair_field_list <- db_field_result$LR_pair_field_list
+
+  #** 在循环外进行计算距离矩阵和相互xy，后面共用
+
+  dist_list <- prep_S2S_dist_mat(kept_db,db_field_result)
+
+  #** for循环内每次需要提取一次LR_info,提取后再套取S2S_score进行计算
+  #** 其中LR_info需要的L与R基因名也可以给到S2S_score
+  LR_S2S_mat_list <- list()
+  field_df_list <- list()
+  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  iter=seq_len(nrow(kept_db))
+  for(i in iter){
+    #tic()
+    field_df_list[[i]] <- concentrate_LR_field_info(
+        db_field_result,
+        kept_db$Ligand[i],kept_db$Receptor[i]
+        )
+    #toc()
+    #tic()
+    LR_S2S_mat_list[[i]] <- 
+      prep_S2S_LR_mat(
+        field_df_list[[i]],
+        kept_db$Ligand[i],kept_db$Receptor[i]
+        )
+    setTxtProgressBar(pb, i)
+    #toc()
+  }
+  close(pb)
+  names(LR_S2S_mat_list) <- names(field_df_list) <- kept_db$id
+  prep_list <- list(dist=dist_list,q_list=LR_S2S_mat_list,field_list=field_df_list)
+
+  return(prep_list)
+}
+
