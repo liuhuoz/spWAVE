@@ -15,6 +15,7 @@
 #'
 #' @return return a list including filtered expression matrix in counts, 
 #' a data.frame contain barcode and weight which used in tradeSeq.
+#' @export
 prep_tradeSeq_data <- function(seurat_obj,field_df,traj_arg,min_expr=1,
   min_n_cell=NULL,
   min_pct_cell=0.01){
@@ -96,6 +97,8 @@ prep_tradeSeq_data <- function(seurat_obj,field_df,traj_arg,min_expr=1,
 #'    traj_arg="KU",
 #'    parallel=TRUE,BPPARAM=SnowParam(),paral_workers=16
 #'  )
+#' 
+#' @export
 run_LR_tradeSeq <- function(
   seurat_obj,
   database_result=NULL,LR=NULL,kept_db=NULL,
@@ -155,7 +158,7 @@ run_LR_tradeSeq <- function(
 #'
 #' @return return data.frame contain gene pvalue, p.adj, waldStat, without test
 #' @details Please see tradeSeq documentation of \code{associationTest} and \code{startvsend} for more details.
-
+#' @export
 run_tradeSeq_gene_test <- function(
     trade_res,
     method_use=c("association","startvsend")
@@ -197,6 +200,7 @@ run_tradeSeq_gene_test <- function(
 #' @return return plot
 #' @examples
 #' # ADD_EXAMPLES_HERE
+#' @export
 plot_tradeTest_heatmap <- function(
   trade_res,
   tradeTest_res,
@@ -300,6 +304,7 @@ plot_tradeTest_heatmap <- function(
 #' @param merge_db merged db list.
 #'
 #' @return return aggregated C2C score dataframe
+#' @export
 aggregate_layers_C2C <- function(score_list,label_name,merge_db){
   res <- 
     aggregate_C2C_score(
@@ -346,6 +351,7 @@ aggregate_layers_C2C <- function(score_list,label_name,merge_db){
 #'   LR_pair="IGF1.IGF1R",
 #'   scale=FALSE
 #' )
+#' @export
 plot_layers_score_dot <- function(
   merge_db_C2C_list,
   merge_kept_db_list,

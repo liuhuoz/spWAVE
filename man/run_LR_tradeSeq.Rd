@@ -101,4 +101,5 @@ fgf_trade_res <-
    traj_arg="KU",
    parallel=TRUE,BPPARAM=SnowParam(),paral_workers=16
  )
+
 }
