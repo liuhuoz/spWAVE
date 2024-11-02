@@ -59,6 +59,7 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
 #'
 #' @param SrtObj Seurat object.
 #' @param gene one or more gene names in Seurat object.
+#' @param assay assay name in slot of Seurat object. Default="SCT".
 #'
 #' @return return a data.frame containing coordinates and barcode or cell id.
 #' 
@@ -855,7 +856,7 @@ subset_ratio <- function(SeuObj){
 #' check character is color
 #'
 #' @param x character
-#' @details adapted from \code{\link{https://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}}
+#' @details adapted from \url{https://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}
 #' @return logical
 #' @export 
 is.color <- function(x){

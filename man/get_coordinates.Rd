@@ -10,6 +10,8 @@ get_coordinates(SrtObj, gene, assay = "SCT")
 \item{SrtObj}{Seurat object.}
 
 \item{gene}{one or more gene names in Seurat object.}
+
+\item{assay}{assay name in slot of Seurat object. Default="SCT".}
 }
 \value{
 return a data.frame containing coordinates and barcode or cell id.

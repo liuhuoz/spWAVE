@@ -16,5 +16,5 @@ logical
 check character is color
 }
 \details{
-adapted from \code{\link{https://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}}
+adapted from \url{https://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}
 }
