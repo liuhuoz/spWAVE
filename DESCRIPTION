@@ -1,6 +1,6 @@
 Package: spWAVE
 Title: spatial Whole Area Vector Estimates (spWAVE) (One Line, Title Case)
-Version: 0.0.0.9000 alpha
+Version: 0.0.0.9000
 Authors@R: 
     person("Kai", "Li", , "likai711@mail.ustc.edu.cn", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0005-0147-7200"))
