@@ -16,6 +16,8 @@
 #' For more infos, please see: \cr
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
+#' 
+#' @export
 get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
     coord_info <- Seurat::GetTissueCoordinates(SrtObj,scale=NULL)
@@ -68,6 +70,8 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
 #' For more infos, please see: \cr
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
+#' 
+#' @export
 get_coordinates <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
     coord_info <- Seurat::GetTissueCoordinates(SrtObj,scale=NULL)
@@ -103,7 +107,8 @@ get_coordinates <- function(SrtObj,gene,assay="SCT"){
 #' @param source matrix
 #' @param target matrix
 #' @return returns pairwise-distances
-#'
+#' 
+#' @export
 spa_vectorized_pdist <- function(source,target){
   an = apply(source, 1, function(rvec) base::crossprod(rvec,rvec))
   bn = apply(target, 1, function(rvec) base::crossprod(rvec,rvec))
@@ -131,7 +136,8 @@ spa_vectorized_pdist <- function(source,target){
 #' @param source matrix
 #' @param target matrix
 #' @return returns pairwise-subtract for each row list
-#' 
+#'  
+#' @export
 pairwised_mat_subtract <- function(source,target){
   target_list <- lapply(seq_len(nrow(target)), function(i) target[i,,drop=FALSE])
   #expand single vector to nrow of source and preform subtract
@@ -154,6 +160,7 @@ pairwised_mat_subtract <- function(source,target){
 #' @return return a data.frame after filtered
 #' @examples
 #' # cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
+#' @export 
 load_database <- function(
   db_source=c("CellChat","CellPhoneDB"),
   db_species=c("human","mouse","zebrafish"),
@@ -202,7 +209,7 @@ load_database <- function(
 #' @param min_pct_cell minimum percentage of cell expressing a gene. 
 #'
 #' @return filtered expression matrix
-
+#' @export 
 filter_LR_expr <- function(
   db,
   SrtObj,
@@ -237,7 +244,7 @@ filter_LR_expr <- function(
 #' @param min_n_cell minimum number of cell expressing a gene. This arg will mask 'min_pct_cell'.
 #' @param min_pct_cell minimum percentage of cell expressing a gene. 
 #' @return filtered expression matrix.
-
+#' @export 
 filter_expr_by_cutoff <- function(
   expr_mat,min_expr=0.1,
   min_n_cell=NULL,
@@ -268,7 +275,7 @@ filter_expr_by_cutoff <- function(
 #' the complex.
 #' 
 #' @return Ruturn a list including filtered database, LR expression list, and merged LR expression dataframe.
-
+#' @export 
 generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   expr_df <- expr_mat %>% as.matrix() %>% t() %>% as.data.frame()
   expr_LR_list <- list()
@@ -301,7 +308,9 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   kept_db_index <- kept_db_index[!is.na(kept_db_index)]
   kept_db <- db[kept_db_index,]
   kept_db$id <- paste(kept_db$Ligand,kept_db$Receptor,sep=".")
-  return(list(kept_db=kept_db,expr_LR_list=expr_LR_list,expr_LR_df=expr_LR_df))
+  return(list(kept_db=kept_db,
+              #expr_LR_list=expr_LR_list,
+              expr_LR_df=expr_LR_df))
 }
 #** 发现expr_LR_list中会存在colnames 重复的情况，不过考虑到一个部分后面不会用到，先不考虑特别处理。
 #** 甚至后续可以把这一项删除。
@@ -316,7 +325,7 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
 #' @param coord_info spot coordinates, 2 cols with x and y.
 #'
 #' @return return dataframe include barcode, spot coordinates, and selected genes expression values.
-
+#' @export 
 concentrate_coord_expr <- function(expr,genes,coord_info){
   expr_df <- expr[,genes,FALSE]
   check_result <- check_row_order(rownames(expr_df),rownames(coord_info))
@@ -340,6 +349,7 @@ concentrate_coord_expr <- function(expr,genes,coord_info){
 #' @param standrad_row rownames as standard.
 #'
 #' @return logical TRUE or FALSE
+#' @export
 check_row_order <- function(check_row,standrad_row){
   row_result <- ifelse(check_row==standrad_row,TRUE,FALSE)
   check_result <- all(row_result)
@@ -358,7 +368,7 @@ check_row_order <- function(check_row,standrad_row){
 #' @details The default 'cluster' is NULL and will using active.ident in Seurat object. 
 #' If a character is given, it must be the column name in Seurat metadata, and the column will be used as cluster. 
 #' If a data.frame is given, the column names should be 'cluster' and 'barcode', respectively.
-
+#' @export 
 cluster_info_identifier <- function(seurat_obj,cluster=NULL){
   if(is.null(cluster)){
     cluster_key <- "ident"
@@ -413,7 +423,7 @@ cluster_info_identifier <- function(seurat_obj,cluster=NULL){
 #' @param receptor Receptor genes or complex.
 #'
 #' @return return dataframe include barcode, spot coordinates, genes and complex expression and field estimate result.
-
+#' @export 
 concentrate_LR_field_info <- function(db_field_result,ligand,receptor){
   single_mol_field_list <- db_field_result$single_mol_field_list
   LR_pair_field_list <- db_field_result$LR_pair_field_list
@@ -437,7 +447,7 @@ concentrate_LR_field_info <- function(db_field_result,ligand,receptor){
 #'
 #' @return List of dataframe, each dataframe contains shuffled barcode and cluster
 #' and the length of list will be equal to shuffle_iter
-
+#' @export 
 generate_shuffle_list <- function(cluster_info,shuffle_iter=500){
   clu_shuf_list <- list()
   for (i in 1:shuffle_iter){
@@ -464,6 +474,8 @@ generate_shuffle_list <- function(cluster_info,shuffle_iter=500){
 #' And do not filter anything and all value will be kept, including the no significant p value and minus value of C2C_score which often considered as reverse signal direcetion.
 #' 
 #' @return return a dataframe contain cluster id and C2C_score of each LR pair or family.
+#' @export 
+
 aggregate_C2C_score <- function(db_C2C_score_list,kept_db){
   db_prep_list <- lapply(db_C2C_score_list,function(x) x$summary)
   db_prep_list <- 
@@ -500,7 +512,7 @@ aggregate_C2C_score <- function(db_C2C_score_list,kept_db){
 #' @param scale scale the C2C score. Default is TRUE.
 #'
 #' @return filtered C2C score dataframe.
-
+#' @export 
 prep_C2C_plot_df <- function(
   C2C_score_df,
   LR_pair=NULL,
@@ -541,7 +553,7 @@ prep_C2C_plot_df <- function(
 #' Default is NULL. If NULL, all result will be kept.
 #'
 #' @return Dataframe filtered by category and respective keyword.
-
+#' @export 
 filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
   all_key <- table(df[[filter_cat]]) %>% names
   if(is.null(filter_key)){
@@ -573,6 +585,7 @@ filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
 #'    aggregate_C2C_score(db_C2C_score_list,kept_db)
 #' grid_col <- assign_cluster_color(C2C_score_df)
 #' 
+#' @export
 assign_cluster_color <- function(C2C_score_df){
   pic_df <- 
     C2C_score_df %>%
@@ -619,6 +632,7 @@ assign_cluster_color <- function(C2C_score_df){
 #' C2C_score_df <- 
 #'     aggregate_C2C_score(db_C2C_score_list,kept_db)
 #' grid_col <- assign_clu_col_lite(C2C_score_df)
+#' @export 
 assign_clu_col_lite <- function(C2C_score_df){
   clu_name <- 
     C2C_score_df$Source %>%
@@ -641,6 +655,7 @@ assign_clu_col_lite <- function(C2C_score_df){
 #' @param target_use the cluster will be used as target, which should be kept in return
 #' 
 #' @return return a named filtered color vector.
+#' @export 
 check_cluster_color <- function(color,C2C_score_df,source_use,target_use){
   all_cluster <- c(C2C_score_df$Source,C2C_score_df$Target) %>% unique()
   if(is.null(names(color))){
@@ -671,7 +686,7 @@ check_cluster_color <- function(color,C2C_score_df,source_use,target_use){
 #'
 #' @return return a filtered matrix which column as Target and row as Source,
 #' and the value based on `method_use`.
-
+#' @export 
 prep_plot_matrix <- function(
   C2C_score_df,
   LR_pair=NULL,
@@ -751,6 +766,7 @@ prep_plot_matrix <- function(
 #'    database_result = hgin_db_res, 
 #'    LR = "TGFB1.TGFBR1_TGFBR2", 
 #'    kept_db = hgin_complex$kept_db)
+#' @export 
 extract_LR_field_result <- function(database_result,LR,kept_db){
   db_res <- database_result
   LR_pool <- c(db_res$LR_family_field_list,db_res$LR_pair_field_list)
@@ -797,6 +813,7 @@ extract_LR_field_result <- function(database_result,LR,kept_db){
 #' @param normalize logical default is FALSE. True means all vector length will be 1
 #'
 #' @return return a data.frame with optimize arrow size for plotting.
+#' @export
 optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
   grid.info$qsum <- sqrt(grid.info$Ex^2 + grid.info$Ey^2)
   dim.scale <- mean(max(grid.info$x) - min(grid.info$x), 
@@ -823,6 +840,7 @@ optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
 #' @examples
 #' SpatialDimPlot(Srt_obj_subset, pt.size.factor = 250,label=T) + 
 #'  theme(aspect.ratio = subset_ratio(Srt_obj_subset))
+#' @export 
 subset_ratio <- function(SeuObj){
   coord <- GetTissueCoordinates(SeuObj)
   # calculate the aspect ratio of rows to columns
@@ -839,6 +857,7 @@ subset_ratio <- function(SeuObj){
 #' @param x character
 #' @details adapted from \code{\link{https://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}}
 #' @return logical
+#' @export 
 is.color <- function(x){
   sapply(x, function(X) {
       tryCatch(is.matrix(col2rgb(X)), 
