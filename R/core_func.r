@@ -9,6 +9,7 @@
 #' @param gene_name selected gene name.
 #'
 #' @return data.frame contain, coordinates,expression, vector field
+#' @export
 single_field_vector <- function(
     spatial_expr,
     gene_name=colnames(spatial_expr)[4]
@@ -104,6 +105,7 @@ single_field_vector <- function(
 #' each data.frame contains a single molecular vector calculated result from `single_molecular_vector`.
 #'
 #' @return return data.frame contain sum-up vector field
+#' @export
 sum_field_vector <- function(vector_df_list){
   if(is.data.frame(vector_df_list)){
       sigma_E_vec = vector_df_list[,c("Ex","Ey","U")]
@@ -128,6 +130,7 @@ sum_field_vector <- function(vector_df_list){
 #' @param R_genes Receptor genes.
 #'
 #' @return return data.frame contain sum-up vector field containing coordinates, expression, vector field
+#' @export
 calc_LR_pair_vec <- function(
   gene_vec_list,
   L_genes,R_genes
@@ -164,6 +167,7 @@ calc_LR_pair_vec <- function(
 #' @return return data.frame contain sum-up vector field coordinates, expression, vector field
 #' @examples
 #' # ADD_EXAMPLES_HERE
+#' @export
 perform_single_LR_spWAVE <- function(
   seurat_obj,assay="SCT",
   L_genes,R_genes
@@ -199,6 +203,7 @@ perform_single_LR_spWAVE <- function(
 #' @param K_constant numeric, the constant of field transmission, default is 1/(4*pi).
 #'
 #' @return extended data.frame of vector_df, added field strength. 
+#' @export
 calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
     vector_df %<>%
       mutate(
@@ -244,6 +249,7 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #'    kept_db = complex_data$kept_db,
 #'    expr = complex_data$expr_LR_df,
 #'    coord = brain_coord)
+#' @export
 calc_database_single_field <- function(kept_db,expr,coord){ 
   single_mol_field <- list()
   #print("Step1. calc single molecule or complex field")
@@ -273,6 +279,7 @@ calc_database_single_field <- function(kept_db,expr,coord){
 #' #upstream step please see calc_database_single_field.
 #' brain_db_field <- 
 #'   calc_database_LR_field(complex_data$kept_db,brain_single_mol_field)
+#' @export
 calc_database_LR_field <- function(kept_db,single_mol_field){
   LR_pair_field_list <- list()
   pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
@@ -339,6 +346,7 @@ calc_database_LR_field <- function(kept_db,single_mol_field){
 #'    kept_db = complex_data$kept_db,
 #'    expr = complex_data$expr_LR_df,
 #'    coord = brain_coord)
+#' @export
 perform_LR_field_calc <- function(kept_db,expr,coord){
   print("Step1. calc single molecule or complex field")
   single_mol_field <- calc_database_single_field(kept_db,expr,coord)
@@ -367,6 +375,7 @@ perform_LR_field_calc <- function(kept_db,expr,coord){
 #' @param db_field_result list, result of perform_LR_field_calc
 #'
 #' @return list,contains distance matrix and coordinates difference matrix of x and y
+#' @export
 prep_S2S_dist_mat <- function(kept_db,db_field_result){
   field_df <- concentrate_LR_field_info(
     db_field_result,
@@ -397,6 +406,7 @@ prep_S2S_dist_mat <- function(kept_db,db_field_result){
 #' @param receptor Receptor gene.
 #'
 #' @return return data.frame contain spot2spot interaction matrix
+#' @export
 prep_S2S_LR_mat <- function(
   field_df,
   ligand,receptor
@@ -432,6 +442,7 @@ prep_S2S_LR_mat <- function(
 #' @param db_field_result list, result of perform_LR_field_calc
 #'
 #' @return return list, the result of prep_S2S_dist_mat and prep_S2S_LR_mat
+#' @export
 prep_database_S2S_list <- function(kept_db,db_field_result){
   #single_mol_field_list <- db_field_result$single_mol_field_list
   #LR_pair_field_list <- db_field_result$LR_pair_field_list
@@ -481,6 +492,7 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
 #' @param LR_pair selected LR pair to be calculated.
 #'
 #' @return list of spot2spot interaction force, including force components of x,y and norm
+#' @export
 calc_S2S_force_mat <- function(
   dist_list,
   LR_mat_list,
@@ -516,6 +528,7 @@ calc_S2S_force_mat <- function(
 #' @param prep_list list, the result of prep_database_S2S_list
 #'
 #' @return list of each LR pair of spot2spot interaction force.
+#' @export
 calc_database_S2S_force <- function(kept_db,prep_list){
   dist_list <- prep_list$dist
   LR_mat_list <- prep_list$q_list
@@ -551,6 +564,7 @@ calc_database_S2S_force <- function(kept_db,prep_list){
 #' @param receptor Receptor gene.
 #'
 #' @return return list of matrices including force component of x,y and force norm.
+#' @export
 calc_field_force_mat <- function(
   field_df,
   ligand,receptor
@@ -599,6 +613,7 @@ calc_field_force_mat <- function(
 #' 算了先用中文写，这一步是计算S2S force 在field force方向上的分量 乘以S2S 的模长得到的，
 #' 在具体代码是线上，是直接使用了向量点乘再除以field force的模长，但两者是等价的。
 #' @return return list of each LR pair of spot2spot interaction score.
+#' @export
 calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
 
   field_Fx <- field_force_list$force_x
@@ -639,6 +654,7 @@ calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
 #' @return list of spot2spot interaction score of each LR pair in database
 #' @examples
 #' # ADD_EXAMPLES_HERE
+#' @export
 calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
   dist_list <- prep_list$dist_list
   LR_mat_list <- prep_list$q_list
@@ -679,6 +695,7 @@ calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
 #' @param clu_info_list data.frame, cluster info, including cluster name and barcode
 #'
 #' @return cluster2cluster interaction score matrix
+#' @export
 calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
   n <- length(clu_info_list)
   C2C_score_mat <- matrix(nrow=n, ncol=n)
@@ -704,6 +721,7 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
 #' @param clu_shuf_list data.frame, shuffled cluster info, the same format as clu_info_list.
 #' Usually generated by generate_shuffle_cluster_info.
 #' @return list of unfiltered cluster2cluster interaction score summary, score and p-value matrices
+#' @export
 calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
   #clac the sum force from S2S to C2C
   C2C_score <- calc_C2C_mat(S2S_score_mat,clu_info_list)
@@ -760,6 +778,7 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
 #' @examples
 #' #'db_C2C_score_list <- 
 #'  calc_database_C2C_score_paral(complex_data$kept_db,db_score_list,brain)
+#' @export
 calc_database_C2C_score <- function(
   kept_db,db_S2S_score_list,
   seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42
@@ -817,6 +836,7 @@ calc_database_C2C_score <- function(
 #' 
 #' db_C2C_score_list <- 
 #'   calc_database_C2C_score_paral(complex_data$kept_db,db_score_list,brain)
+#' @export
 calc_database_C2C_score_paral <- function(
   kept_db,db_S2S_score_list,
   seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42
