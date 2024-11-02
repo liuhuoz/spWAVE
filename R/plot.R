@@ -50,6 +50,7 @@
 #'   line_sf = 0.3,arrow_sf = 0.05,arrow_color = "firebrick4",show_arrow = F) +
 #' scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
 #' 
+#' @export
 plot_field_direction <- function(
   arrow_df,
   seurat_obj,
@@ -225,7 +226,7 @@ plot_field_direction <- function(
 #' plot_field_direction(temp,lze22_nor,point = "Rel_LR_Exp",mode="grid",
 #'   arrow_color = "firebrick4",show_arrow = F) +
 #' scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
-#' 
+#' @export 
 plot_field_direction2 <- function(
   arrow_df,
   seurat_obj,
@@ -376,6 +377,7 @@ plot_field_direction2 <- function(
 #'   target_use = c("7","9","11"),
 #'   scale = TRUE
 #'   )
+#' @export 
 plot_db_score_dot <- function(
   db_C2C_score_list,
   kept_db,
@@ -435,6 +437,7 @@ plot_db_score_dot <- function(
 #' @param n number of colors, maximum is 37.
 #'
 #' @return return color palette
+#' @export 
 MD2_color_picker <- function(n){
   require(ggsci)
   color_order <- c("red", "pink", "purple", "deep-purple", "indigo", "blue", "light-blue",
@@ -477,6 +480,7 @@ MD2_color_picker <- function(n){
 #' @param chord_order cluster order.
 #' @param chord_group cluster names.
 #' @param main_title plot title.
+#' @export 
 chord_cluster_core_function <- function(
   pic_df,grid_col,chord_order,chord_group,main_title
 ){
@@ -537,6 +541,7 @@ chord_cluster_core_function <- function(
 #'    source_use=c("1","10","11","2","9"),
 #'    target_use = c("7","9","11","12")
 #'  )
+#' @export 
 plot_LR_cluster_chord <- function(
   db_C2C_score_list,
   kept_db,
@@ -619,6 +624,7 @@ plot_LR_cluster_chord <- function(
 #' @param chord_order cluster order.
 #' @param chord_group cluster names.
 #' @param main_title plot title.
+#' @export 
 chord_gene_core_function <- function(
   pic_df,grid_col,legend_col,chord_order,chord_group,main_title
 ){
@@ -685,6 +691,7 @@ chord_gene_core_function <- function(
 #'    source_use=c("1","10","11","2","9"),
 #'    target_use = c("7","9","11","12")
 #'  )
+#' @export 
 plot_LR_gene_chord <- function(
   db_C2C_score_list,
   kept_db,
@@ -805,6 +812,7 @@ plot_LR_gene_chord <- function(
 #'   normalize=FALSE,
 #'   ht_col="Reds"
 #' )
+#' @export 
 plot_LR_cluster_heatmap <- function(
   db_C2C_score_list,
   kept_db,
@@ -961,6 +969,7 @@ plot_LR_cluster_heatmap <- function(
 #' @import igraph
 #' @details adopted from cellchat netVisual_circle function. More detail please refer to CellChat netVisual_circle
 #' @return return net plot based on igraph 
+#' @export 
 plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
   weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex=1,vertex.label.color= "black",
   edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6, label.edge = FALSE,edge.label.color='black',edge.label.cex=0.8,
@@ -1068,6 +1077,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #'    method_use = "strength",
 #'    mat_scale = TRUE
 #'  )
+#' @export 
 plot_LR_cluster_net <- function(
   db_C2C_score_list,
   kept_db,

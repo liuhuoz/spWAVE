@@ -89,5 +89,4 @@ plot_field_direction2(nor_IGF,lze22_nor,point = "E_strength",mode="grid",
 plot_field_direction(temp,lze22_nor,point = "Rel_LR_Exp",mode="grid",
   arrow_color = "firebrick4",show_arrow = F) +
 scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
-
 }
