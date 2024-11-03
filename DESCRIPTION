@@ -16,6 +16,7 @@ Imports:
     circlize,
     ComplexHeatmap,
     dplyr,
+    FNN,
     future,
     future.apply,
     ggplot2,
