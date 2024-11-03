@@ -168,6 +168,7 @@ plot_field_direction <- function(
 #' The scale_factor is to control the arrow size in point mode, 
 #' and proper value is ranged in 50~200 depend on interaction strength. 
 #' @return field projection plot
+#' @import ggplot2
 #' @import ggquiver
 #' @export 
 plot_field_direction2 <- function(

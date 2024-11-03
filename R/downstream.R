@@ -75,7 +75,6 @@ run_LR_tradeSeq <- function(
   min_expr=1,min_n_cell=NULL,min_pct_cell=0.01,
   nknots=6,verbose=TRUE,parallel=TRUE,BPPARAM=NULL,paral_workers=8
 ){
-  require(tradeSeq)
   message("prep data")
   #** prep data
   if(is.null(field_df)){
@@ -135,7 +134,7 @@ run_tradeSeq_gene_test <- function(
   method_use=match.arg(method_use)
   tradeTest <- switch(method_use,
     association = tradeSeq::associationTest,
-    startvsend = tradeSeq::startvsend
+    startvsend = tradeSeq::startVsEndTest
   )
   testRes <- tradeTest(trade_res)
   testRes[is.na(testRes[,"waldStat"]),"waldStat"] <- 0.0

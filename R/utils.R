@@ -17,6 +17,7 @@
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
 #' @import Seurat
+#' @import magrittr
 #' @export
 get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){

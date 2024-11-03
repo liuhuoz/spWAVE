@@ -174,7 +174,7 @@ perform_single_LR_spWAVE <- function(
 ){
   #extract coordinates and expression
   calc_df <- 
-    Seurat::get_spatial_expr(seurat_obj,unlist(c(L_genes,R_genes)),assay = assay) %>%
+    get_spatial_expr(seurat_obj,unlist(c(L_genes,R_genes)),assay = assay) %>%
     dplyr::select(c("x","y","barcode"),unlist(c(L_genes,R_genes)))
   #generate gene expression list and divide into Ligand and Receptor.
   gene_df_list <- 
@@ -530,6 +530,7 @@ calc_database_S2S_force <- function(kept_db,prep_list){
 #' @param receptor Receptor gene.
 #'
 #' @return return list of matrices including force component of x,y and force norm.
+#' @import Matrix
 #' @export
 calc_field_force_mat <- function(
   field_df,
@@ -579,6 +580,7 @@ calc_field_force_mat <- function(
 #' 算了先用中文写，这一步是计算S2S force 在field force方向上的分量 乘以S2S 的模长得到的，
 #' 在具体代码是线上，是直接使用了向量点乘再除以field force的模长，但两者是等价的。
 #' @return return list of each LR pair of spot2spot interaction score.
+#' @import Matrix
 #' @export
 calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
 
