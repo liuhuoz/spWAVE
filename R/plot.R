@@ -409,6 +409,7 @@ MD2_color_picker <- function(n){
 #' @param chord_order cluster order.
 #' @param chord_group cluster names.
 #' @param main_title plot title.
+#' @importFrom graphics strwidth
 #' @export 
 chord_cluster_core_function <- function(
   pic_df,grid_col,chord_order,chord_group,main_title
@@ -423,7 +424,7 @@ chord_cluster_core_function <- function(
       group = chord_group,
       order=chord_order,
       annotationTrack = "grid", 
-      preAllocateTracks = list(track.height = max(strwidth(chord_order))),
+      preAllocateTracks = list(track.height = max(graphics::strwidth(chord_order))),
       link.arr.type = "big.arrow",
       scale = FALSE
       )
@@ -545,6 +546,7 @@ plot_LR_cluster_chord <- function(
 #' @param main_title plot title.
 #' @import ComplexHeatmap
 #' @import circlize
+#' @importFrom graphics title strwidth
 #' @export 
 chord_gene_core_function <- function(
   pic_df,grid_col,legend_col,chord_order,chord_group,main_title
@@ -559,7 +561,7 @@ chord_gene_core_function <- function(
       group = chord_group,
       order=chord_order,
       annotationTrack = "grid", 
-      preAllocateTracks = list(track.height = max(circlize::strwidth(chord_order))),
+      preAllocateTracks = list(track.height = max(graphics::strwidth(chord_order))),
       link.arr.type = "big.arrow",
       scale = FALSE
       )
@@ -581,7 +583,7 @@ chord_gene_core_function <- function(
   legend <- ComplexHeatmap::Legend(at = names(legend_col), type = "grid", legend_gp = grid::gpar(fill = legend_col), title = "Cluster")
   ComplexHeatmap::draw(legend, x = unit(1, "npc")-unit(20, "mm"), just = c("right"))
 
-  title(main_title)
+  graphics::title(main_title)
   
   circos.clear()
 }
@@ -972,6 +974,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #' However, if the lines in the plot are still too large or too small, we recommond to set both mat_scale and weight.scale = TRUE.
 #' @return network plot based on igraph package.
 #' @import igraph
+#' @importFrom stats sd
 #' @export 
 plot_LR_cluster_net <- function(
   db_C2C_score_list,
@@ -1008,7 +1011,7 @@ plot_LR_cluster_net <- function(
   #** scale matrix
   if(mat_scale){
     #ht_mat_mean <- mean(ht_mat)
-    ht_mat_std <- sd(ht_mat)
+    ht_mat_std <- stats::sd(ht_mat)
     nor_mat <- ht_mat/ht_mat_std
     ht_mat <- log2(nor_mat+1)
   }

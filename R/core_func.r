@@ -372,6 +372,8 @@ prep_S2S_dist_mat <- function(kept_db,db_field_result){
 #' @param receptor Receptor gene.
 #'
 #' @return return data.frame contain spot2spot interaction matrix
+#' @importFrom methods as
+#' @import Matrix
 #' @export
 prep_S2S_LR_mat <- function(
   field_df,
@@ -531,6 +533,7 @@ calc_database_S2S_force <- function(kept_db,prep_list){
 #'
 #' @return return list of matrices including force component of x,y and force norm.
 #' @import Matrix
+#' @importFrom methods as
 #' @export
 calc_field_force_mat <- function(
   field_df,
@@ -581,6 +584,7 @@ calc_field_force_mat <- function(
 #' 在具体代码是线上，是直接使用了向量点乘再除以field force的模长，但两者是等价的。
 #' @return return list of each LR pair of spot2spot interaction score.
 #' @import Matrix
+#' @importFrom methods as
 #' @export
 calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
 

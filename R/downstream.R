@@ -126,6 +126,7 @@ run_LR_tradeSeq <- function(
 #' @return return data.frame contain gene pvalue, p.adj, waldStat, without test
 #' @details Please see tradeSeq documentation of \code{associationTest} and \code{startvsend} for more details.
 #' @import tradeSeq 
+#' @importFrom stats p.adjust
 #' @export
 run_tradeSeq_gene_test <- function(
     trade_res,
@@ -140,7 +141,7 @@ run_tradeSeq_gene_test <- function(
   testRes[is.na(testRes[,"waldStat"]),"waldStat"] <- 0.0
   testRes[is.na(testRes[,"df"]),"df"] <- 0.0
   testRes[is.na(testRes[,"pvalue"]),"pvalue"] <- 1.0
-  testRes$p.adj <-p.adjust(testRes$pvalue,method = 'BH')
+  testRes$p.adj <-stats::p.adjust(testRes$pvalue,method = 'BH')
   testRes %<>% arrange(desc(waldStat))
   return(testRes)
 }
@@ -272,6 +273,8 @@ plot_tradeTest_heatmap <- function(
 #' @param merge_db merged db list.
 #'
 #' @return return aggregated C2C score dataframe
+#' @import dplyr
+#' @import tidyr
 #' @export
 aggregate_layers_C2C <- function(score_list,label_name,merge_db){
   res <- 
@@ -279,8 +282,8 @@ aggregate_layers_C2C <- function(score_list,label_name,merge_db){
       db_C2C_score_list=score_list,
       kept_db=merge_db
     ) %>%
-    drop_na() %>% 
-    mutate(label = label_name)
+    tidyr::drop_na() %>% 
+    dplyr::mutate(label = label_name)
   return(res)
 }
 

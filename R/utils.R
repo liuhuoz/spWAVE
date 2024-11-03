@@ -859,6 +859,7 @@ is.color <- function(x){
 #' @details This part adapted from COMMOT plot_cell_signaling function in R
 #' See \url{https://github.com/zcang/COMMOT}
 #' @importFrom FNN get.knnx
+#' @importFrom stats dnorm quantile
 #' @return data.frame, contain x,y,Ex,Ey.
 #' @export
 
@@ -892,7 +893,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
   nn_mdl <- FNN::get.knnx(X[,1:2], grid_pts,algorithm = "kd_tree",k = grid_knn)
   dis <- nn_mdl$nn.dist
   nbs <- nn_mdl$nn.index
-  w <- dnorm(x = dis, mean = 0, sd = gridsize * grid_scale)
+  w <- stats::dnorm(x = dis, mean = 0, sd = gridsize * grid_scale)
   w_sum <- rowSums(w)
 
   grid_thresh <- grid_thresh * quantile(w_sum, probs = 0.99) / 100
