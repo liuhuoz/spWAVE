@@ -179,7 +179,7 @@ perform_single_LR_spWAVE <- function(
   #generate gene expression list and divide into Ligand and Receptor.
   gene_df_list <- 
   lapply(calc_df[,-c(1:3)],
-    function(gene) cbind.data.frame(spatial_expr[,c("x","y","barcode")],gene)
+    function(gene) cbind.data.frame(calc_df[,c("x","y","barcode")],gene)
   )
   for(i in seq_len(length(gene_df_list))){
     colnames(gene_df_list[[i]])[4] <- names(gene_df_list)[i]

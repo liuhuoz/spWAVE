@@ -522,9 +522,7 @@ plot_LR_cluster_chord <- function(
   if(length(LR_pair)==1){
     title0 <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
-  if(!is.null(title)){
-      title <- title
-  }else{title <- title0}
+  if(is.null(title)){title <- title0}
 
     chord_cluster_core_function(
       pic_df,
@@ -546,6 +544,7 @@ plot_LR_cluster_chord <- function(
 #' @param chord_group cluster names.
 #' @param main_title plot title.
 #' @import ComplexHeatmap
+#' @import circlize
 #' @export 
 chord_gene_core_function <- function(
   pic_df,grid_col,legend_col,chord_order,chord_group,main_title
@@ -560,7 +559,7 @@ chord_gene_core_function <- function(
       group = chord_group,
       order=chord_order,
       annotationTrack = "grid", 
-      preAllocateTracks = list(track.height = max(strwidth(chord_order))),
+      preAllocateTracks = list(track.height = max(circlize::strwidth(chord_order))),
       link.arr.type = "big.arrow",
       scale = FALSE
       )
@@ -682,9 +681,7 @@ plot_LR_gene_chord <- function(
   if(length(LR_pair)==1){
     title0 <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
-  if(!is.null(title)){
-      title <- title
-  }else{title <- title0}
+  if(is.null(title)){title <- title0}
 
   chord_gene_core_function(
       pic_df,
