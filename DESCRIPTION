@@ -10,21 +10,26 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Suggests: 
-    renv,
-    tradeSeq,
-    viridis,
-    future,
-    future.apply,
-    BiocParallel
+    renv
 Imports: 
+    BiocParallel,
     circlize,
     ComplexHeatmap,
+    dplyr,
+    future,
+    future.apply,
+    ggplot2,
+    ggquiver,
     ggsci,
     igraph,
     Matrix,
     matrixStats,
     pbapply,
-    RColorBrewer
+    purrr,
+    RColorBrewer,
+    scales,
+    tradeSeq,
+    viridis
 Depends: 
     R (>= 4.0),
     tidyverse,
