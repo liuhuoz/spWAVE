@@ -843,3 +843,70 @@ is.color <- function(x){
               error = function(e) FALSE)
       })
 }
+
+
+
+#' generate vector field in grid
+#'
+#' calculation vector field in grid from vector field in spatial coordinate 
+#'
+#' @param spatial_vector data.frame,spatial vector field in point coordinate,
+#' Must contain x,y,Ex,Ey.
+#' @param grid_density grid density, default is 1. Smaller value means sparser grid.
+#' @param grid_knn knn number, default is NULL. If NULL, it will be set to 1/50 of the number of points.
+#' @param grid_scale grid scale factor, default is 1. Relate to filtering grid point. 
+#' @param grid_thresh grid threshold, default is 1. Relate to filtering grid point.
+#' @details This part adapted from COMMOT plot_cell_signaling function in R
+#' See \url{https://github.com/zcang/COMMOT}
+#' @importFrom FNN get.knnx
+#' @return data.frame, contain x,y,Ex,Ey.
+#' @export
+
+generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,grid_scale = 1.0,grid_thresh = 1.0){
+  #This part adapted from COMMOT plot cell_signaling function in R
+  #generate squre grid
+  X <- spatial_vector[,c("x","y")]
+  V <- spatial_vector[,c("Ex","Ey")]
+
+  xl <- min(X[, "x"])
+  xr <- max(X[, "x"])
+  epsilon <- 0.02 * (xr - xl)
+  xl <- xl - epsilon
+  xr <- xr + epsilon
+  yl <- min(X[, "y"])
+  yr <- max(X[, "y"])
+  epsilon <- 0.02 * (yr - yl)
+  yl <- yl - epsilon
+  yr <- yr + epsilon
+  ngrid_x <- as.integer(50 * grid_density)
+  gridsize <- (xr - xl) / ngrid_x
+  ngrid_y <- as.integer((yr - yl) / gridsize)
+  meshgrid <- expand.grid(x = seq(xl, xr, length.out = ngrid_x), y = seq(yl, yr, length.out = ngrid_y))
+  grid_pts <- cbind(meshgrid$x, meshgrid$y)
+  colnames(grid_pts) <- c("x","y")
+
+  #knn filter out outliers
+  if (is.null(grid_knn)) {
+      grid_knn <- as.integer(nrow(X) / 50)
+  }
+  nn_mdl <- FNN::get.knnx(X[,1:2], grid_pts,algorithm = "kd_tree",k = grid_knn)
+  dis <- nn_mdl$nn.dist
+  nbs <- nn_mdl$nn.index
+  w <- dnorm(x = dis, mean = 0, sd = gridsize * grid_scale)
+  w_sum <- rowSums(w)
+
+  grid_thresh <- grid_thresh * quantile(w_sum, probs = 0.99) / 100
+  grid_pts <- grid_pts[w_sum > grid_thresh, ]
+
+  V_grid <- data.frame()
+  for(i in 1:nrow(nbs)){
+    temp <- (V[nbs[i,],]*w[i,]) %>% colSums
+    V_grid <- rbind.data.frame(V_grid,temp)
+  }
+  colnames(V_grid) <- c("Ex","Ey")
+  V_grid <- V_grid / pmax(1, w_sum)
+  V_grid <- V_grid[w_sum > grid_thresh,]
+
+  merge_df <- cbind(grid_pts,V_grid)
+  return(merge_df)
+}
