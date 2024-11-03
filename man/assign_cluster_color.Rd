@@ -22,9 +22,3 @@ To keep the color consistent crossing the clusters, this function only using Sou
 This function return 2 side result of cluster labelled by Source and Target.
 For more universal color assignment, please use \code{\link{assign_clu_col_lite}}.
 }
-\examples{
-C2C_score_df <- 
-   aggregate_C2C_score(db_C2C_score_list,kept_db)
-grid_col <- assign_cluster_color(C2C_score_df)
-
-}

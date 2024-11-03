@@ -68,38 +68,3 @@ The parallel program depends on the BiocParallel.
 The default program is different from platform, please check document of BiocParallel.
 Or you can manually set the program before the function runs.
 }
-\examples{
-# using upstream field info and default parallel program.
-fgf_trade_res <- 
- run_LR_tradeSeq(mouse_brain,
-   database_result=brain_db_res,LR="Fgf1.Fgfr1",kept_db=complex_data$kept_db,
-   traj_arg="KU",
-   parallel=TRUE,paral_workers=2
- )
-
-# using given field info
-# generate field_df and add quantity
-escc_IGF <- 
-  extract_LR_field_result(
-    escc_db_res,
-    "IGF1.IGF1R",
-    escc_complex$kept_db)
- escc_IGF <- calc_field_strength(escc_IGF)
- escc_IGF \%<>\% mutate(EForce=E_strength*Rel_LR_Exp)
-
-escc_IGF_trade_res <- 
- run_LR_tradeSeq(
-   seurat_obj = lze22_escc,field_df = escc_IGF,traj_arg = "EForce",
-   parallel=FALSE
- )
-
-# Set custom parallel program.
-
-fgf_trade_res <- 
- run_LR_tradeSeq(mouse_brain,
-   database_result=brain_db_res,LR="Fgf1.Fgfr1",kept_db=complex_data$kept_db,
-   traj_arg="KU",
-   parallel=TRUE,BPPARAM=SnowParam(),paral_workers=16
- )
-
-}

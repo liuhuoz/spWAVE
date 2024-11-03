@@ -28,13 +28,9 @@ calc_database_C2C_score(
 the answer to the ultimate question of life, the universe, and everything.}
 }
 \value{
-RETURN_DESCRIPTION
+list of each LR pair C2C score summary, score and p value.
 }
 \description{
 calculation of cluster2cluster interaction score of LR pairs in database
 and shuffle test for p-value
-}
-\examples{
-#'db_C2C_score_list <- 
- calc_database_C2C_score_paral(complex_data$kept_db,db_score_list,brain)
 }

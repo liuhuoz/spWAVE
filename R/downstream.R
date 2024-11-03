@@ -15,6 +15,7 @@
 #'
 #' @return return a list including filtered expression matrix in counts, 
 #' a data.frame contain barcode and weight which used in tradeSeq.
+#' @import Seurat
 #' @export
 prep_tradeSeq_data <- function(seurat_obj,field_df,traj_arg,min_expr=1,
   min_n_cell=NULL,
@@ -64,40 +65,8 @@ prep_tradeSeq_data <- function(seurat_obj,field_df,traj_arg,min_expr=1,
 #' Or you can manually set the program before the function runs.
 #' 
 #' @return return tradeSeq result
-#' @examples
-#' # using upstream field info and default parallel program.
-#' fgf_trade_res <- 
-#'  run_LR_tradeSeq(mouse_brain,
-#'    database_result=brain_db_res,LR="Fgf1.Fgfr1",kept_db=complex_data$kept_db,
-#'    traj_arg="KU",
-#'    parallel=TRUE,paral_workers=2
-#'  )
-#' 
-#' # using given field info
-#' # generate field_df and add quantity
-#' escc_IGF <- 
-#'   extract_LR_field_result(
-#'     escc_db_res,
-#'     "IGF1.IGF1R",
-#'     escc_complex$kept_db)
-#'  escc_IGF <- calc_field_strength(escc_IGF)
-#'  escc_IGF %<>% mutate(EForce=E_strength*Rel_LR_Exp)
-#' 
-#' escc_IGF_trade_res <- 
-#'  run_LR_tradeSeq(
-#'    seurat_obj = lze22_escc,field_df = escc_IGF,traj_arg = "EForce",
-#'    parallel=FALSE
-#'  )
-#' 
-#' # Set custom parallel program.
-#' 
-#' fgf_trade_res <- 
-#'  run_LR_tradeSeq(mouse_brain,
-#'    database_result=brain_db_res,LR="Fgf1.Fgfr1",kept_db=complex_data$kept_db,
-#'    traj_arg="KU",
-#'    parallel=TRUE,BPPARAM=SnowParam(),paral_workers=16
-#'  )
-#' 
+#' @import tradeSeq
+#' @import BiocParallel
 #' @export
 run_LR_tradeSeq <- function(
   seurat_obj,
@@ -125,7 +94,6 @@ run_LR_tradeSeq <- function(
       min_pct_cell=min_pct_cell)
 
   if(parallel){
-    require(BiocParallel)
     if(is.null(BPPARAM)){
       BPPARAM <- BiocParallel::bpparam()
     }else(BPPARAM = BPPARAM)
@@ -158,6 +126,7 @@ run_LR_tradeSeq <- function(
 #'
 #' @return return data.frame contain gene pvalue, p.adj, waldStat, without test
 #' @details Please see tradeSeq documentation of \code{associationTest} and \code{startvsend} for more details.
+#' @import tradeSeq 
 #' @export
 run_tradeSeq_gene_test <- function(
     trade_res,
@@ -198,8 +167,8 @@ run_tradeSeq_gene_test <- function(
 #' @param n_split_row cut row into n_split_row tree. Default is 4.
 #'
 #' @return return plot
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @import viridis
+#' @import ComplexHeatmap
 #' @export
 plot_tradeTest_heatmap <- function(
   trade_res,
@@ -331,26 +300,7 @@ aggregate_layers_C2C <- function(score_list,label_name,merge_db){
 #' @param scale logical, whether to scale the score, default is TRUE.
 #'
 #' @return return a dot plot
-#' @examples
-#' # Construct merge_db_C2C_list and merge_kept_db_list,
-#' # the names in merge_db_C2C_list will be the names of layers and follow the order.
-#' db_C2C_list <- 
-#'  list(NOR=nor_db_C2C_score_list,
-#'      HGIN=hgin_db_C2C_score_list,
-#'      ESCC=escc_db_C2C_score_list)
-#'
-#' kept_db_list <- 
-#'  list(NOR=nor_complex$kept_db,
-#'      HGIN=hgin_complex$kept_db,
-#'      ESCC=escc_complex$kept_db)
-#' 
-#' plot_layers_score_dot(
-#'   db_C2C_list,
-#'   kept_db_list,
-#'   p_val=0.05,
-#'   LR_pair="IGF1.IGF1R",
-#'   scale=FALSE
-#' )
+#' @import purrr
 #' @export
 plot_layers_score_dot <- function(
   merge_db_C2C_list,

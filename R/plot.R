@@ -20,36 +20,6 @@
 #' @param ... Other args passing to \code{\link{SpatialPlot}} in Seurat.
 #' @details we do recommend to use "grid" instead of "point".
 #' @return field projection plot
-#' @examples
-#' # plot field projection only using arrow_df without seurat object.
-#' # And point fill with expression of Sox2
-#' plot_field_direction(arrow_df=brain_smad3_str, point = "Sox2", mode='grid')
-#' 
-#' # plot field projection over HE image
-#' # HE and cluster will be extract from seurat object
-#' plot_field_direction(mouse_fgfr_str,seurat_obj = brain, image="HE",mode='grid')
-#' 
-#' # plot field projection over HE image with passing args to SpatialPlot of Seurat
-#' plot_field_direction(hgin_IGF,lze22_hgin,
-#'   pt.size.factor=100,alpha=0.7, #pt.size.factor and alpha are passed to SpatialPlot
-#'   image="cluster",mode="grid",
-#'   show_arrow = T,arrow_color = "cyan2")
-#'  
-#' # plot field projection over cluster image with custom arrow color
-#' # cluster info was extracted from seurat_obj@active.ident
-#' plot_field_direction(mouse_fgfr_str,seurat_obj = brain,
-#'   image="cluster",mode='grid',arrow_color="cyan2")
-#' 
-#' # plot field with custom point fill color indicating quantity in spot
-#' plot_field_direction(nor_IGF,lze22_nor,point = "E_strength",mode="grid",
-#'   line_sf = 0.3,arrow_sf = 0.05,
-#'   point_color="salmon3",arrow_color = "black")
-#' 
-#' # plot field with custom triple colors indicating quantity in spot
-#' plot_field_direction(temp,lze22_nor,point = "Rel_LR_Exp",mode="grid",
-#'   line_sf = 0.3,arrow_sf = 0.05,arrow_color = "firebrick4",show_arrow = F) +
-#' scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
-#' 
 #' @export
 plot_field_direction <- function(
   arrow_df,
@@ -198,34 +168,7 @@ plot_field_direction <- function(
 #' The scale_factor is to control the arrow size in point mode, 
 #' and proper value is ranged in 50~200 depend on interaction strength. 
 #' @return field projection plot
-#' @examples
-#' # plot field projection only using arrow_df without seurat object.
-#' # And point fill with expression of Sox2
-#' plot_field_direction2(arrow_df=brain_smad3_str, point = "Sox2", mode='grid')
-#' 
-#' # plot field projection over HE image
-#' # HE and cluster will be extract from seurat object
-#' plot_field_direction2(mouse_fgfr_str,seurat_obj = brain, image="HE",mode='grid')
-#' 
-#' # plot field projection over HE image with passing args to SpatialPlot of Seurat
-#' plot_field_direction2(hgin_IGF,lze22_hgin,
-#'   pt.size.factor=100,alpha=0.7, #pt.size.factor and alpha are passed to SpatialPlot
-#'   image="cluster",mode="grid",
-#'   show_arrow = T,arrow_color = "cyan2")
-#'  
-#' # plot field projection over cluster image with custom arrow color
-#' # cluster info was extracted from seurat_obj@active.ident
-#' plot_field_direction2(mouse_fgfr_str,seurat_obj = brain,
-#'   image="cluster",mode='grid',arrow_color="cyan2")
-#' 
-#' # plot field with custom point fill color indicating quantity in spot
-#' plot_field_direction2(nor_IGF,lze22_nor,point = "E_strength",mode="grid",
-#'   point_color="salmon3",arrow_color = "black")
-#' 
-#' # plot field with custom triple colors indicating quantity in spot
-#' plot_field_direction(temp,lze22_nor,point = "Rel_LR_Exp",mode="grid",
-#'   arrow_color = "firebrick4",show_arrow = F) +
-#' scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
+#' @import ggquiver
 #' @export 
 plot_field_direction2 <- function(
   arrow_df,
@@ -244,7 +187,6 @@ plot_field_direction2 <- function(
   ...
   #alpha=c(0.5,1),
   ){
-  require(ggquiver)
   #check arg
   mode <- match.arg(mode)
   image <- match.arg(image)
@@ -363,20 +305,6 @@ plot_field_direction2 <- function(
 #' @param scale logical, whether to scale the score, default is TRUE.
 #'
 #' @return return a ggplot2 object plot
-#' @examples
-#' LR_selected <- 
-#'   c("Fgf9.Fgfr1","Fgf9.Fgfr2","Fgf9.Fgfr3",
-#'     "Fgf7.Fgfr1","Fgf7.Fgfr2",
-#'     "Fgf5.Fgfr2","Fgf5.Fgfr3"
-#'   )
-#' plot_db_score_dot(
-#'   db_C2C_score_list,complex_data$kept_db,
-#'   #LR_family = c("FGF"),
-#'   LR_pair = LR_selected,
-#'   source_use = c("7","11"),
-#'   target_use = c("7","9","11"),
-#'   scale = TRUE
-#'   )
 #' @export 
 plot_db_score_dot <- function(
   db_C2C_score_list,
@@ -437,9 +365,9 @@ plot_db_score_dot <- function(
 #' @param n number of colors, maximum is 37.
 #'
 #' @return return color palette
+#' @import ggsci
 #' @export 
 MD2_color_picker <- function(n){
-  require(ggsci)
   color_order <- c("red", "pink", "purple", "deep-purple", "indigo", "blue", "light-blue",
     "cyan", "teal", "green", "light-green", "lime", "yellow", "amber", "orange",
     "deep-orange", "brown","blue-grey")
@@ -533,14 +461,7 @@ chord_cluster_core_function <- function(
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE.
 #'
 #' @return plot using based on circlize package
-#' @examples
-#' plot_LR_cluster_chord(
-#'  db_C2C_score_list,complex_data$kept_db,
-#'    LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-#'    #LR_family=c("FGF","TGFb")
-#'    source_use=c("1","10","11","2","9"),
-#'    target_use = c("7","9","11","12")
-#'  )
+#' @import circlize
 #' @export 
 plot_LR_cluster_chord <- function(
   db_C2C_score_list,
@@ -554,7 +475,6 @@ plot_LR_cluster_chord <- function(
   title=NULL,
   scale=FALSE
 ){
-  require(circlize)
   #** assign color to all clusters
   C2C_score_df <- 
     aggregate_C2C_score(db_C2C_score_list,kept_db)
@@ -624,6 +544,7 @@ plot_LR_cluster_chord <- function(
 #' @param chord_order cluster order.
 #' @param chord_group cluster names.
 #' @param main_title plot title.
+#' @import ComplexHeatmap
 #' @export 
 chord_gene_core_function <- function(
   pic_df,grid_col,legend_col,chord_order,chord_group,main_title
@@ -683,14 +604,7 @@ chord_gene_core_function <- function(
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE.
 #'
 #' @return plot using based on circlize package
-#' @examples
-#' plot_LR_gene_chord(
-#'  db_C2C_score_list,complex_data$kept_db,
-#'    LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-#'    #LR_family=c("FGF","TGFb")
-#'    source_use=c("1","10","11","2","9"),
-#'    target_use = c("7","9","11","12")
-#'  )
+#' @import circlize
 #' @export 
 plot_LR_gene_chord <- function(
   db_C2C_score_list,
@@ -704,7 +618,6 @@ plot_LR_gene_chord <- function(
   title=NULL,
   scale=FALSE
 ){
-  require(circlize)
   C2C_score_df <- 
     aggregate_C2C_score(db_C2C_score_list,kept_db)
   #** 这里需要添加一个转换，把cluster名字里面的.转换成下划线_,不然会干扰到后面LR判断
@@ -799,19 +712,10 @@ plot_LR_gene_chord <- function(
 #' Default is "Reds" in the palettes.
 #'
 #' @return heatmap using based on ComplexHeatmap package.
-#' @examples
-#' plot_LR_cluster_heatmap(
-#'   db_C2C_score_list,
-#'   complex_data$kept_db,
-#'   #C2C_score_df,
-#'   LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-#'   source_use=c("1","10","11","2","9"),
-#'   target_use = c("7","9","11","12"),
-#'   title=NULL,
-#'   method_use="strength",
-#'   normalize=FALSE,
-#'   ht_col="Reds"
-#' )
+#' @import ComplexHeatmap
+#' @import grDevices
+#' @import RColorBrewer
+#' @import grid
 #' @export 
 plot_LR_cluster_heatmap <- function(
   db_C2C_score_list,
@@ -967,6 +871,7 @@ plot_LR_cluster_heatmap <- function(
 #' @param text.x,text.y the x- and y-coordinates to add the text
 #' 
 #' @import igraph
+#' @import scales
 #' @details adopted from cellchat netVisual_circle function. More detail please refer to CellChat netVisual_circle
 #' @return return net plot based on igraph 
 #' @export 
@@ -1068,15 +973,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #' Commonly, set mat_scale = TRUE and weight.scale = FALSE is enough to get proper visualization.
 #' However, if the lines in the plot are still too large or too small, we recommond to set both mat_scale and weight.scale = TRUE.
 #' @return network plot based on igraph package.
-#' @examples
-#' plot_LR_cluster_net(
-#'  db_C2C_score_list,complex_data$kept_db,
-#'    LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-#'    #LR_family=c("FGF","TGFb")
-#'    cluster_use=c("1","10","11","2","9","7"),
-#'    method_use = "strength",
-#'    mat_scale = TRUE
-#'  )
+#' @import igraph
 #' @export 
 plot_LR_cluster_net <- function(
   db_C2C_score_list,
@@ -1092,7 +989,6 @@ plot_LR_cluster_net <- function(
   weight.scale=FALSE,
   ...
 ){
-  require(igraph)
   C2C_score_df <- 
       aggregate_C2C_score(db_C2C_score_list,kept_db)
   if(is.null(cluster_color)){

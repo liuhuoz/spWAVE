@@ -59,13 +59,3 @@ The weight.scale is used to scale edge weight consdering the edge maximum length
 Commonly, set mat_scale = TRUE and weight.scale = FALSE is enough to get proper visualization.
 However, if the lines in the plot are still too large or too small, we recommond to set both mat_scale and weight.scale = TRUE.
 }
-\examples{
-plot_LR_cluster_net(
- db_C2C_score_list,complex_data$kept_db,
-   LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-   #LR_family=c("FGF","TGFb")
-   cluster_use=c("1","10","11","2","9","7"),
-   method_use = "strength",
-   mat_scale = TRUE
- )
-}

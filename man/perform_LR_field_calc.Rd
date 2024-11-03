@@ -21,19 +21,3 @@ LR pair field and LR family field in 3 separated list.
 perform calculation of LR pair or family in database in 1 step.
 An integrated function of calc_database_single_field and calc_database_LR_field
 }
-\examples{
-#prepare database and expression data
-mouse_db <-
-  load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
-expr_ft_mat <-
-  filter_LR_expr(db=mouse_db,brain,assay = "SCT")
-complex_data <- generate_complex_data(mouse_db,expr_ft_mat)
-#extract coordinates from seurat object
-brain_coord <- get_coordinates(brain)
-# perform calculation
-brain_db_res <- 
- perform_LR_field_calc(
-   kept_db = complex_data$kept_db,
-   expr = complex_data$expr_LR_df,
-   coord = brain_coord)
-}

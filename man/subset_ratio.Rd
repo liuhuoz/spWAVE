@@ -15,7 +15,3 @@ return aspect ratio
 \description{
 calculate the aspect ratio of a subset image from Seurat object
 }
-\examples{
-SpatialDimPlot(Srt_obj_subset, pt.size.factor = 250,label=T) + 
- theme(aspect.ratio = subset_ratio(Srt_obj_subset))
-}

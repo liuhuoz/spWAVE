@@ -21,6 +21,3 @@ return data.frame contain sum-up vector field coordinates, expression, vector fi
 \description{
 perform calculation of given single LR pair field estimation directly from seurat object
 }
-\examples{
-# ADD_EXAMPLES_HERE
-}

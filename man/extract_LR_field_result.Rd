@@ -20,16 +20,3 @@ expression of each ligand and receptor and field estimate result including direc
 \description{
 Extract certain LR field form complex list and aggregate into a dataframe
 }
-\examples{
-# extract NOTCH family field result
-hgin_notch <- extract_LR_field_result(
-   database_result = hgin_db_res, 
-   LR = "NOTCH", 
-   kept_db = hgin_complex$kept_db)
-
-# extract TGFB1.TGFBR1-TGFBR2 LR complex pair field result
-hgin_TGFB1 <- extract_LR_field_result(
-   database_result = hgin_db_res, 
-   LR = "TGFB1.TGFBR1_TGFBR2", 
-   kept_db = hgin_complex$kept_db)
-}

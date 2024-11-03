@@ -16,7 +16,7 @@
 #' For more infos, please see: \cr
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
-#' 
+#' @import Seurat
 #' @export
 get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
@@ -48,7 +48,7 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   colnames(select_gene) <- gene
   select_gene$barcode <- rownames(select_gene)
 
-  spatial_expr <- dplyr::full_join(coord_info,select_gene,by="barcode")
+  spatial_expr <- full_join(coord_info,select_gene,by="barcode")
   #colnames(spatial_expr) <- c("y","x","barcode",gene)
   return(spatial_expr)
 }
@@ -71,7 +71,7 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
 #' For more infos, please see: \cr
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
-#' 
+#' @import Seurat
 #' @export
 get_coordinates <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
@@ -160,7 +160,7 @@ pairwised_mat_subtract <- function(source,target){
 #'
 #' @return return a data.frame after filtered
 #' @examples
-#' # cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
+#' cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
 #' @export 
 load_database <- function(
   db_source=c("CellChat","CellPhoneDB"),
@@ -209,6 +209,7 @@ load_database <- function(
 #' @param min_n_cell minimum number of cell expressing a gene. default NULL. This arg will mask 'min_pct_cell'.
 #' @param min_pct_cell minimum percentage of cell expressing a gene. 
 #'
+#' @import Seurat
 #' @return filtered expression matrix
 #' @export 
 filter_LR_expr <- function(
@@ -276,6 +277,7 @@ filter_expr_by_cutoff <- function(
 #' the complex.
 #' 
 #' @return Ruturn a list including filtered database, LR expression list, and merged LR expression dataframe.
+#' @import matrixStats
 #' @export 
 generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   expr_df <- expr_mat %>% as.matrix() %>% t() %>% as.data.frame()
@@ -579,13 +581,7 @@ filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
 #' This function return 2 side result of cluster labelled by Source and Target.
 #' For more universal color assignment, please use \code{\link{assign_clu_col_lite}}.
 #' 
-#' @return return a named and ordered vector of colors of both Source and Target, seprately. The names are cluster id with prefix "S@" and "R@".
-#' 
-#' @examples
-#' C2C_score_df <- 
-#'    aggregate_C2C_score(db_C2C_score_list,kept_db)
-#' grid_col <- assign_cluster_color(C2C_score_df)
-#' 
+#' @return return a named and ordered vector of colors of both Source and Target, seprately. The names are cluster id with prefix "S@" and "R@". 
 #' @export
 assign_cluster_color <- function(C2C_score_df){
   pic_df <- 
@@ -629,10 +625,6 @@ assign_cluster_color <- function(C2C_score_df){
 #' 
 #' @return return a named vector of colors, the names are cluster id.
 #' 
-#' @examples
-#' C2C_score_df <- 
-#'     aggregate_C2C_score(db_C2C_score_list,kept_db)
-#' grid_col <- assign_clu_col_lite(C2C_score_df)
 #' @export 
 assign_clu_col_lite <- function(C2C_score_df){
   clu_name <- 
@@ -755,18 +747,6 @@ prep_plot_matrix <- function(
 #'
 #' @return return a dataframe contain cluster, coordinates, 
 #' expression of each ligand and receptor and field estimate result including direction and strength.
-#' @examples
-#' # extract NOTCH family field result
-#' hgin_notch <- extract_LR_field_result(
-#'    database_result = hgin_db_res, 
-#'    LR = "NOTCH", 
-#'    kept_db = hgin_complex$kept_db)
-#' 
-#' # extract TGFB1.TGFBR1-TGFBR2 LR complex pair field result
-#' hgin_TGFB1 <- extract_LR_field_result(
-#'    database_result = hgin_db_res, 
-#'    LR = "TGFB1.TGFBR1_TGFBR2", 
-#'    kept_db = hgin_complex$kept_db)
 #' @export 
 extract_LR_field_result <- function(database_result,LR,kept_db){
   db_res <- database_result
@@ -838,9 +818,6 @@ optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
 #' @param SeuObj subset Seurat object.
 #'
 #' @return return aspect ratio 
-#' @examples
-#' SpatialDimPlot(Srt_obj_subset, pt.size.factor = 250,label=T) + 
-#'  theme(aspect.ratio = subset_ratio(Srt_obj_subset))
 #' @export 
 subset_ratio <- function(SeuObj){
   coord <- GetTissueCoordinates(SeuObj)

@@ -53,6 +53,3 @@ return plot
 \description{
 Plot heatmap of gene expression in trajectory, from tradeSeq result
 }
-\examples{
-# ADD_EXAMPLES_HERE
-}

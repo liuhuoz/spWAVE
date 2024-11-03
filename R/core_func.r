@@ -163,10 +163,10 @@ calc_LR_pair_vec <- function(
 #' @param assay assay name in Seurat object. Default is "SCT".
 #' @param L_genes Ligand genes.
 #' @param R_genes Receptor genes.
-#'
+#' 
+#' @import Seurat
+#' @import dplyr 
 #' @return return data.frame contain sum-up vector field coordinates, expression, vector field
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 perform_single_LR_spWAVE <- function(
   seurat_obj,assay="SCT",
@@ -174,8 +174,8 @@ perform_single_LR_spWAVE <- function(
 ){
   #extract coordinates and expression
   calc_df <- 
-    get_spatial_expr(seurat_obj,unlist(c(L_genes,R_genes)),assay = assay) %>%
-    select(c("x","y","barcode"),unlist(c(L_genes,R_genes)))
+    Seurat::get_spatial_expr(seurat_obj,unlist(c(L_genes,R_genes)),assay = assay) %>%
+    dplyr::select(c("x","y","barcode"),unlist(c(L_genes,R_genes)))
   #generate gene expression list and divide into Ligand and Receptor.
   gene_df_list <- 
   lapply(calc_df[,-c(1:3)],
@@ -234,21 +234,6 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #' @param coord spatial coordinates. 
 #'
 #' @return list of single molecule field
-#' @examples
-#' #prepare database and expression data
-#' mouse_db <-
-#'   load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
-#' expr_ft_mat <-
-#'   filter_LR_expr(db=mouse_db,brain,assay = "SCT")
-#' complex_data <- generate_complex_data(mouse_db,expr_ft_mat)
-#' #extract coordinates from seurat object
-#' brain_coord <- get_coordinates(brain)
-#' # perform calculation
-#' brain_single_mol_field <- 
-#'  calc_database_single_field(
-#'    kept_db = complex_data$kept_db,
-#'    expr = complex_data$expr_LR_df,
-#'    coord = brain_coord)
 #' @export
 calc_database_single_field <- function(kept_db,expr,coord){ 
   single_mol_field <- list()
@@ -275,10 +260,6 @@ calc_database_single_field <- function(kept_db,expr,coord){
 #' usually the result of calc_database_single_field 
 #'
 #' @return return list of LR pair or family field estimation.
-#' @examples
-#' #upstream step please see calc_database_single_field.
-#' brain_db_field <- 
-#'   calc_database_LR_field(complex_data$kept_db,brain_single_mol_field)
 #' @export
 calc_database_LR_field <- function(kept_db,single_mol_field){
   LR_pair_field_list <- list()
@@ -331,21 +312,6 @@ calc_database_LR_field <- function(kept_db,single_mol_field){
 #'
 #' @return return list of single molecule field, 
 #' LR pair field and LR family field in 3 separated list.
-#' @examples
-#' #prepare database and expression data
-#' mouse_db <-
-#'   load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
-#' expr_ft_mat <-
-#'   filter_LR_expr(db=mouse_db,brain,assay = "SCT")
-#' complex_data <- generate_complex_data(mouse_db,expr_ft_mat)
-#' #extract coordinates from seurat object
-#' brain_coord <- get_coordinates(brain)
-#' # perform calculation
-#' brain_db_res <- 
-#'  perform_LR_field_calc(
-#'    kept_db = complex_data$kept_db,
-#'    expr = complex_data$expr_LR_df,
-#'    coord = brain_coord)
 #' @export
 perform_LR_field_calc <- function(kept_db,expr,coord){
   print("Step1. calc single molecule or complex field")
@@ -652,8 +618,6 @@ calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
 #' @param db_S2S_force_list list, the result of calc_database_S2S_force
 #'
 #' @return list of spot2spot interaction score of each LR pair in database
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
   dist_list <- prep_list$dist_list
@@ -774,10 +738,7 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
 #' @param random_seed random seed used in shuffle. Default is 42, 
 #' the answer to the ultimate question of life, the universe, and everything.
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' #'db_C2C_score_list <- 
-#'  calc_database_C2C_score_paral(complex_data$kept_db,db_score_list,brain)
+#' @return list of each LR pair C2C score summary, score and p value.
 #' @export
 calc_database_C2C_score <- function(
   kept_db,db_S2S_score_list,
@@ -825,24 +786,16 @@ calc_database_C2C_score <- function(
 #' the answer to the ultimate question of life, the universe, and everything.
 #'
 #' @return list of each LR pair C2C score summary, score and p value.
-#' @examples
-#' #** parallel setting
-#' library(future)
-#' library(future.apply)
-#' library(pbapply)
-#' 
-#' plan("multisession",workers=2)
-#' options(future.globals.maxSize = 2*1024^3)
-#' 
-#' db_C2C_score_list <- 
-#'   calc_database_C2C_score_paral(complex_data$kept_db,db_score_list,brain)
+#' @import future
+#' @import future.apply
+#' @import pbapply
 #' @export
 calc_database_C2C_score_paral <- function(
   kept_db,db_S2S_score_list,
   seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42
 ){
-  require(future)
-  require(future.apply)
+  #require(future)
+  #require(future.apply)
 
   cluster_info <- cluster_info_identifier(seurat_obj,cluster)
   #clu_info_list <- split(cluster_info$barcode,cluster_info$cluster)

@@ -50,17 +50,3 @@ heatmap using based on ComplexHeatmap package.
 \description{
 Heatmap of ligand-receptor interaction in clusters level
 }
-\examples{
-plot_LR_cluster_heatmap(
-  db_C2C_score_list,
-  complex_data$kept_db,
-  #C2C_score_df,
-  LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-  source_use=c("1","10","11","2","9"),
-  target_use = c("7","9","11","12"),
-  title=NULL,
-  method_use="strength",
-  normalize=FALSE,
-  ht_col="Reds"
-)
-}

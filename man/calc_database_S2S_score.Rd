@@ -20,6 +20,3 @@ list of spot2spot interaction score of each LR pair in database
 calculation of spot2spot interaction score of each LR pair in database,
 a wrapper of calc_S2S_score_mat
 }
-\examples{
-# ADD_EXAMPLES_HERE
-}

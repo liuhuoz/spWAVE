@@ -18,8 +18,3 @@ return list of LR pair or family field estimation.
 \description{
 calculate LR pair fields by sum-up single molecular field in list and database
 }
-\examples{
-#upstream step please see calc_database_single_field.
-brain_db_field <- 
-  calc_database_LR_field(complex_data$kept_db,brain_single_mol_field)
-}

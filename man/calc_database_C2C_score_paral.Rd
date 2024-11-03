@@ -35,15 +35,3 @@ The parallel version of calc_database_C2C_score. The parallel is based on 'futur
 calculation of cluster2cluster interaction score of LR pairs in database
 and shuffle test for p-value
 }
-\examples{
-#** parallel setting
-library(future)
-library(future.apply)
-library(pbapply)
-
-plan("multisession",workers=2)
-options(future.globals.maxSize = 2*1024^3)
-
-db_C2C_score_list <- 
-  calc_database_C2C_score_paral(complex_data$kept_db,db_score_list,brain)
-}

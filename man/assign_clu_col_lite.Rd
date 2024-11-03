@@ -21,8 +21,3 @@ Typically, the input dataframe is unfiltered and contains all cluster in "Source
 To keep the color consistent crossing the clusters, this function only using Source to assign the color.
 This function only return one side result of cluster which will not distinguish the Source or Target.
 }
-\examples{
-C2C_score_df <- 
-    aggregate_C2C_score(db_C2C_score_list,kept_db)
-grid_col <- assign_clu_col_lite(C2C_score_df)
-}

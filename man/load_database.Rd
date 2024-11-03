@@ -24,5 +24,5 @@ return a data.frame after filtered
 load database from built-in data, and filter specific type LR pairs.
 }
 \examples{
-# cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
+cpdb_human <- load_database(db_source="CellPhoneDB",db_species="human")
 }

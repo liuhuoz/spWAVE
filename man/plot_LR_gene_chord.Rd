@@ -42,12 +42,3 @@ plot using based on circlize package
 \description{
 Chordigram plot for genes in Ligand-receptor pairs
 }
-\examples{
-plot_LR_gene_chord(
- db_C2C_score_list,complex_data$kept_db,
-   LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
-   #LR_family=c("FGF","TGFb")
-   source_use=c("1","10","11","2","9"),
-   target_use = c("7","9","11","12")
- )
-}

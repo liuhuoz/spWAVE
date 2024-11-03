@@ -38,18 +38,3 @@ return a ggplot2 object plot
 \description{
 Dot Plot to display cluster levels interaction scores from database calc result
 }
-\examples{
-LR_selected <- 
-  c("Fgf9.Fgfr1","Fgf9.Fgfr2","Fgf9.Fgfr3",
-    "Fgf7.Fgfr1","Fgf7.Fgfr2",
-    "Fgf5.Fgfr2","Fgf5.Fgfr3"
-  )
-plot_db_score_dot(
-  db_C2C_score_list,complex_data$kept_db,
-  #LR_family = c("FGF"),
-  LR_pair = LR_selected,
-  source_use = c("7","11"),
-  target_use = c("7","9","11"),
-  scale = TRUE
-  )
-}

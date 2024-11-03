@@ -19,19 +19,3 @@ list of single molecule field
 \description{
 calculate single molecule fields of all genes in database
 }
-\examples{
-#prepare database and expression data
-mouse_db <-
-  load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
-expr_ft_mat <-
-  filter_LR_expr(db=mouse_db,brain,assay = "SCT")
-complex_data <- generate_complex_data(mouse_db,expr_ft_mat)
-#extract coordinates from seurat object
-brain_coord <- get_coordinates(brain)
-# perform calculation
-brain_single_mol_field <- 
- calc_database_single_field(
-   kept_db = complex_data$kept_db,
-   expr = complex_data$expr_LR_df,
-   coord = brain_coord)
-}

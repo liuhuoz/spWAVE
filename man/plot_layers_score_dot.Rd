@@ -38,24 +38,3 @@ return a dot plot
 \description{
 Plot multi C2C score as Dot Plot
 }
-\examples{
-# Construct merge_db_C2C_list and merge_kept_db_list,
-# the names in merge_db_C2C_list will be the names of layers and follow the order.
-db_C2C_list <- 
- list(NOR=nor_db_C2C_score_list,
-     HGIN=hgin_db_C2C_score_list,
-     ESCC=escc_db_C2C_score_list)
-
-kept_db_list <- 
- list(NOR=nor_complex$kept_db,
-     HGIN=hgin_complex$kept_db,
-     ESCC=escc_complex$kept_db)
-
-plot_layers_score_dot(
-  db_C2C_list,
-  kept_db_list,
-  p_val=0.05,
-  LR_pair="IGF1.IGF1R",
-  scale=FALSE
-)
-}

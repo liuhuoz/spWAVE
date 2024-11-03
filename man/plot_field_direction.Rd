@@ -59,34 +59,3 @@ expression or other quantity.
 \details{
 we do recommend to use "grid" instead of "point".
 }
-\examples{
-# plot field projection only using arrow_df without seurat object.
-# And point fill with expression of Sox2
-plot_field_direction(arrow_df=brain_smad3_str, point = "Sox2", mode='grid')
-
-# plot field projection over HE image
-# HE and cluster will be extract from seurat object
-plot_field_direction(mouse_fgfr_str,seurat_obj = brain, image="HE",mode='grid')
-
-# plot field projection over HE image with passing args to SpatialPlot of Seurat
-plot_field_direction(hgin_IGF,lze22_hgin,
-  pt.size.factor=100,alpha=0.7, #pt.size.factor and alpha are passed to SpatialPlot
-  image="cluster",mode="grid",
-  show_arrow = T,arrow_color = "cyan2")
- 
-# plot field projection over cluster image with custom arrow color
-# cluster info was extracted from seurat_obj@active.ident
-plot_field_direction(mouse_fgfr_str,seurat_obj = brain,
-  image="cluster",mode='grid',arrow_color="cyan2")
-
-# plot field with custom point fill color indicating quantity in spot
-plot_field_direction(nor_IGF,lze22_nor,point = "E_strength",mode="grid",
-  line_sf = 0.3,arrow_sf = 0.05,
-  point_color="salmon3",arrow_color = "black")
-
-# plot field with custom triple colors indicating quantity in spot
-plot_field_direction(temp,lze22_nor,point = "Rel_LR_Exp",mode="grid",
-  line_sf = 0.3,arrow_sf = 0.05,arrow_color = "firebrick4",show_arrow = F) +
-scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
-
-}
