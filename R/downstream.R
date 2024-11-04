@@ -69,7 +69,8 @@ prep_tradeSeq_data <- function(seurat_obj,field_df,traj_arg,min_expr=1,
 run_LR_tradeSeq <- function(
   seurat_obj,
   database_result=NULL,LR=NULL,kept_db=NULL,
-  field_df=NULL,traj_arg="U",
+  field_df=NULL,
+  traj_arg="U",
   min_expr=1,min_n_cell=NULL,min_pct_cell=0.01,
   nknots=6,verbose=TRUE,parallel=TRUE,BPPARAM=NULL,paral_workers=8
 ){
@@ -78,6 +79,14 @@ run_LR_tradeSeq <- function(
       "Package \"tradeSeq\" must be installed to use this function.",
       call. = FALSE
     )
+  }
+  data_check <- 
+    any(
+      all(!is.null(database_result),!is.null(LR),!is.null(kept_db)),
+      !is.null(field_df)
+  )
+  if(!data_check){
+    stop("Must give database_result, LR, and kept_db, or manually give field_df.")
   }
   message("prep data")
   #** prep data
