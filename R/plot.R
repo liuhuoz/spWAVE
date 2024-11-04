@@ -304,7 +304,8 @@ plot_field_direction2 <- function(
 #' @param source_use Ligand source clusters selected to display.
 #' @param target_use Receptor target clusters selected to display.
 #' @param scale logical, whether to scale the score, default is TRUE.
-#'
+#' @import dplyr
+#' @import stringr
 #' @return return a ggplot2 object plot
 #' @export 
 plot_db_score_dot <- function(
@@ -332,19 +333,19 @@ plot_db_score_dot <- function(
 
   draw_df <- 
     aggregate_df %>% 
-    filter(p_value<p_val) %>%
-      mutate(
-        LR_pair=str_replace(.data[["id"]],pattern = "\\.",replacement = "->"),
+    dplyr::filter(p_value<p_val) %>%
+      dplyr::mutate(
+        LR_pair=stringr::str_replace(.data[["id"]],pattern = "\\.",replacement = "->"),
         S2T=paste0(.data[["Source"]],"->",.data[["Target"]])
         )
   if(scale && nrow(draw_df)!=1){
     draw_df <- draw_df %>% 
-      mutate(scale_score = scale(.data[["raw_score"]]))
+      dplyr::mutate(scale_score = scale(.data[["raw_score"]]))
     score_title <- "scaled score"
   }else{
     if(nrow(draw_df)==1){message("Only one row in filtered data. Will not scale.")}
     draw_df <- draw_df %>% 
-      mutate(scale_score = .data[["raw_score"]])
+      dplyr::mutate(scale_score = .data[["raw_score"]])
     score_title <- "score"
   }
 
@@ -410,6 +411,7 @@ MD2_color_picker <- function(n){
 #' @param chord_group cluster names.
 #' @param main_title plot title.
 #' @importFrom graphics strwidth
+#' @import stringr
 #' @export 
 chord_cluster_core_function <- function(
   pic_df,grid_col,chord_order,chord_group,main_title
@@ -433,14 +435,14 @@ chord_cluster_core_function <- function(
       xlim = get.cell.meta.data("xlim")
       xplot = get.cell.meta.data("xplot")
       ylim = get.cell.meta.data("ylim")
-      sector.name = str_split(get.cell.meta.data("sector.index"),pattern = "@",simplify = TRUE)[,2]
+      sector.name = stringr::str_split(get.cell.meta.data("sector.index"),pattern = "@",simplify = TRUE)[,2]
       circos.text(mean(xlim), ylim[2], sector.name, facing = "clockwise", niceFacing = TRUE, adj = c(-0.1, 0.5),cex = 1)
     }, bg.border = NA) # here set bg.border to NA is important
   title(main_title)
 
-  highlight.sector(chord_order[str_detect(chord_order,pattern = "^S")], track.index = 1,col = NA,
+  highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^S")], track.index = 1,col = NA,
       text = "Sender",cex = 1.2, facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
-  highlight.sector(chord_order[str_detect(chord_order,pattern = "^R")], track.index = 1,col = NA,
+  highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^R")], track.index = 1,col = NA,
       text = "Receiver",cex = 1.2,facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
   circos.clear()
 }
@@ -464,6 +466,8 @@ chord_cluster_core_function <- function(
 #'
 #' @return plot using based on circlize package
 #' @import circlize
+#' @import stringr
+#' @import dplyr
 #' @export 
 plot_LR_cluster_chord <- function(
   db_C2C_score_list,
@@ -506,22 +510,22 @@ plot_LR_cluster_chord <- function(
           target_use=target_use,
           scale=scale
       ) %>%
-      filter(p_value<0.05) %>%
-      #filter(Source!=Target) %>%
-      mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) 
+      dplyr::filter(p_value<0.05) %>%
+      #dplyr::filter(Source!=Target) %>%
+      dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) 
 
   #print(pic_df)
 
   temp <- which(chord_order %in% c(pic_df$Source,pic_df$Target))
   chord_order <- chord_order[temp]
   grid_col <- grid_col[temp]
-  chord_group <- str_split(chord_order,pattern = "@",simplify = TRUE)[,1]
+  chord_group <- stringr::str_split(chord_order,pattern = "@",simplify = TRUE)[,1]
   names(chord_group) <- chord_order
 
   title0 <- NULL
   if(!is.null(LR_family)){title0 <- paste0(LR_family," family signaling")}
   if(length(LR_pair)==1){
-    title0 <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
+    title0 <- stringr::str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
   if(is.null(title)){title <- title0}
 
@@ -546,6 +550,7 @@ plot_LR_cluster_chord <- function(
 #' @param main_title plot title.
 #' @import ComplexHeatmap
 #' @import circlize
+#' @import stringr
 #' @importFrom graphics title strwidth
 #' @export 
 chord_gene_core_function <- function(
@@ -570,14 +575,14 @@ chord_gene_core_function <- function(
       xlim = get.cell.meta.data("xlim")
       xplot = get.cell.meta.data("xplot")
       ylim = get.cell.meta.data("ylim")
-      temp = str_split_fixed(get.cell.meta.data("sector.index"),pattern = "[@\\.]",n=3)
+      temp = stringr::str_split_fixed(get.cell.meta.data("sector.index"),pattern = "[@\\.]",n=3)
       sector.name = temp[,3]
       circos.text(mean(xlim), ylim[2], sector.name, facing = "clockwise", niceFacing = TRUE, adj = c(-0.1, 0.5),cex = 1)
     }, bg.border = NA) # here set bg.border to NA is important
 
-  highlight.sector(chord_order[str_detect(chord_order,pattern = "^S")], track.index = 1,col = NA,
+  highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^S")], track.index = 1,col = NA,
       text = "Sender",cex = 1.2, facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
-  highlight.sector(chord_order[str_detect(chord_order,pattern = "^R")], track.index = 1,col = NA,
+  highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^R")], track.index = 1,col = NA,
       text = "Receiver",cex = 1.2,facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
   
   legend <- ComplexHeatmap::Legend(at = names(legend_col), type = "grid", legend_gp = grid::gpar(fill = legend_col), title = "Cluster")
@@ -607,6 +612,8 @@ chord_gene_core_function <- function(
 #'
 #' @return plot using based on circlize package
 #' @import circlize
+#' @import dplyr
+#' @import stringr
 #' @export 
 plot_LR_gene_chord <- function(
   db_C2C_score_list,
@@ -634,15 +641,15 @@ plot_LR_gene_chord <- function(
           target_use=target_use,
           scale=scale
       ) %>%
-      filter(p_value<0.05) %>%
-      #filter(Source!=Target) %>%
-      mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) %>%
-      mutate(Source=str_replace_all(Source,pattern = "\\.",replacement = "_"),
-            Target=str_replace_all(Target,pattern = "\\.",replacement = "_")) %>%
-      #mutate(Source = paste0(Source,"_",id),Target = paste0(Target,"_",id))
-      mutate("lig"=str_split(id,pattern = "\\.",simplify = TRUE)[,1],
-            "rec"=str_split(id,pattern = "\\.",simplify = TRUE)[,2]) %>%
-      mutate(source_lig=paste0(Source,".",lig),
+      dplyr::filter(p_value<0.05) %>%
+      #dplyr::filter(Source!=Target) %>%
+      dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) %>%
+      dplyr::mutate(Source=stringr::str_replace_all(Source,pattern = "\\.",replacement = "_"),
+            Target=stringr::str_replace_all(Target,pattern = "\\.",replacement = "_")) %>%
+      #dplyr::mutate(Source = paste0(Source,"_",id),Target = paste0(Target,"_",id))
+      dplyr::mutate("lig"=stringr::str_split(id,pattern = "\\.",simplify = TRUE)[,1],
+            "rec"=stringr::str_split(id,pattern = "\\.",simplify = TRUE)[,2]) %>%
+      dplyr::mutate(source_lig=paste0(Source,".",lig),
             target_rec=paste0(Target,".",rec))
 
 
@@ -658,10 +665,10 @@ plot_LR_gene_chord <- function(
   colnames(color_df) <- "color"
   color_df$clu <- rownames(color_df)
   LR_clu <- c(pic_df$source_lig,pic_df$target_rec) %>% table() %>% names() %>%
-    str_split_fixed(pattern="[@\\.]",n=3) %>% as.data.frame()
+    stringr::str_split_fixed(pattern="[@\\.]",n=3) %>% as.data.frame()
   colnames(LR_clu) <- c("SR","clu","LR")
 
-  LR_clu %<>% left_join(color_df,by="clu")
+  LR_clu %<>% dplyr::left_join(color_df,by="clu")
   grid_col <- LR_clu$color
   chord_order <- 
     names(grid_col) <- c(pic_df$source_lig,pic_df$target_rec) %>% table() %>% names()
@@ -674,14 +681,14 @@ plot_LR_gene_chord <- function(
   temp <- which(chord_order %in% c(pic_df$source_lig,pic_df$target_rec))
   chord_order <- chord_order[temp]
   grid_col <- grid_col[temp]
-  chord_group <- str_split(chord_order,pattern = "@",simplify = TRUE)[,1]
+  chord_group <- stringr::str_split(chord_order,pattern = "@",simplify = TRUE)[,1]
   names(chord_group) <- chord_order
 
   #** set title
   title0 <- NULL
   if(!is.null(LR_family)){title0 <- paste0(LR_family," family signaling")}
   if(length(LR_pair)==1){
-    title0 <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
+    title0 <- stringr::str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
   if(is.null(title)){title <- title0}
 
@@ -716,6 +723,7 @@ plot_LR_gene_chord <- function(
 #' @import grDevices
 #' @import RColorBrewer
 #' @import grid
+#' @import stringr
 #' @export 
 plot_LR_cluster_heatmap <- function(
   db_C2C_score_list,
@@ -822,7 +830,7 @@ plot_LR_cluster_heatmap <- function(
   suffix_title <- NULL
   if(!is.null(LR_family)){suffix_title <- paste0(LR_family," Family Signaling")}
   if(length(LR_pair)==1){
-    suffix_title <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
+    suffix_title <- stringr::str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
 
   main_title <- 
@@ -975,6 +983,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #' @return network plot based on igraph package.
 #' @import igraph
 #' @importFrom stats sd
+#' @import stringr
 #' @export 
 plot_LR_cluster_net <- function(
   db_C2C_score_list,
@@ -1020,7 +1029,7 @@ plot_LR_cluster_net <- function(
   suffix_title <- NULL
   if(!is.null(LR_family)){suffix_title <- paste0(LR_family," Family Signaling")}
   if(length(LR_pair)==1){
-    suffix_title <- str_replace(LR_pair,pattern = "\\.",replacement = "->")
+    suffix_title <- stringr::str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
 
   main_title <- 
@@ -1030,7 +1039,7 @@ plot_LR_cluster_net <- function(
             ifelse(is.null(suffix_title),"Interactions",suffix_title)),
       title
     )
-  g <- graph_from_adjacency_matrix(ht_mat, mode = "directed", weighted = T)
+  g <- igraph::graph_from_adjacency_matrix(ht_mat, mode = "directed", weighted = T)
   plot_net_core_function(g,
     color.use=clu_col,
     main_title = main_title,

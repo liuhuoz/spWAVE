@@ -234,17 +234,18 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #' @param coord spatial coordinates. 
 #'
 #' @return list of single molecule field
+#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 calc_database_single_field <- function(kept_db,expr,coord){ 
   single_mol_field <- list()
   #print("Step1. calc single molecule or complex field")
-  pb <- txtProgressBar(min = 0, max = ncol(expr), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = ncol(expr), style = 3)
   for(i in seq_len(ncol(expr))){
     spatial_expr <- 
       concentrate_coord_expr(expr=expr,genes=colnames(expr)[i],coord_info=coord)
     single_mol_field[[i]] <- 
       single_field_vector(spatial_expr,gene_name=colnames(expr)[i])
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   names(single_mol_field) <- colnames(expr)
@@ -260,16 +261,17 @@ calc_database_single_field <- function(kept_db,expr,coord){
 #' usually the result of calc_database_single_field 
 #'
 #' @return return list of LR pair or family field estimation.
+#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 calc_database_LR_field <- function(kept_db,single_mol_field){
   LR_pair_field_list <- list()
-  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   for(i in seq_len(nrow(kept_db))){
     LR_pair_field_list[[i]] <- 
       calc_LR_pair_vec(single_mol_field,kept_db$Ligand[i],kept_db$Receptor[i])
     LR_pair_field_list[[i]]$LR_pair <- 
       paste(kept_db$Ligand[i],kept_db$Receptor[i],sep=".")
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   names(LR_pair_field_list) <- kept_db$id
@@ -284,12 +286,12 @@ calc_database_LR_field <- function(kept_db,single_mol_field){
   family_rec_list %<>% lapply(unique)
 
   LR_family_field_list <- list()
-  pb <- txtProgressBar(min = 0, max = length(family_lig_list), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = length(family_lig_list), style = 3)
   for(i in seq_len(length(family_lig_list))){
     LR_family_field_list[[i]] <- 
       calc_LR_pair_vec(single_mol_field,family_lig_list[[i]],family_rec_list[[i]])
     LR_family_field_list[[i]]$Family <- names(family_lig_list)[i]
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   names(LR_family_field_list) <- names(family_lig_list)
@@ -410,6 +412,7 @@ prep_S2S_LR_mat <- function(
 #' @param db_field_result list, result of perform_LR_field_calc
 #'
 #' @return return list, the result of prep_S2S_dist_mat and prep_S2S_LR_mat
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 prep_database_S2S_list <- function(kept_db,db_field_result){
   #single_mol_field_list <- db_field_result$single_mol_field_list
@@ -423,7 +426,7 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
   #** 其中LR_info需要的L与R基因名也可以给到S2S_score
   LR_S2S_mat_list <- list()
   field_df_list <- list()
-  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   iter=seq_len(nrow(kept_db))
   for(i in iter){
     
@@ -438,7 +441,7 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
         field_df_list[[i]],
         kept_db$Ligand[i],kept_db$Receptor[i]
         )
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
     
   }
   close(pb)
@@ -496,13 +499,14 @@ calc_S2S_force_mat <- function(
 #' @param prep_list list, the result of prep_database_S2S_list
 #'
 #' @return list of each LR pair of spot2spot interaction force.
+#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 calc_database_S2S_force <- function(kept_db,prep_list){
   dist_list <- prep_list$dist
   LR_mat_list <- prep_list$q_list
 
   db_S2S_force_list <- list()
-  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   iter=seq_len(nrow(kept_db))
   for(i in iter){
     
@@ -512,7 +516,7 @@ calc_database_S2S_force <- function(kept_db,prep_list){
         LR_mat_list,
         kept_db$id[i]
         )
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
     
   }
   close(pb)
@@ -624,6 +628,7 @@ calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
 #' @param db_S2S_force_list list, the result of calc_database_S2S_force
 #'
 #' @return list of spot2spot interaction score of each LR pair in database
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
   dist_list <- prep_list$dist_list
@@ -631,7 +636,7 @@ calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
   field_df_list <- prep_list$field_list
   
   db_S2S_score_list <- list()
-  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   iter=seq_len(nrow(kept_db))
   for(i in iter){
     db_field_force_df <- 
@@ -646,7 +651,7 @@ calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
         db_field_force_df,
         db_S2S_force_list[[i]]
         )
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
     
   }
   close(pb)
@@ -691,6 +696,9 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
 #' @param clu_shuf_list data.frame, shuffled cluster info, the same format as clu_info_list.
 #' Usually generated by generate_shuffle_cluster_info.
 #' @return list of unfiltered cluster2cluster interaction score summary, score and p-value matrices
+#' @import tibble
+#' @import dplyr
+#' @import tidyr
 #' @export
 calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
   #clac the sum force from S2S to C2C
@@ -715,17 +723,17 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
   score_long <- 
   C2C_score %>% 
     as.data.frame() %>%
-    rownames_to_column(var="Source") %>%
-    pivot_longer(!Source,names_to = "Target",values_to = "raw_score") %>%
-    mutate(scale_score=scale(.data[["raw_score"]])[,1])
+    tibble::rownames_to_column(var="Source") %>%
+    tidyr::pivot_longer(!Source,names_to = "Target",values_to = "raw_score") %>%
+    dplyr::mutate(scale_score=scale(.data[["raw_score"]])[,1])
 
   p_value_long <- 
   C2C_p_value %>% 
     as.data.frame() %>%
-    rownames_to_column(var="Source") %>%
-    pivot_longer(!Source,names_to = "Target",values_to = "p_value")
+    tibble::rownames_to_column(var="Source") %>%
+    tidyr::pivot_longer(!Source,names_to = "Target",values_to = "p_value")
 
-  long_df <- full_join(score_long,p_value_long,by=c("Source","Target"))
+  long_df <- dplyr::full_join(score_long,p_value_long,by=c("Source","Target"))
   return(list(summary=long_df,score_mat=C2C_score,p_val_mat=C2C_p_value))
 }
 
@@ -745,6 +753,7 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
 #' the answer to the ultimate question of life, the universe, and everything.
 #'
 #' @return list of each LR pair C2C score summary, score and p value.
+#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 calc_database_C2C_score <- function(
   kept_db,db_S2S_score_list,
@@ -757,7 +766,7 @@ calc_database_C2C_score <- function(
   set.seed(random_seed)
   clu_shuf_list <- generate_shuffle_list(cluster_info,shuffle_iter)
 
-  pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   C2C_score_list <- list()
   iter=seq_len(nrow(kept_db))
   for(i in iter){
@@ -767,7 +776,7 @@ calc_database_C2C_score <- function(
         clu_info_list,
         clu_shuf_list
       )
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   names(C2C_score_list) <- kept_db$id

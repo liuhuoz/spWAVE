@@ -169,6 +169,10 @@ run_tradeSeq_gene_test <- function(
 #' @return return plot
 #' @import viridis
 #' @import ComplexHeatmap
+#' @import tradeSeq
+#' @import stringr
+#' @import dplyr
+#' @import circlize
 #' @export
 plot_tradeTest_heatmap <- function(
   trade_res,
@@ -192,8 +196,8 @@ plot_tradeTest_heatmap <- function(
     p_val <- match.arg(p_val)
     select_genes <- 
       tradeTest_res %>% 
-        filter(.data[[p_val]] < p_cutoff) %>%
-        arrange(desc(colnames(.data)[od_col])) %>% 
+        dplyr::filter(.data[[p_val]] < p_cutoff) %>%
+        dplyr::arrange(dplyr::desc(colnames(.data)[od_col])) %>% 
         head(top_n_gene) %>% 
         rownames()
   }else{
@@ -212,7 +216,7 @@ plot_tradeTest_heatmap <- function(
   U_seq <- seq(min(field_df$U),max(field_df$U),length.out = 100) %>% as.data.frame()
   rownames(U_seq) <- colnames(yhatSmooth)
   if(is.null(pot_col)){
-    col_fun <- colorRamp2(c(min(field_df$U), 0, max(field_df$U)), c("dodgerblue3","lightgray","salmon3"))
+    col_fun <- circlize::colorRamp2(c(min(field_df$U), 0, max(field_df$U)), c("dodgerblue3","lightgray","salmon3"))
   }else(
     col_fun <- pot_col
   )
@@ -248,7 +252,7 @@ plot_tradeTest_heatmap <- function(
     )
   main_title <- 
     ifelse(is.null(title),
-      paste0(str_replace(field_df$LR_pair[1],pattern = "\\.",replacement = "->"),
+      paste0(stringr::str_replace(field_df$LR_pair[1],pattern = "\\.",replacement = "->"),
             " Field Potential DE genes"),
       title
     )
@@ -303,6 +307,8 @@ aggregate_layers_C2C <- function(score_list,label_name,merge_db){
 #'
 #' @return return a dot plot
 #' @import purrr
+#' @import stringr
+#' @import dplyr
 #' @export
 plot_layers_score_dot <- function(
   merge_db_C2C_list,
@@ -333,21 +339,20 @@ plot_layers_score_dot <- function(
       scale=scale
     )
 
-  draw_df <- 
-    temp %>% 
-    filter(p_value<0.05) %>%
-      mutate(
-        LR_pair=str_replace(.data[["id"]],pattern = "\\.",replacement = "->"),
+  draw_df <- temp %>% 
+    dplyr::filter(p_value<0.05) %>%
+    dplyr::mutate(
+        LR_pair=stringr::str_replace(.data[["id"]],pattern = "\\.",replacement = "->"),
         S2T=paste0(.data[["Source"]],"->",.data[["Target"]])
         )
   if(scale && nrow(draw_df)!=1){
     draw_df <- draw_df %>% 
-      mutate(scale_score = scale(.data[["raw_score"]]))
+      dplyr::mutate(scale_score = scale(.data[["raw_score"]]))
     score_title <- "scaled score"
   }else{
     if(nrow(draw_df)==1){message("Only one row in filtered data. Will not scale.")}
     draw_df <- draw_df %>% 
-      mutate(scale_score = .data[["raw_score"]])
+      dplyr::mutate(scale_score = .data[["raw_score"]])
     score_title <- "score"
   }
   plot <- 

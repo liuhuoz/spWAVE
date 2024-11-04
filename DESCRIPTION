@@ -1,5 +1,5 @@
 Package: spWAVE
-Title: spatial Whole Area Vector Estimates (spWAVE) (One Line, Title Case)
+Title: spatial Whole Area Vector Estimates (spWAVE)
 Version: 0.0.0.9000
 Authors@R: 
     person("Kai", "Li", , "likai711@mail.ustc.edu.cn", role = c("aut", "cre"),
@@ -15,7 +15,6 @@ Imports:
     BiocParallel,
     circlize,
     ComplexHeatmap,
-    dplyr,
     FNN,
     future,
     future.apply,
@@ -31,8 +30,9 @@ Imports:
     purrr,
     RColorBrewer,
     scales,
+    Seurat (>= 5.1.0),
     stats,
-    stringr,
+    tibble,
     tidyr,
     tradeSeq,
     utils,
@@ -40,5 +40,6 @@ Imports:
 Depends: 
     R (>= 4.0),
     magrittr,
-    Seurat (>= 5.1.0)
+    dplyr,
+    stringr
 LazyData: true

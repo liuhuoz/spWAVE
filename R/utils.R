@@ -211,6 +211,7 @@ load_database <- function(
 #' @param min_pct_cell minimum percentage of cell expressing a gene. 
 #'
 #' @import Seurat
+#' @import stringr
 #' @return filtered expression matrix
 #' @export 
 filter_LR_expr <- function(
@@ -221,9 +222,9 @@ filter_LR_expr <- function(
   min_n_cell=NULL,
   min_pct_cell=0.01
 ){
-  expr_mat <- GetAssayData(SrtObj,assay=assay)
+  expr_mat <- Seurat::GetAssayData(SrtObj,assay=assay)
   db_all_genes <- 
-    c(db$Ligand,str_split(db$Receptor,pattern = "_")) %>% 
+    c(db$Ligand,stringr::str_split(db$Receptor,pattern = "_")) %>% 
     unlist() %>% unique()
 
   #filterd by database
@@ -279,6 +280,7 @@ filter_expr_by_cutoff <- function(
 #' 
 #' @return Ruturn a list including filtered database, LR expression list, and merged LR expression dataframe.
 #' @import matrixStats
+#' @import stringr
 #' @export 
 generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   expr_df <- expr_mat %>% as.matrix() %>% t() %>% as.data.frame()
@@ -287,7 +289,7 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
   for(i in seq_len(nrow(db))){
     lig <- db$Ligand[i]
     rec_complex <- db$Receptor[i]
-    rec <- str_split_1(rec_complex,pattern = "_")
+    rec <- stringr::str_split_1(rec_complex,pattern = "_")
     if(all(c(lig,rec) %in% colnames(expr_df))){ #filter out not-exist in expr LR_pair
       LR_complex_df <- expr_df[,c(lig,rec)]
       temp <- matrixStats::rowProds(LR_complex_df[,c(rec)] %>% as.matrix())^(1/length(rec))
@@ -476,7 +478,7 @@ generate_shuffle_list <- function(cluster_info,shuffle_iter=500){
 #' 
 #' @details This function extract C2C_score summary dataframe from the list of C2C_score field estimate results.
 #' And do not filter anything and all value will be kept, including the no significant p value and minus value of C2C_score which often considered as reverse signal direcetion.
-#' 
+#' @import dplyr
 #' @return return a dataframe contain cluster id and C2C_score of each LR pair or family.
 #' @export 
 
@@ -485,8 +487,8 @@ aggregate_C2C_score <- function(db_C2C_score_list,kept_db){
   db_prep_list <- 
     lapply(db_prep_list,function(db){
       db %<>% 
-        #filter(p_value<0.05) %>%
-        arrange(desc(raw_score))
+        #dplyr::filter(p_value<0.05) %>%
+        dplyr::arrange(dplyr::desc(raw_score))
       return(db)
     })
 
@@ -514,6 +516,8 @@ aggregate_C2C_score <- function(db_C2C_score_list,kept_db){
 #' @param source_use filter cluster id as source (sender).
 #' @param target_use filter cluster id as target (receiver).
 #' @param scale scale the C2C score. Default is TRUE.
+#' 
+#' @import dplyr
 #'
 #' @return filtered C2C score dataframe.
 #' @export 
@@ -532,7 +536,7 @@ prep_C2C_plot_df <- function(
 
   filtered_df <- 
     C2C_score_df %>%
-      filter(
+      dplyr::filter(
         id %in% LR_pair,
         Family %in% LR_family,
         Source %in% source_use,
@@ -582,14 +586,15 @@ filter_cat_keyword <- function(df,filter_cat,filter_key=NULL){
 #' This function return 2 side result of cluster labelled by Source and Target.
 #' For more universal color assignment, please use \code{\link{assign_clu_col_lite}}.
 #' 
+#' @import dplyr
 #' @return return a named and ordered vector of colors of both Source and Target, seprately. The names are cluster id with prefix "S@" and "R@". 
 #' @export
 assign_cluster_color <- function(C2C_score_df){
   pic_df <- 
     C2C_score_df %>%
-      #filter(p_value<0.05) %>%
-      #filter(Source!=Target) %>%
-      mutate(Source = paste0("S@",Source),Target = paste0("R@",Target))
+      #dplyr::filter(p_value<0.05) %>%
+      #dplyr::filter(Source!=Target) %>%
+      dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target))
 
   clu_name <- 
     C2C_score_df$Source %>%
@@ -677,6 +682,9 @@ check_cluster_color <- function(color,C2C_score_df,source_use,target_use){
 #' Only support "count" and "strength". Default is "count".
 #' The 'count' reflect the number of interactions,
 #' and 'strength' reflect the sum of C2C score.
+#' 
+#' @import dplyr
+#' @import tidyr
 #'
 #' @return return a filtered matrix which column as Target and row as Source,
 #' and the value based on `method_use`.
@@ -698,14 +706,14 @@ prep_plot_matrix <- function(
         target_use=target_use,
         scale=FALSE
       ) %>%
-      filter(p_value<0.05)
+      dplyr::filter(p_value<0.05)
 
   method_use=match.arg(method_use)
   method_use <-ifelse(method_use=="count","length","sum")
 
   ht_mat <- 
   ht_df[,c(1:3)] %>%
-    pivot_wider(
+    tidyr::pivot_wider(
       id_cols = Source,
       names_from = Target,
       values_from = raw_score,
@@ -745,6 +753,8 @@ prep_plot_matrix <- function(
 #' @param database_result database result list from spWAVE.
 #' @param LR LR pair or family. LR pair must be format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".
 #' @param kept_db The database used in results list.
+#' 
+#' @import dplyr
 #'
 #' @return return a dataframe contain cluster, coordinates, 
 #' expression of each ligand and receptor and field estimate result including direction and strength.
@@ -762,13 +772,13 @@ extract_LR_field_result <- function(database_result,LR,kept_db){
   #** 分开获取LR的名字，方便后面进行加减
   L_info <- 
     kept_db %>% 
-      filter(Family==LR | id ==LR) %>%
-      pull(Ligand) %>%
+      dplyr::filter(Family==LR | id ==LR) %>%
+      dplyr::pull(Ligand) %>%
       unique()
   R_info <- 
     kept_db %>% 
-      filter(Family==LR | id ==LR) %>%
-      pull(Receptor) %>%
+      dplyr::filter(Family==LR | id ==LR) %>%
+      dplyr::pull(Receptor) %>%
       unique()
 
   LR_expr_list <-  db_res$single_mol_field_list[c(L_info,R_info)]
