@@ -65,8 +65,6 @@ prep_tradeSeq_data <- function(seurat_obj,field_df,traj_arg,min_expr=1,
 #' Or you can manually set the program before the function runs.
 #' 
 #' @return return tradeSeq result
-#' @import tradeSeq
-#' @import BiocParallel
 #' @export
 run_LR_tradeSeq <- function(
   seurat_obj,
@@ -75,6 +73,12 @@ run_LR_tradeSeq <- function(
   min_expr=1,min_n_cell=NULL,min_pct_cell=0.01,
   nknots=6,verbose=TRUE,parallel=TRUE,BPPARAM=NULL,paral_workers=8
 ){
+  if (!requireNamespace("tradeSeq", quietly = TRUE)) {
+    stop(
+      "Package \"tradeSeq\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
   message("prep data")
   #** prep data
   if(is.null(field_df)){
@@ -92,7 +96,7 @@ run_LR_tradeSeq <- function(
       min_n_cell=min_n_cell,
       min_pct_cell=min_pct_cell)
 
-  if(parallel){
+  if(parallel && requireNamespace("BiocParallel", quietly = TRUE)){
     if(is.null(BPPARAM)){
       BPPARAM <- BiocParallel::bpparam()
     }else(BPPARAM = BPPARAM)
@@ -103,7 +107,7 @@ run_LR_tradeSeq <- function(
   }
   message("running tradeSeq")
   sce <- 
-    fitGAM(counts = trade_data$expr_mat, 
+    tradeSeq::fitGAM(counts = trade_data$expr_mat, 
       pseudotime=trade_data$cell_PT[,traj_arg,F], 
       cellWeights=trade_data$cell_PT[,"cellWeight",F],
       nknots=nknots, 
@@ -125,13 +129,19 @@ run_LR_tradeSeq <- function(
 #'
 #' @return return data.frame contain gene pvalue, p.adj, waldStat, without test
 #' @details Please see tradeSeq documentation of \code{associationTest} and \code{startvsend} for more details.
-#' @import tradeSeq 
 #' @importFrom stats p.adjust
+#' @import dplyr 
 #' @export
 run_tradeSeq_gene_test <- function(
     trade_res,
     method_use=c("association","startvsend")
 ){
+  if (!requireNamespace("tradeSeq", quietly = TRUE)) {
+    stop(
+      "Package \"tradeSeq\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
   method_use=match.arg(method_use)
   tradeTest <- switch(method_use,
     association = tradeSeq::associationTest,
@@ -142,7 +152,7 @@ run_tradeSeq_gene_test <- function(
   testRes[is.na(testRes[,"df"]),"df"] <- 0.0
   testRes[is.na(testRes[,"pvalue"]),"pvalue"] <- 1.0
   testRes$p.adj <-stats::p.adjust(testRes$pvalue,method = 'BH')
-  testRes %<>% arrange(desc(waldStat))
+  testRes %<>% dplyr::arrange(dplyr::desc(waldStat))
   return(testRes)
 }
 
@@ -169,9 +179,9 @@ run_tradeSeq_gene_test <- function(
 #' @return return plot
 #' @import viridis
 #' @import ComplexHeatmap
-#' @import tradeSeq
 #' @import stringr
 #' @import dplyr
+#' @import grid
 #' @importFrom circlize colorRamp2
 #' @importFrom utils head
 #' @export
@@ -190,6 +200,13 @@ plot_tradeTest_heatmap <- function(
   show_rownames=FALSE,
   n_split_row=4
 ){
+  if (!requireNamespace("tradeSeq", quietly = TRUE)) {
+    stop(
+      "Package \"tradeSeq\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+
   if(is.null(select_genes)){
     order_by <- match.arg(order_by)
     od_col <- ifelse(order_by=="wald",1,4)
@@ -209,7 +226,7 @@ plot_tradeTest_heatmap <- function(
   }
   print(select_genes)
   yhatSmooth <- 
-    predictSmooth(trade_res, 
+    tradeSeq::predictSmooth(trade_res, 
       gene = select_genes, 
       nPoints = 100, 
       tidy = FALSE)
