@@ -16,8 +16,9 @@
 #' For more infos, please see: \cr
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
-#' @import Seurat
+#' @importFrom Seurat GetTissueCoordinates GetAssayData
 #' @import magrittr
+#' @import dplyr
 #' @export
 get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
@@ -45,11 +46,11 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   select_gene <-
     expr_mat %>% as.matrix() %>% t() %>%
     as.data.frame() %>%
-    select(all_of(gene))
+    dplyr::select(all_of(gene))
   colnames(select_gene) <- gene
   select_gene$barcode <- rownames(select_gene)
 
-  spatial_expr <- full_join(coord_info,select_gene,by="barcode")
+  spatial_expr <- dplyr::full_join(coord_info,select_gene,by="barcode")
   #colnames(spatial_expr) <- c("y","x","barcode",gene)
   return(spatial_expr)
 }
@@ -72,7 +73,7 @@ get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
 #' For more infos, please see: \cr
 #' Visium rotation: \url{https://github.com/satijalab/seurat/issues/2702} \cr
 #' Xenium rotation: \url{https://github.com/satijalab/seurat/issues/6110#issuecomment-1172650788}
-#' @import Seurat
+#' @importFrom Seurat GetTissueCoordinates
 #' @export
 get_coordinates <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
@@ -210,7 +211,7 @@ load_database <- function(
 #' @param min_n_cell minimum number of cell expressing a gene. default NULL. This arg will mask 'min_pct_cell'.
 #' @param min_pct_cell minimum percentage of cell expressing a gene. 
 #'
-#' @import Seurat
+#' @importFrom Seurat GetAssayData
 #' @import stringr
 #' @return filtered expression matrix
 #' @export 
@@ -279,7 +280,7 @@ filter_expr_by_cutoff <- function(
 #' the complex.
 #' 
 #' @return Ruturn a list including filtered database, LR expression list, and merged LR expression dataframe.
-#' @import matrixStats
+#' @importFrom matrixStats rowProds
 #' @import stringr
 #' @export 
 generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
@@ -684,7 +685,7 @@ check_cluster_color <- function(color,C2C_score_df,source_use,target_use){
 #' and 'strength' reflect the sum of C2C score.
 #' 
 #' @import dplyr
-#' @import tidyr
+#' @importFrom tidyr pivot_wider
 #'
 #' @return return a filtered matrix which column as Target and row as Source,
 #' and the value based on `method_use`.
@@ -827,11 +828,13 @@ optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
 #' calculate the aspect ratio of a subset image from Seurat object
 #'
 #' @param SeuObj subset Seurat object.
-#'
+#' 
+#' @importFrom Seurat GetTissueCoordinates GetAssayData
 #' @return return aspect ratio 
+#' 
 #' @export 
 subset_ratio <- function(SeuObj){
-  coord <- GetTissueCoordinates(SeuObj)
+  coord <- Seurat::GetTissueCoordinates(SeuObj)
   # calculate the aspect ratio of rows to columns
   ratio <- (max(coord$imagerow) - min(coord$imagerow)) / (max(coord$imagecol) - min(coord$imagecol))
   # force the image into the right aspect ratio

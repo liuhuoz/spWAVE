@@ -411,6 +411,7 @@ MD2_color_picker <- function(n){
 #' @param chord_group cluster names.
 #' @param main_title plot title.
 #' @importFrom graphics strwidth
+#' @importFrom circlize circos.clear circos.par chordDiagram circos.text circos.track get.cell.meta.data highlight.sector
 #' @import stringr
 #' @export 
 chord_cluster_core_function <- function(
@@ -465,7 +466,7 @@ chord_cluster_core_function <- function(
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE.
 #'
 #' @return plot using based on circlize package
-#' @import circlize
+#' 
 #' @import stringr
 #' @import dplyr
 #' @export 
@@ -549,7 +550,7 @@ plot_LR_cluster_chord <- function(
 #' @param chord_group cluster names.
 #' @param main_title plot title.
 #' @import ComplexHeatmap
-#' @import circlize
+#' @importFrom circlize circos.clear circos.par chordDiagram circos.text circos.track get.cell.meta.data highlight.sector
 #' @import stringr
 #' @importFrom graphics title strwidth
 #' @export 
@@ -611,7 +612,6 @@ chord_gene_core_function <- function(
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE.
 #'
 #' @return plot using based on circlize package
-#' @import circlize
 #' @import dplyr
 #' @import stringr
 #' @export 
@@ -878,8 +878,8 @@ plot_LR_cluster_heatmap <- function(
 #' @param arrow.size the size of arrow
 #' @param text.x,text.y the x- and y-coordinates to add the text
 #' 
-#' @import igraph
-#' @import scales
+#' @importFrom igraph ends E V layout_ in_circle
+#' @importFrom scales rescale
 #' @details adopted from cellchat netVisual_circle function. More detail please refer to CellChat netVisual_circle
 #' @return return net plot based on igraph 
 #' @export 
@@ -892,7 +892,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 ){
   g <- igraph_g
   edge.start <- igraph::ends(g, es=igraph::E(g), names=FALSE)
-  coords<-layout_(g,layout)
+  coords<-igraph::layout_(g,layout)
   if(nrow(coords)!=1){
     coords_scale=scale(coords)
   }else{
@@ -981,7 +981,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #' Commonly, set mat_scale = TRUE and weight.scale = FALSE is enough to get proper visualization.
 #' However, if the lines in the plot are still too large or too small, we recommond to set both mat_scale and weight.scale = TRUE.
 #' @return network plot based on igraph package.
-#' @import igraph
+#' @importFrom igraph graph_from_adjacency_matrix
 #' @importFrom stats sd
 #' @import stringr
 #' @export 

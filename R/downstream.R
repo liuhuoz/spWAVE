@@ -172,7 +172,8 @@ run_tradeSeq_gene_test <- function(
 #' @import tradeSeq
 #' @import stringr
 #' @import dplyr
-#' @import circlize
+#' @importFrom circlize colorRamp2
+#' @importFrom utils head
 #' @export
 plot_tradeTest_heatmap <- function(
   trade_res,
@@ -278,7 +279,7 @@ plot_tradeTest_heatmap <- function(
 #'
 #' @return return aggregated C2C score dataframe
 #' @import dplyr
-#' @import tidyr
+#' @importFrom tidyr drop_na
 #' @export
 aggregate_layers_C2C <- function(score_list,label_name,merge_db){
   res <- 
@@ -306,7 +307,7 @@ aggregate_layers_C2C <- function(score_list,label_name,merge_db){
 #' @param scale logical, whether to scale the score, default is TRUE.
 #'
 #' @return return a dot plot
-#' @import purrr
+#' @importFrom purrr map2
 #' @import stringr
 #' @import dplyr
 #' @export
