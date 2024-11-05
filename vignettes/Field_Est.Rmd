@@ -1,0 +1,37 @@
+---
+title: "Field_Est"
+output: rmarkdown::html_vignette
+mainfont: Arial
+vignette: >
+  %\VignetteIndexEntry{Field_Est}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+This vignette outlines the steps of  of cell-cell communication network for **a single dataset using CellChat**. We showcase CellChat’s diverse functionalities by applying it to a scRNA-seq data on cells from lesional (LS, diseased) human skin from patients.  
+
+CellChat requires gene expression data of cells as the user input and models the probability of cell-cell communication by integrating gene expression with prior knowledge of the interactions between signaling ligands, receptors and their cofactors. 
+
+Upon infering the intercellular communication network, CellChat provides functionality for further data exploration, analysis, and visualization. 
+
+
+## Load the required libraries
+```{r setup}
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+
+library(Seurat)
+library(spWAVE)
+```
+Personally, I prefer to directly use 'library(tidyverse)' to load the tidyverse packages.
+However, is not 

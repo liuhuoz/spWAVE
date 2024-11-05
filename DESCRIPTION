@@ -11,7 +11,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Suggests: 
     BiocParallel,
+    knitr,
     renv,
+    rmarkdown,
     tradeSeq
 Imports: 
     circlize,
@@ -43,3 +45,4 @@ Depends:
     dplyr,
     stringr
 LazyData: true
+VignetteBuilder: knitr
