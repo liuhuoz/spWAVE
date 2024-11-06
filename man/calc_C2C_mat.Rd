@@ -9,7 +9,9 @@ calc_C2C_mat(S2S_score_mat, clu_info_list)
 \arguments{
 \item{S2S_score_mat}{S2S score matrix}
 
-\item{clu_info_list}{data.frame, cluster info, including cluster name and barcode}
+\item{clu_info_list}{A named list, where each element is a vector.
+The names of the list elements represent the cluster names.
+Each vector corresponds to a cluster, and the elements within each vector are the indices of the matrix.}
 }
 \value{
 cluster2cluster interaction score matrix
