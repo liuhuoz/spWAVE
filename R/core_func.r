@@ -705,16 +705,21 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
   #clac the sum force from S2S to C2C
   C2C_score <- calc_C2C_mat(S2S_score_mat,clu_info_list)
 
-  n <- length(clu_info_list)
-  C2C_p_value <- matrix(0, nrow=n, ncol=n)
+  C2C_p_value <- list()
   shuffle_iter <- length(clu_shuf_list)
   
-  for(i in 1:shuffle_iter){
-    C2C_shuf <- calc_C2C_mat(S2S_score_mat,clu_shuf_list[[i]])
-    #C2C_p_value[C2C_shuf > C2C_score] <- C2C_p_value[C2C_shuf > C2C_score] + 1
-    C2C_p_value <- ifelse(C2C_shuf > C2C_score, C2C_p_value + 1, C2C_p_value)
-  }
-  C2C_p_value <- C2C_p_value/shuffle_iter  
+  # for(i in 1:shuffle_iter){
+  #   C2C_shuf <- calc_C2C_mat(S2S_score_mat,clu_shuf_list[[i]])
+  #   #C2C_p_value[C2C_shuf > C2C_score] <- C2C_p_value[C2C_shuf > C2C_score] + 1
+  #   C2C_p_value[[i]] <- (C2C_shuf > C2C_score)
+  # }
+  C2C_p_value <- 
+    lapply(clu_shuf_list, function(clu_shuf){
+      C2C_shuf <- calc_C2C_mat(S2S_score_mat,clu_shuf)
+      #C2C_p_value[C2C_shuf > C2C_score] <- C2C_p_value[C2C_shuf > C2C_score] + 1
+      return(C2C_shuf > C2C_score)
+    })
+  C2C_p_value <- Reduce("+", C2C_p_value) / shuffle_iter  
 
   rownames(C2C_score) <- names(clu_info_list)
   colnames(C2C_score) <- names(clu_info_list)
