@@ -459,21 +459,20 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
 #' based on the distance and LR interaction matrices.
 #'
 #' @param dist_list distance matrix list, the result of prep_S2S_dist_mat
-#' @param LR_mat_list spot2spot interaction matrix list, the result of prep_S2S_LR_mat
-#' @param LR_pair selected LR pair to be calculated.
+#' @param LR_mat spot2spot interaction matrix of selected LR pair, in the result of prep_S2S_LR_mat
 #'
 #' @return list of spot2spot interaction force, including force components of x,y and norm
 #' @export
 calc_S2S_force_mat <- function(
   dist_list,
-  LR_mat_list,
-  LR_pair
+  #LR_mat_list,
+  LR_mat
 ){
   #** col as receiver, row as sender
   dist <- dist_list$p_dist
   sub_x <- dist_list$p_sub_x
   sub_y <- dist_list$p_sub_y
-  LR_mat <- LR_mat_list[[LR_pair]]
+  #LR_mat <- LR_mat_list[[LR_pair]]
 
   force_x_mat <- -LR_mat*sub_x/(dist^3)
   force_y_mat <- -LR_mat*sub_y/(dist^3)
@@ -499,27 +498,20 @@ calc_S2S_force_mat <- function(
 #' @param prep_list list, the result of prep_database_S2S_list
 #'
 #' @return list of each LR pair of spot2spot interaction force.
-#' @importFrom utils setTxtProgressBar txtProgressBar
+#' @import pbapply
+#' @import future
+#' @import future.apply
 #' @export
 calc_database_S2S_force <- function(kept_db,prep_list){
   dist_list <- prep_list$dist
   LR_mat_list <- prep_list$q_list
 
   db_S2S_force_list <- list()
-  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
-  iter=seq_len(nrow(kept_db))
-  for(i in iter){
-    
-    db_S2S_force_list[[i]] <- 
-      calc_S2S_force_mat(
-        dist_list,
-        LR_mat_list,
-        kept_db$id[i]
-        )
-    utils::setTxtProgressBar(pb, i)
-    
-  }
-  close(pb)
+
+    db_S2S_force_list <- 
+      pblapply(LR_mat_list, cl='future',function(id_mat){
+        calc_S2S_force_mat(dist_list,id_mat)
+        })
   names(db_S2S_force_list) <- kept_db$id
 
   return(db_S2S_force_list)
@@ -544,14 +536,18 @@ calc_field_force_mat <- function(
   ligand,receptor
 ){
   #** col as receiver, row as sender
-  ori_field_force <- 
-  field_df %>%
-    #rowwise() %>%
-    mutate(
-      q_net=.data[[ligand]]-.data[[receptor]],
-      Fx=q_net*Ex,
-      Fy=q_net*Ey
-      ) %>% as.data.frame
+  # ori_field_force <- 
+  # field_df %>%
+  #   #rowwise() %>%
+  #   mutate(
+  #     q_net=.data[[ligand]]-.data[[receptor]],
+  #     Fx=q_net*Ex,
+  #     Fy=q_net*Ey
+  #     ) %>% as.data.frame
+    field_df$q_net <- field_df[,ligand] - field_df[,receptor]
+    field_df$Fx=field_df$q_net*field_df$Ex
+    field_df$Fy=field_df$q_net*field_df$Ey
+    ori_field_force <- field_df %>% as.data.frame()
     # mutate(
     #   Fx=.data[[receptor]]*Ex,
     #   Fy=.data[[receptor]]*Ey
