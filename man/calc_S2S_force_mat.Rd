@@ -4,14 +4,12 @@
 \alias{calc_S2S_force_mat}
 \title{calculation spot2spot interaction force}
 \usage{
-calc_S2S_force_mat(dist_list, LR_mat_list, LR_pair)
+calc_S2S_force_mat(dist_list, LR_mat)
 }
 \arguments{
 \item{dist_list}{distance matrix list, the result of prep_S2S_dist_mat}
 
-\item{LR_mat_list}{spot2spot interaction matrix list, the result of prep_S2S_LR_mat}
-
-\item{LR_pair}{selected LR pair to be calculated.}
+\item{LR_mat}{spot2spot interaction matrix of selected LR pair, in the result of prep_S2S_LR_mat}
 }
 \value{
 list of spot2spot interaction force, including force components of x,y and norm

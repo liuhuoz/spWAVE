@@ -664,12 +664,14 @@ calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
 #'
 #' @param S2S_score_mat S2S score matrix
 #' @param clu_info_list A named list, where each element is a vector. 
+#' @param n_mat matrix, each element is the product of number of interacting clusters.
+#' Col as sender, row as receiver.
 #' The names of the list elements represent the cluster names.
 #' Each vector corresponds to a cluster, and the elements within each vector are the indices of the matrix.
 #' 
 #' @return cluster2cluster interaction score matrix
 #' @export
-calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
+calc_C2C_mat <- function(S2S_score_mat,clu_info_list,n_mat){
   n <- length(clu_info_list)
   C2C_score_mat <- matrix(nrow=n, ncol=n)
   #idx_list <- lapply(clu_info_list, function(clu) which(rownames(S2S_score_mat) %in% clu))
@@ -678,7 +680,7 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
     for (j in 1:n) {
       tmp_idx_j <- clu_info_list[[j]]
       C2C_score_mat[i,j] <- 
-        sum(S2S_score_mat[tmp_idx_i, tmp_idx_j]) / (length(tmp_idx_i)*length(tmp_idx_j))
+        sum(S2S_score_mat[tmp_idx_i, tmp_idx_j]) / n_mat[i,j]
     }
   }
   return(C2C_score_mat)
@@ -698,9 +700,9 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
 #' @import dplyr
 #' @importFrom tidyr pivot_longer
 #' @export
-calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
+calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list,n_mat){
   #clac the sum force from S2S to C2C
-  C2C_score <- calc_C2C_mat(S2S_score_mat,clu_info_list)
+  C2C_score <- calc_C2C_mat(S2S_score_mat,clu_info_list,n_mat)
 
   C2C_p_value <- list()
   shuffle_iter <- length(clu_shuf_list)
@@ -712,7 +714,7 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list){
   # }
   C2C_p_value <- 
     lapply(clu_shuf_list, function(clu_shuf){
-      C2C_shuf <- calc_C2C_mat(S2S_score_mat,clu_shuf)
+      C2C_shuf <- calc_C2C_mat(S2S_score_mat,clu_shuf,n_mat)
       #C2C_p_value[C2C_shuf > C2C_score] <- C2C_p_value[C2C_shuf > C2C_score] + 1
       return(C2C_shuf > C2C_score)
     })
@@ -818,6 +820,8 @@ calc_database_C2C_score_paral <- function(
   cluster_info <- cluster_info_identifier(seurat_obj,cluster)
   #clu_info_list <- split(cluster_info$barcode,cluster_info$cluster)
   clu_info_list <- split(1:nrow(cluster_info),cluster_info$cluster)
+  n_vec <- lapply(clu_info_list,length) %>% as.numeric()
+  n_mat <- n_vec %*% t(n_vec)
 
   set.seed(random_seed)
   clu_shuf_list <- generate_shuffle_list(cluster_info,shuffle_iter)
@@ -835,7 +839,8 @@ calc_database_C2C_score_paral <- function(
         calc_C2C_score_loop(
           S2S_score,
           clu_info_list,
-          clu_shuf_list
+          clu_shuf_list,
+          n_mat
         )
       #setTxtProgressBar(pb, i)
       #p(sprintf("x=%g", S2S_score))

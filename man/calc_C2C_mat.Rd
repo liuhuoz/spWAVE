@@ -4,12 +4,15 @@
 \alias{calc_C2C_mat}
 \title{calculation of cluster2cluster interaction score matrix}
 \usage{
-calc_C2C_mat(S2S_score_mat, clu_info_list)
+calc_C2C_mat(S2S_score_mat, clu_info_list, n_mat)
 }
 \arguments{
 \item{S2S_score_mat}{S2S score matrix}
 
-\item{clu_info_list}{A named list, where each element is a vector.
+\item{clu_info_list}{A named list, where each element is a vector.}
+
+\item{n_mat}{matrix, each element is the product of number of interacting clusters.
+Col as sender, row as receiver.
 The names of the list elements represent the cluster names.
 Each vector corresponds to a cluster, and the elements within each vector are the indices of the matrix.}
 }
