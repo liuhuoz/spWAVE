@@ -233,20 +233,21 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #' @param coord spatial coordinates. 
 #'
 #' @return list of single molecule field
-#' @importFrom utils setTxtProgressBar txtProgressBar
+#' @import pbapply
+#' @import future
+#' @import future.apply
 #' @export
 calc_database_single_field <- function(kept_db,expr,coord){ 
   single_mol_field <- list()
-  #print("Step1. calc single molecule or complex field")
-  pb <- utils::txtProgressBar(min = 0, max = ncol(expr), style = 3)
-  for(i in seq_len(ncol(expr))){
-    spatial_expr <- 
-      concentrate_coord_expr(expr=expr,genes=colnames(expr)[i],coord_info=coord)
-    single_mol_field[[i]] <- 
-      single_field_vector(spatial_expr,gene_name=colnames(expr)[i])
-    utils::setTxtProgressBar(pb, i)
-  }
-  close(pb)
+  spatial_expr_list <- 
+    lapply(colnames(expr),function(gene_name){
+      concentrate_coord_expr(expr=expr,genes=gene_name,coord_info=coord)
+      }
+    )
+  single_mol_field <- 
+    pblapply(spatial_expr_list,cl="future",function(spatial_expr){
+      single_field_vector(spatial_expr)
+    })
   names(single_mol_field) <- colnames(expr)
   return(single_mol_field)
 }
