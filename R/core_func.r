@@ -673,12 +673,12 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list){
   n <- length(clu_info_list)
   C2C_score_mat <- matrix(nrow=n, ncol=n)
   #idx_list <- lapply(clu_info_list, function(clu) which(rownames(S2S_score_mat) %in% clu))
-  tmp_mat <- base::as.matrix(S2S_score_mat) #** convert sparse matrix to matrix which mean function can work
   for (i in 1:n) {
     tmp_idx_i <- clu_info_list[[i]]
     for (j in 1:n) {
       tmp_idx_j <- clu_info_list[[j]]
-      C2C_score_mat[i,j] <- mean(tmp_mat[tmp_idx_i, tmp_idx_j],na.rm=TRUE)
+      C2C_score_mat[i,j] <- 
+        sum(S2S_score_mat[tmp_idx_i, tmp_idx_j]) / (length(tmp_idx_i)*length(tmp_idx_j))
     }
   }
   return(C2C_score_mat)
