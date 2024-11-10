@@ -7,8 +7,9 @@
 plot_field_direction(
   arrow_df,
   seurat_obj,
-  mode = c("point", "grid"),
+  mode = c("grid", "point"),
   point = "E_strength",
+  point_size = 2,
   show_arrow = TRUE,
   arrow_sf = NULL,
   line_sf = NULL,
@@ -27,9 +28,11 @@ Usually using the output from \code{\link{extract_LR_field_result}}.}
 \item{seurat_obj}{Seurat object, used to extract image.}
 
 \item{mode}{arrow show in each point (spot) or in grid.
-Only support "point" or "grid", default is "point".}
+Only support "point" or "grid", default is "grid".}
 
 \item{point}{point (spot) value to show, must be in colnames of arrow_df.}
+
+\item{point_size}{point (spot) size, default is 2.}
 
 \item{show_arrow}{logical, whether to show arrow, default is TRUE.}
 

@@ -823,6 +823,26 @@ optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
   return(grid.info)
 }
 
+
+#' Auto calculate arrow scale factor
+#'
+#' Auto calculate arrow scale factor for plot_field_direction2 function,
+#' based on the average magnitude of vector.
+#'
+#' @param grid_info coordinates and vector (Ex,Ey) for each point
+#' @details This function is auto calculated scale factor for plot_field_direction2
+#' by average magnitude of vector. 
+#' The calculated scale factor is used in "point" mode to control arrow size.
+#'
+#' @return return a number indicating proper scale factor for plotting.
+#' @export
+autocalc_arrow_sf <- function(grid_info){
+  temp <- c(grid_info$Ex,grid_info$Ey) 
+  num_power <- temp %>% abs() %>% log10() %>% median() %>% round()
+  sf <- 10^(1 - num_power)
+  return(sf)
+}
+
 #' Get slide aspect ratio
 #'
 #' calculate the aspect ratio of a subset image from Seurat object

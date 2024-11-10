@@ -7,10 +7,11 @@
 plot_field_direction2(
   arrow_df,
   seurat_obj,
-  mode = c("point", "grid"),
+  mode = c("grid", "point"),
   point = "E_strength",
+  point_size = 2,
   show_arrow = TRUE,
-  scale_factor = 100,
+  arrow_sf = 2,
   grid_density = NULL,
   image = c("blank", "HE", "cluster"),
   arrow_color = NULL,
@@ -26,13 +27,15 @@ Usually using the output from \code{\link{extract_LR_field_result}}.}
 \item{seurat_obj}{Seurat object, used to extract image.}
 
 \item{mode}{arrow show in each point (spot) or in grid.
-Only support "point" or "grid", default is "point".}
+Only support "point" or "grid", default is "grid".}
 
 \item{point}{point (spot) value to show, must be in colnames of arrow_df.}
 
+\item{point_size}{point (spot) size, default is 2.}
+
 \item{show_arrow}{logical, whether to show arrow, default is TRUE.}
 
-\item{scale_factor}{scale factor of arrow, smaller value means smaller size. Default is 100.
+\item{arrow_sf}{scale factor of arrow, smaller value means smaller size. Default is 2.
 And may only effect in mode="point", because of the ggquiver behavior. See details.}
 
 \item{grid_density}{grid density of arrow, smaller value means sparser arrow over image, default is 0.5.}
@@ -58,6 +61,4 @@ expression or other quantity, using ggquiver.
 we do recommend to use "grid" instead of "point".
 This function using ggquiver to draw the vector field projection differed from plot_field_direction().
 ggquiver will auto resize the arrow in grid mode, but not in point mode.
-The scale_factor is to control the arrow size in point mode,
-and proper value is ranged in 50~200 depend on interaction strength.
 }

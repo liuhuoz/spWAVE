@@ -7,8 +7,9 @@
 #' Usually using the output from \code{\link{extract_LR_field_result}}.
 #' @param seurat_obj Seurat object, used to extract image.
 #' @param mode arrow show in each point (spot) or in grid. 
-#' Only support "point" or "grid", default is "point".
+#' Only support "point" or "grid", default is "grid".
 #' @param point point (spot) value to show, must be in colnames of arrow_df.
+#' @param point_size point (spot) size, default is 2.
 #' @param show_arrow logical, whether to show arrow, default is TRUE.
 #' @param arrow_sf arrow head size scale factor, smaller value means larger head size.
 #' @param line_sf arrow line size scale factor, smaller value means larger line size.
@@ -24,8 +25,9 @@
 plot_field_direction <- function(
   arrow_df,
   seurat_obj,
-  mode=c("point","grid"),
+  mode=c("grid","point"),
   point="E_strength",
+  point_size=2,
   show_arrow=TRUE,
   arrow_sf=NULL,
   line_sf=NULL,
@@ -87,7 +89,7 @@ plot_field_direction <- function(
           geom_point(
             data=arrow_df,
             aes(x=x,y=y,fill=.data[[point]]),
-            size=3, shape = 23, stroke = 0.1
+            size=point_size, shape = 23, stroke = 0.1
           )+ 
           scale_fill_gradient(low="lightgrey", high=point_color) +
           geom_segment(
@@ -151,10 +153,11 @@ plot_field_direction <- function(
 #' Usually using the output from \code{\link{extract_LR_field_result}}.
 #' @param seurat_obj Seurat object, used to extract image.
 #' @param mode arrow show in each point (spot) or in grid. 
-#' Only support "point" or "grid", default is "point".
+#' Only support "point" or "grid", default is "grid".
 #' @param point point (spot) value to show, must be in colnames of arrow_df.
+#' @param point_size point (spot) size, default is 2.
 #' @param show_arrow logical, whether to show arrow, default is TRUE.
-#' @param scale_factor scale factor of arrow, smaller value means smaller size. Default is 100.
+#' @param arrow_sf scale factor of arrow, smaller value means smaller size. Default is 2.
 #' And may only effect in mode="point", because of the ggquiver behavior. See details. 
 #' @param grid_density grid density of arrow, smaller value means sparser arrow over image, default is 0.5.
 #' @param image image type, "blank" or "HE" or "cluster", default is "blank".
@@ -165,8 +168,10 @@ plot_field_direction <- function(
 #' @details we do recommend to use "grid" instead of "point". 
 #' This function using ggquiver to draw the vector field projection differed from plot_field_direction().
 #' ggquiver will auto resize the arrow in grid mode, but not in point mode. 
-#' The scale_factor is to control the arrow size in point mode, 
-#' and proper value is ranged in 50~200 depend on interaction strength. 
+# ' The `arrow_sf` is a scale factor used to fine-tuning the size of the arrows. 
+# ' The final size is determined by arrow_sf multiplied with a scaling magnitude, 
+# ' which is determined based on the magnitude of the vectors.
+#' 
 #' @return field projection plot
 #' @import ggplot2
 #' @import ggquiver
@@ -174,12 +179,11 @@ plot_field_direction <- function(
 plot_field_direction2 <- function(
   arrow_df,
   seurat_obj,
-  mode=c("point","grid"),
+  mode=c("grid","point"),
   point="E_strength",
+  point_size=2,
   show_arrow=TRUE,
-  scale_factor=100,
-  #arrow_sf=NULL,
-  #line_sf=NULL,
+  arrow_sf=2,
   grid_density=NULL,
   image=c("blank","HE","cluster"),
   arrow_color=NULL,
@@ -205,10 +209,11 @@ plot_field_direction2 <- function(
   }
 
   if(show_arrow){
+    arrow_sf <- autocalc_arrow_sf(arrow_draw)*arrow_sf
   }else{
     #arrow_sf <- 0
     #line_sf <- Inf
-    scale_factor=0
+    arrow_sf=0
   }
 
   if(is.null(arrow_color)){
@@ -239,12 +244,12 @@ plot_field_direction2 <- function(
           geom_point(
             data=arrow_df,
             aes(x=x,y=y,fill=.data[[point]]),
-            size=3, shape = 23, stroke = 0.1
+            size=point_size, shape = 23, stroke = 0.1
           )+ 
           scale_fill_gradient(low="lightgrey", high=point_color) +
           geom_quiver(
             data=arrow_draw,
-            aes(x=x,y=y,u=scale_factor*Ex, v=scale_factor*Ey),
+            aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey),
             linewidth = 1, color = arrow_color
             #arrow = arrow(length = unit(arrow_size, "npc"))
           )+
@@ -261,7 +266,7 @@ plot_field_direction2 <- function(
         (SpatialFeaturePlot(seurat_obj, features = NULL, alpha = c(0)) + NoLegend())+
           geom_quiver(
             data=arrow_draw,
-            aes(x=x,y=y,u=scale_factor*Ex, v=scale_factor*Ey,fill=NULL),
+            aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
             linewidth = 1, color = arrow_color
           )+
         #scale_colour_hue(l = 45) + 
@@ -277,7 +282,7 @@ plot_field_direction2 <- function(
         (SpatialDimPlot(seurat_obj, label = FALSE,...) + NoLegend())+
           geom_quiver(
             data=arrow_draw,
-            aes(x=x,y=y,u=scale_factor*Ex, v=scale_factor*Ey,fill=NULL),
+            aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
             linewidth = 1, color = arrow_color
           )+
         #scale_colour_hue(l = 45) + 
