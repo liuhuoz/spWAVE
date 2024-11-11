@@ -4,20 +4,16 @@
 \alias{get_coordinates}
 \title{Get coordinates from Seurat Object}
 \usage{
-get_coordinates(SrtObj, gene, assay = "SCT")
+get_coordinates(SrtObj)
 }
 \arguments{
 \item{SrtObj}{Seurat object.}
-
-\item{gene}{one or more gene names in Seurat object.}
-
-\item{assay}{assay name in slot of Seurat object. Default="SCT".}
 }
 \value{
 return a data.frame containing coordinates and barcode or cell id.
 }
 \description{
-Extract coordinates from Seurat object, and modify for plotting
+Extract coordinates from Seurat object, and modify for calculation
 }
 \details{
 Right now this function only test on Xenium and Visium.

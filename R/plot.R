@@ -197,6 +197,14 @@ plot_field_direction2 <- function(
   image <- match.arg(image)
   #create the data.frame for drawing
 
+  if(image != "blank"){
+    temp <- rownames(arrow_df)
+    lo_res_coord <- get_coordinates_in_plot(seurat_obj)
+    arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
+    rownames(arrow_df) <- arrow_df$barcode
+    arrow_df <- arrow_df[temp,]
+  }
+
   if(mode=="grid"){
     #arrow_sf <- ifelse(is.null(arrow_sf),0.2,arrow_sf)
     #line_sf <- ifelse(is.null(line_sf),1,line_sf)
