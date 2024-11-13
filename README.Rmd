@@ -13,42 +13,41 @@ knitr::opts_chunk$set(
 )
 ```
 
-# spWAVE
+
 # spWAVE <img src="man/figures/logo.png" align="right" height="138" alt="" />
 <!-- badges: start -->
+[![R](https://img.shields.io/badge/R-276DC3.svg?logo=r&logoColor=white)]()
+[![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)]()
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
-The goal of spWAVE is to ...
+**Sp**atial **W**hole **A**rea **V**ector **E**stimation (spWAVE) is design to 
+estimate the ligand receptor spatial interference based on vector field superposition principle.
+
 
 ## Installation
 
-You can install the development version of spWAVE like so:
+### Dependency
+Require [Seurat](https://satijalab.org/seurat/) >= 5.0, because the data structure changed after 5.0, 
+This package use the new 'layers' structure to access data, which is not compatible with Seurat < 5.0.
+And we recomannd Seurat >=5.1.0, due to a better compatible with new ST techniques, 
+escpecially for the HD single-cell ST. 
 
-``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+### Install
+Right now, it is a non-open source package, even not published on github, so please download the .zip file 
+and install it from local.
+
+``` {r,eval=FALSE}
+devtools::install_local("spWAVE.zip")
 ```
 
-## Example
+## Tutorial
+Please check the tutorial in this package folder.
 
-This is a basic example which shows you how to solve a common problem:
+Field Estimation: "spWAVE/tutorial/Field_Est.html"
 
-```{r example}
-library(spWAVE)
-## basic example code
-```
+Visualization: "spWAVE/tutorial/Visualization.html"
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+Downstream Analysis: "spWAVE/tutorial/Downstream.html" (not write now, will update)
 
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+All links is missing because it is not publish on Github, will update in the future.
