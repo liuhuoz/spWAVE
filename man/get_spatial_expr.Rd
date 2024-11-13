@@ -4,7 +4,7 @@
 \alias{get_spatial_expr}
 \title{get_spatial_expr}
 \usage{
-get_spatial_expr(SrtObj)
+get_spatial_expr(SrtObj, gene, assay = "SCT")
 }
 \arguments{
 \item{SrtObj}{Seurat object.}

@@ -20,7 +20,7 @@
 #' @import magrittr
 #' @import dplyr
 #' @export
-get_spatial_expr <- function(SrtObj){
+get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
     coord_info <- Seurat::GetTissueCoordinates(SrtObj,scale=NULL)
     scale_spot <- SrtObj@images$slice1@scale.factors$spot
