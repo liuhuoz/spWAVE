@@ -832,11 +832,12 @@ optimize.arrow <- function(grid.info, scale.factor = 1,normalize=FALSE){
 #' by average magnitude of vector. 
 #' The calculated scale factor is used in "point" mode to control arrow size.
 #'
+#' @importFrom stats median
 #' @return return a number indicating proper scale factor for plotting.
 #' @export
 autocalc_arrow_sf <- function(grid_info){
   temp <- c(grid_info$Ex,grid_info$Ey) 
-  num_power <- temp %>% abs() %>% log10() %>% median() %>% round()
+  num_power <- temp %>% abs() %>% log10() %>% stats::median() %>% round()
   sf <- 10^(1 - num_power)
   return(sf)
 }
