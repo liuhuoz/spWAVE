@@ -12,27 +12,36 @@
 #' @export
 single_field_vector <- function(
     spatial_expr,
-    gene_name=colnames(spatial_expr)[4]
+    gene_name=colnames(spatial_expr)[4],
+    dist_mat=NULL,
+    coords_sub_list=NULL
     ){
   col_idx <- which(colnames(spatial_expr)==gene_name)
   colnames(spatial_expr)[col_idx] <- "gene"
-
-  expr_point <- spatial_expr[which(spatial_expr$gene!=0),]
+  idx_temp <- which(spatial_expr$gene!=0)
+  expr_point <- spatial_expr[idx_temp,]
 
   source_mat <- spatial_expr[,c("x","y"),T] %>% as.matrix()
   target_mat <- expr_point[,c("x","y"),T]  %>% as.matrix()
-
-  spatial_dist_mat <- 
-    spa_vectorized_pdist(source_mat,target_mat)
+  
+  if(is.null(dist_mat)){
+    spatial_dist_mat <- 
+      spa_vectorized_pdist(source_mat,target_mat)
+  }else{
+    spatial_dist_mat <- dist_mat[,idx_temp,drop=FALSE]
+  }
   #spatial_dist_mat[spatial_dist_mat==0] <- NA
   #min_dist <- min(spatial_dist_mat,na.rm = TRUE)
   #spatial_dist_mat[is.na(spatial_dist_mat)] <- min_dist/2
   #avoid the 0 dist which would induce Inf. 
   #1/2 min_dist thought as the spot boundary radius.
   #not so good, it seems manually add a vector to those point which may disrupt the whole vector field
-  spatial_sub_list <- 
-    pairwised_mat_subtract(source_mat,target_mat)
-
+  if(is.null(coords_sub_list)){
+    spatial_sub_list <- 
+      pairwised_mat_subtract(source_mat,target_mat)
+  }else{
+    spatial_sub_list <- coords_sub_list[idx_temp]
+  }
   vec_list <- 
   lapply(seq_len(length(spatial_sub_list)),function(i){
       #spatial_sub_list[[i]][spatial_sub_list[[i]]==0] <- min_dist/2
@@ -244,9 +253,15 @@ calc_database_single_field <- function(kept_db,expr,coord){
       concentrate_coord_expr(expr=expr,genes=gene_name,coord_info=coord)
       }
     )
+  coord_mat <- coord[,c("x","y")] %>% as.matrix()
+  dist_mat <- spa_vectorized_pdist(coord_mat,coord_mat)
+  coords_sub_list <- pairwised_mat_subtract(coord_mat,coord_mat)
   single_mol_field <- 
     pblapply(spatial_expr_list,cl="future",function(spatial_expr){
-      single_field_vector(spatial_expr)
+      single_field_vector(spatial_expr = spatial_expr,
+      dist_mat = dist_mat,
+      coords_sub_list = coords_sub_list
+      )
     })
   names(single_mol_field) <- colnames(expr)
   return(single_mol_field)
