@@ -4,12 +4,24 @@
 \alias{single_field_vector}
 \title{Calc single molecular vector field}
 \usage{
-single_field_vector(spatial_expr, gene_name = colnames(spatial_expr)[4])
+single_field_vector(
+  spatial_expr,
+  gene_name = colnames(spatial_expr)[4],
+  dist_mat = NULL,
+  coords_sub_list = NULL
+)
 }
 \arguments{
 \item{spatial_expr}{data.frame, contain spatial coordinate and expression.}
 
 \item{gene_name}{selected gene name.}
+
+\item{dist_mat}{pre-calced pairwise distance matrix. Default is NULL.
+If NULL, it will be calculated automatically.
+we recommend to pre-calculate distance matrix for speed up.}
+
+\item{coords_sub_list}{pre-calced pairwise subtraction matrix. Default is NULL.
+Treatment and recommendation likes parameter \code{dist_mat}.}
 }
 \value{
 data.frame contain, coordinates,expression, vector field

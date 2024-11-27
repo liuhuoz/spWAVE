@@ -7,6 +7,11 @@
 #'
 #' @param spatial_expr data.frame, contain spatial coordinate and expression.
 #' @param gene_name selected gene name.
+#' @param dist_mat pre-calced pairwise distance matrix. Default is NULL.
+#' If NULL, it will be calculated automatically.
+#' we recommend to pre-calculate distance matrix for speed up.
+#' @param coords_sub_list pre-calced pairwise subtraction matrix. Default is NULL.
+#' Treatment and recommendation likes parameter \code{dist_mat}.
 #'
 #' @return data.frame contain, coordinates,expression, vector field
 #' @export
@@ -342,6 +347,154 @@ perform_LR_field_calc <- function(kept_db,expr,coord){
       LR_family_field_list=LR_field_list[[2]]
     )
   return(res_list)
+}
+
+#**** Centroid calc module *****
+#' Calculate a single point vector
+#'
+#' Calculate a single point vector from spatial coordinates, 
+#' for the centroid method ST like 10x Xenium 
+#'
+#' @param X,Y The coordinates of the spot. 
+#' @param spatial_expr the spatial expression 
+#' containing spatial coordinates barcode, and expression. 
+#' @param dist_mat the pre-calced distance matrix, default is NULL.
+#' And it will be calculated automatically if NULL. 
+#' For large matrix, we recommend to auto generate the distance matrix in this function.
+#' Because generating one-column matrix is faster than slicing the large fullback matrix.
+#' @param coords_sub_list the pre-calced pairwise subtraction matrix, default is NULL.
+#' Treatment and recommendation likes parameter \code{dist_mat}.
+#'
+#' @details This function is blahblah
+#' 
+#' @return data.frame, each row is a single point field vector of a gene 
+#' at given coordinates.
+#' @export 
+single_point_vector <- function(
+    X,Y,
+    spatial_expr,
+    #gene_name=colnames(spatial_expr)[4],
+    dist_mat=NULL,
+    coords_sub_list=NULL
+  ){
+  #col_idx <- which(colnames(spatial_expr)==gene_name)
+  #colnames(spatial_expr)[col_idx] <- "gene"
+
+  expr_point <- spatial_expr#[which(spatial_expr$gene!=0),]
+
+  source_mat <- matrix(data=c(X,Y),nrow=1)
+  colnames(source_mat) <- c("x","y")
+  target_mat <- expr_point[,c("x","y"),TRUE] %>% as.matrix()
+
+  if(is.null(dist_mat)){
+    spatial_dist_mat <- 
+      spa_vectorized_pdist(target_mat,source_mat) 
+    #** here is one point to others,for returning one column,
+    #** I reverse the source and target in args and return as a transposed the result.
+  }else{
+    spatial_dist_mat <- dist_mat
+  }
+
+  if(is.null(coords_sub_list)){
+    spatial_sub_mat <- 
+      rep(1,nrow(target_mat)) %x% source_mat - target_mat
+  }else{
+    spatial_sub_mat <- coords_sub_list
+  }
+  
+  expr_point <- expr_point[,-c(1:3,ncol(expr_point))]
+  genes <- colnames(expr_point)
+  vec <- 
+  cbind(spatial_sub_mat,
+        spatial_dist_mat,
+        expr_point
+    )
+  colnames(vec)[3] <- c("r_length")
+
+#note here, the x,y are not coordinate but vectors subtracted from coordinate
+  vec %<>% as.data.frame() 
+  vec$Ex=vec$x/(vec$r_length^3)
+  vec$Ey=vec$y/(vec$r_length^3)
+  vec$Ex=ifelse(is.na(vec$Ex),0,vec$Ex) #filter out Inf which produced by the expr point itself
+  vec$Ey=ifelse(is.na(vec$Ey),0,vec$Ey)
+
+  E_vec_list <- 
+  lapply(genes,function(one_gene){
+    E_vec <- vec
+    E_vec$Ex=E_vec[[one_gene]]*E_vec$Ex
+    E_vec$Ey=E_vec[[one_gene]]*E_vec$Ey
+    E_vec$U=E_vec[[one_gene]]/vec$r_length
+    E_vec$U=ifelse(is.na(E_vec$U)|is.infinite(E_vec$U),0,E_vec$U)
+    sigma_E_vec <- 
+      E_vec[,c("Ex","Ey","U")] %>% 
+      colSums %>% 
+      matrix(nrow=1,dimnames = list(NULL,c("Ex","Ey","U")))
+      merge_df <- cbind(source_mat,sigma_E_vec) %>% as.data.frame()
+  })
+  gene_point_vector <- do.call(rbind,E_vec_list)
+  rownames(gene_point_vector) <- genes
+  #colnames(merge_df)[col_idx] <- gene_name
+  return(gene_point_vector)
+}
+
+#' Calculate a single point vector
+#'
+#' Calculate a single point vector from spatial coordinates, 
+#' for the centroid method ST like 10x Xenium 
+#' 
+#' @inheritParams calc_database_single_field
+#' @inheritParams generate_holed_coord
+#'
+#' @details This function is wrapper of \code{\link{single_point_vector}} 
+#' and \code{\link{generate_holed_coord_expr}} to generate a database field vector of 
+#' each single spot or point in spatial by using the holed methods.
+#' Although the inputs is similar to \code{\link{calc_database_single_field}},
+#' this function uses different method and automatically processed the data  
+#' during the calculation.
+#' 
+#' @seealso \code{\link{generate_holed_coord}}
+#' @seealso \code{\link{single_point_vector}}
+#' 
+#' @return list of data.frame, 
+#' each data.frame is a single molecule field vector of a gene
+#' @export 
+calc_database_holed_field <- function(
+  kept_db,
+  expr,
+  meta_coords_list,
+  radius = 500
+){
+  #* 这里就是直接对每个i点直接生成merge的空间表达后，直接计算，求和
+  meta_coords <- meta_coords_list[[1]]
+  spot_coords <- meta_coords_list[[2]]
+  
+  spot_expr <- expr
+  spot_expr$cluster <- rownames(spot_expr)
+  meta_expr <- generate_meta_expr(expr,spot_coords)
+  all_expr <- rbind.data.frame(spot_expr,meta_expr)
+
+  point_vec_list <- 
+  pblapply(seq_len(nrow(spot_expr)),cl="future",
+    function(i){
+    temp <- generate_holed_coord_expr(
+      meta_coords_list = meta_coords_list,
+      all_expr=all_expr,
+      center=spot_expr$cluster[i],
+      radius=radius)
+    center_idx <- which(temp$uni_id == all_expr$cluster[i])
+    point_vec <- 
+      single_point_vector(temp$x[center_idx],temp$y[center_idx],temp)
+    point_vec$uni_id <- all_expr$cluster[i]
+    return(point_vec)
+  })
+  gene_vec_list <- list() 
+  for(i in seq_len(nrow(point_vec_list[[1]]))){
+    gene_vec_list[[i]] <- 
+      do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
+  }
+  names(gene_vec_list) <- rownames(point_vec_list[[1]])
+
+  return(gene_vec_list)
 }
 
 #*******************************
