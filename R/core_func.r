@@ -489,8 +489,11 @@ calc_database_holed_field <- function(
   })
   gene_vec_list <- list() 
   for(i in seq_len(nrow(point_vec_list[[1]]))){
-    gene_vec_list[[i]] <- 
+    temp <- 
       do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
+    rownames(temp) <- temp$barcode <- temp$uni_id
+    temp$uni_id <- NULL
+    gene_vec_list[[i]] <- temp
   }
   names(gene_vec_list) <- rownames(point_vec_list[[1]])
 
