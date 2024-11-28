@@ -255,7 +255,7 @@ calc_database_single_field <- function(kept_db,expr,coord){
   single_mol_field <- list()
   spatial_expr_list <- 
     lapply(colnames(expr),function(gene_name){
-      concentrate_coord_expr(expr=expr,genes=gene_name,coord_info=coord)
+      concatenate_coord_expr(expr=expr,genes=gene_name,coord_info=coord)
       }
     )
   coord_mat <- coord[,c("x","y")] %>% as.matrix()
@@ -516,7 +516,7 @@ calc_database_holed_field <- function(
 #' @return list,contains distance matrix and coordinates difference matrix of x and y
 #' @export
 prep_S2S_dist_mat <- function(kept_db,db_field_result){
-  field_df <- concentrate_LR_field_info(
+  field_df <- concatenate_LR_field_info(
     db_field_result,
     kept_db$Ligand[1],kept_db$Receptor[1]
     )
@@ -601,7 +601,7 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
   iter=seq_len(nrow(kept_db))
   for(i in iter){
     
-    field_df_list[[i]] <- concentrate_LR_field_info(
+    field_df_list[[i]] <- concatenate_LR_field_info(
         db_field_result,
         kept_db$Ligand[i],kept_db$Receptor[i]
         )

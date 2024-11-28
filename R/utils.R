@@ -321,9 +321,9 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
 #** 甚至后续可以把这一项删除。
 
 
-#' Concentrate Coordinates and Expression
+#' concatenate Coordinates and Expression
 #' 
-#' concentrate expression matrix and coordinates by barcode 
+#' concatenate expression matrix and coordinates by barcode 
 #'
 #' @param expr expression matrix.
 #' @param genes select genes.
@@ -331,7 +331,7 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
 #'
 #' @return return dataframe include barcode, spot coordinates, and selected genes expression values.
 #' @export 
-concentrate_coord_expr <- function(expr,genes,coord_info){
+concatenate_coord_expr <- function(expr,genes,coord_info){
   expr_df <- expr[,genes,FALSE]
   check_result <- check_row_order(rownames(expr_df),rownames(coord_info))
   if(check_result){
@@ -419,9 +419,9 @@ cluster_info_identifier <- function(seurat_obj,cluster=NULL){
 }
 
 
-#' Concentrate LR expression and field estimate result
+#' concatenate LR expression and field estimate result
 #'
-#' Concentrate LR expression and field estimate result for each spot or cell
+#' concatenate LR expression and field estimate result for each spot or cell
 #'
 #' @param db_field_result field estimate result of LR in database .
 #' @param ligand Ligand genes.
@@ -429,7 +429,7 @@ cluster_info_identifier <- function(seurat_obj,cluster=NULL){
 #'
 #' @return return dataframe include barcode, spot coordinates, genes and complex expression and field estimate result.
 #' @export 
-concentrate_LR_field_info <- function(db_field_result,ligand,receptor){
+concatenate_LR_field_info <- function(db_field_result,ligand,receptor){
   single_mol_field_list <- db_field_result$single_mol_field_list
   LR_pair_field_list <- db_field_result$LR_pair_field_list
   LR_pair <- paste(ligand,receptor,sep=".")
