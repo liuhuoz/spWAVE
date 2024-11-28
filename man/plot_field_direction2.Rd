@@ -9,12 +9,13 @@ plot_field_direction2(
   seurat_obj,
   mode = c("grid", "point"),
   point = "E_strength",
-  point_size = 2,
+  point_size = NULL,
   show_arrow = TRUE,
   arrow_sf = 2,
   grid_density = NULL,
   image = c("blank", "HE", "cluster"),
   arrow_color = NULL,
+  arrow_alpha = NULL,
   point_color = "navy",
   arrow_normalize = FALSE,
   ...
@@ -31,7 +32,8 @@ Only support "point" or "grid", default is "grid".}
 
 \item{point}{point (spot) value to show, must be in colnames of arrow_df.}
 
-\item{point_size}{point (spot) size, default is 2.}
+\item{point_size}{point (spot) size. In 10x Visium result, default is 2.
+In centroid result, default is 0.2.}
 
 \item{show_arrow}{logical, whether to show arrow, default is TRUE.}
 
@@ -42,13 +44,16 @@ And may only effect in mode="point", because of the ggquiver behavior. See detai
 
 \item{image}{image type, "blank" or "HE" or "cluster", default is "blank".}
 
-\item{arrow_color}{arrow color.}
+\item{arrow_color}{arrow color. Default: firebrick3 in blank, black in other.
+But in 'cluster' of centroid result, the color is white to match the black background.}
 
-\item{point_color}{point color of value.}
+\item{arrow_alpha}{arrow alpha. Default: 1 in blank, 0.7 in other.}
+
+\item{point_color}{point color of value. Default is navy.}
 
 \item{arrow_normalize}{logical, TRUE means only show the direction without arrow length, default is FALSE.}
 
-\item{...}{Other args passing to \code{\link{SpatialPlot}} in Seurat.}
+\item{...}{Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImagePlot}} in Seurat.}
 }
 \value{
 field projection plot

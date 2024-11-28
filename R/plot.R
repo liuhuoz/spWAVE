@@ -155,16 +155,19 @@ plot_field_direction <- function(
 #' @param mode arrow show in each point (spot) or in grid. 
 #' Only support "point" or "grid", default is "grid".
 #' @param point point (spot) value to show, must be in colnames of arrow_df.
-#' @param point_size point (spot) size, default is 2.
+#' @param point_size point (spot) size. In 10x Visium result, default is 2. 
+#' In centroid result, default is 0.2.
 #' @param show_arrow logical, whether to show arrow, default is TRUE.
 #' @param arrow_sf scale factor of arrow, smaller value means smaller size. Default is 2.
 #' And may only effect in mode="point", because of the ggquiver behavior. See details. 
 #' @param grid_density grid density of arrow, smaller value means sparser arrow over image, default is 0.5.
 #' @param image image type, "blank" or "HE" or "cluster", default is "blank".
-#' @param arrow_color arrow color.
-#' @param point_color point color of value.
+#' @param arrow_color arrow color. Default: firebrick3 in blank, black in other. 
+#' But in 'cluster' of centroid result, the color is white to match the black background.  
+#' @param arrow_alpha arrow alpha. Default: 1 in blank, 0.7 in other.
+#' @param point_color point color of value. Default is navy.
 #' @param arrow_normalize logical, TRUE means only show the direction without arrow length, default is FALSE.
-#' @param ... Other args passing to \code{\link{SpatialPlot}} in Seurat.
+#' @param ... Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImagePlot}} in Seurat.
 #' @details we do recommend to use "grid" instead of "point". 
 #' This function using ggquiver to draw the vector field projection differed from plot_field_direction().
 #' ggquiver will auto resize the arrow in grid mode, but not in point mode. 
@@ -181,12 +184,13 @@ plot_field_direction2 <- function(
   seurat_obj,
   mode=c("grid","point"),
   point="E_strength",
-  point_size=2,
+  point_size=NULL,
   show_arrow=TRUE,
   arrow_sf=2,
   grid_density=NULL,
   image=c("blank","HE","cluster"),
   arrow_color=NULL,
+  arrow_alpha=NULL,
   point_color="navy",
   arrow_normalize=FALSE,
   ...
@@ -196,13 +200,40 @@ plot_field_direction2 <- function(
   mode <- match.arg(mode)
   image <- match.arg(image)
   #create the data.frame for drawing
+  #** first distinguish seurat class and use different function and default args
+  if(image=="blank"){
+      arrow_color <- ifelse(is.null(arrow_color),"firebrick3",arrow_color)
+      arrow_alpha <- ifelse(is.null(arrow_alpha),1,arrow_alpha)
+    }else{
+      arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)
+    }
 
-  if(image != "blank"){
-    temp <- rownames(arrow_df)
-    lo_res_coord <- get_coordinates_in_plot(seurat_obj)
-    arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
-    rownames(arrow_df) <- arrow_df$barcode
-    arrow_df <- arrow_df[temp,]
+  if(class(seurat_obj@images[[1]]) %in% c("FOV")){
+    point_size <- ifelse(is.null(point_size),0.2,point_size)
+    #** point_size only works in "blank", so not need to add if statement. Below is same.
+    if(image == "HE"){
+      warning("The centroid methods do not have HE image, using 'cluster' instead.")
+      image <- "cluster"
+    }
+    if(image == "cluster"){
+      SeuratDimPlot <- Seurat::ImageDimPlot
+      arrow_color <- ifelse(is.null(arrow_color),"white",arrow_color)
+    }
+  }else if(class(seurat_obj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
+    point_size <- ifelse(is.null(point_size),2,point_size)
+    if(image != "blank"){
+      temp <- rownames(arrow_df)
+      lo_res_coord <- get_coordinates_in_plot(seurat_obj)
+      arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
+      rownames(arrow_df) <- arrow_df$barcode
+      arrow_df <- arrow_df[temp,]
+
+      arrow_color <- ifelse(is.null(arrow_color),"black",arrow_color)
+    }else if(image=="cluster"){
+      SeuratDimPlot <- Seurat::SpatialDimPlot
+    }
+  }else{
+    stop("Invaild Seurat Object! Please check the 'images' slot.")
   }
 
   if(mode=="grid"){
@@ -222,14 +253,6 @@ plot_field_direction2 <- function(
     #arrow_sf <- 0
     #line_sf <- Inf
     arrow_sf=0
-  }
-
-  if(is.null(arrow_color)){
-    if(image=="blank"){
-      arrow_color <- "firebrick3"
-    }else{
-      arrow_color <- "black"
-    }
   }
 
   if(arrow_normalize){
@@ -258,7 +281,7 @@ plot_field_direction2 <- function(
           geom_quiver(
             data=arrow_draw,
             aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey),
-            linewidth = 1, color = arrow_color
+            linewidth = 1, color = arrow_color,alpha=arrow_alpha
             #arrow = arrow(length = unit(arrow_size, "npc"))
           )+
         #scale_colour_hue(l = 45) + 
@@ -275,10 +298,10 @@ plot_field_direction2 <- function(
           geom_quiver(
             data=arrow_draw,
             aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
-            linewidth = 1, color = arrow_color
+            linewidth = 1, color = arrow_color,alpha=arrow_alpha
           )+
         #scale_colour_hue(l = 45) + 
-          theme_classic() + 
+          #theme_classic() + 
           theme(axis.text.x = element_text(face = "bold", color = "black",
                                             size = 12, angle = 0, hjust = 1),
                 axis.text.y = element_text(face = "bold", color = "black",
@@ -287,14 +310,14 @@ plot_field_direction2 <- function(
     },
     cluster={
       p_arrow <- 
-        (SpatialDimPlot(seurat_obj, label = FALSE,...) + NoLegend())+
+        (SeuratDimPlot(seurat_obj,...) + NoLegend())+
           geom_quiver(
             data=arrow_draw,
             aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
-            linewidth = 1, color = arrow_color
+            linewidth = 1, color = arrow_color,alpha=arrow_alpha
           )+
         #scale_colour_hue(l = 45) + 
-          theme_classic() + 
+          #theme_classic() + 
           theme(axis.text.x = element_text(face = "bold", color = "black",
                                             size = 12, angle = 0, hjust = 1),
                 axis.text.y = element_text(face = "bold", color = "black",
