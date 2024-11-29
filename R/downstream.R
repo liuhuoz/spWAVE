@@ -349,7 +349,7 @@ plot_layers_score_dot <- function(
 ){
   merge_db <- 
     do.call(rbind.data.frame,merge_kept_db_list) %>%
-    distinct(.keep_all = TRUE)
+    dplyr::distinct(.keep_all = TRUE)
   res_list <- 
     purrr::map2(.x=merge_db_C2C_list,.y=names(merge_db_C2C_list),
                 .f=aggregate_layers_C2C,merge_db=merge_db)

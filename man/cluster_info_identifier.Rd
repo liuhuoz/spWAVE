@@ -10,7 +10,7 @@ cluster_info_identifier(seurat_obj, cluster = NULL)
 \item{seurat_obj}{Seurat object.}
 
 \item{cluster}{cluster info. Default is NULL and will using active.ident in Seurat object.
-Accepted data format is data.frame or character. See detailed for more explain.}
+Accepted data format is data.frame or character. See details for more explain.}
 }
 \value{
 return dataframe include barcode and cluster id.

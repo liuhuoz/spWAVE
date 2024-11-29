@@ -167,7 +167,7 @@ plot_field_direction <- function(
 #' @param arrow_alpha arrow alpha. Default: 1 in blank, 0.7 in other.
 #' @param point_color point color of value. Default is navy.
 #' @param arrow_normalize logical, TRUE means only show the direction without arrow length, default is FALSE.
-#' @param ... Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImagePlot}} in Seurat.
+#' @param ... Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImageDimPlot}} in Seurat.
 #' @details we do recommend to use "grid" instead of "point". 
 #' This function using ggquiver to draw the vector field projection differed from plot_field_direction().
 #' ggquiver will auto resize the arrow in grid mode, but not in point mode. 
@@ -178,6 +178,7 @@ plot_field_direction <- function(
 #' @return field projection plot
 #' @import ggplot2
 #' @import ggquiver
+#' @importFrom Seurat SpatialDimPlot ImageDimPlot SpatialFeaturePlot
 #' @export 
 plot_field_direction2 <- function(
   arrow_df,
@@ -760,6 +761,7 @@ plot_LR_gene_chord <- function(
 #' @import RColorBrewer
 #' @import grid
 #' @import stringr
+#' @importFrom Matrix colSums
 #' @export 
 plot_LR_cluster_heatmap <- function(
   db_C2C_score_list,
@@ -840,7 +842,7 @@ plot_LR_cluster_heatmap <- function(
     show_annotation_name = FALSE)
 
   ha2 <- HeatmapAnnotation(
-      Strength = anno_barplot(colSums(abs(ht_mat),na.rm=TRUE), 
+      Strength = anno_barplot(Matrix::colSums(abs(ht_mat),na.rm=TRUE), 
       border = FALSE,
       gp = gpar(fill = col_col, col=col_col)),
       show_annotation_name = FALSE)

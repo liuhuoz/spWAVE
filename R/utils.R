@@ -367,7 +367,7 @@ check_row_order <- function(check_row,standrad_row){
 #'
 #' @param seurat_obj Seurat object.
 #' @param cluster cluster info. Default is NULL and will using active.ident in Seurat object. 
-#' Accepted data format is data.frame or character. See detailed for more explain.
+#' Accepted data format is data.frame or character. See details for more explain.
 #'
 #' @return return dataframe include barcode and cluster id.
 #' @details The default 'cluster' is NULL and will using active.ident in Seurat object. 
@@ -937,6 +937,7 @@ is.color <- function(x){
 #' See \url{https://github.com/zcang/COMMOT}
 #' @importFrom FNN get.knnx
 #' @importFrom stats dnorm quantile
+#' @importFrom Matrix colSums
 #' @return data.frame, contain x,y,Ex,Ey.
 #' @export
 
@@ -978,7 +979,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 
   V_grid <- data.frame()
   for(i in 1:nrow(nbs)){
-    temp <- (V[nbs[i,],]*w[i,]) %>% colSums
+    temp <- (V[nbs[i,],]*w[i,]) %>% Matrix::colSums()
     V_grid <- rbind.data.frame(V_grid,temp)
   }
   colnames(V_grid) <- c("Ex","Ey")

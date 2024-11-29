@@ -53,7 +53,7 @@ But in 'cluster' of centroid result, the color is white to match the black backg
 
 \item{arrow_normalize}{logical, TRUE means only show the direction without arrow length, default is FALSE.}
 
-\item{...}{Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImagePlot}} in Seurat.}
+\item{...}{Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImageDimPlot}} in Seurat.}
 }
 \value{
 field projection plot

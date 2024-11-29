@@ -367,6 +367,8 @@ perform_LR_field_calc <- function(kept_db,expr,coord){
 #'
 #' @details This function is blahblah
 #' 
+#' @importFrom Matrix colSums
+#' 
 #' @return data.frame, each row is a single point field vector of a gene 
 #' at given coordinates.
 #' @export 
@@ -427,7 +429,7 @@ single_point_vector <- function(
     E_vec$U=ifelse(is.na(E_vec$U)|is.infinite(E_vec$U),0,E_vec$U)
     sigma_E_vec <- 
       E_vec[,c("Ex","Ey","U")] %>% 
-      colSums %>% 
+      Matrix::colSums %>% 
       matrix(nrow=1,dimnames = list(NULL,c("Ex","Ey","U")))
       merge_df <- cbind(source_mat,sigma_E_vec) %>% as.data.frame()
   })
