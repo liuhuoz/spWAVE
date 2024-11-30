@@ -761,7 +761,6 @@ plot_LR_gene_chord <- function(
 #' @import RColorBrewer
 #' @import grid
 #' @import stringr
-#' @importFrom Matrix colSums
 #' @export 
 plot_LR_cluster_heatmap <- function(
   db_C2C_score_list,
@@ -842,7 +841,7 @@ plot_LR_cluster_heatmap <- function(
     show_annotation_name = FALSE)
 
   ha2 <- HeatmapAnnotation(
-      Strength = anno_barplot(Matrix::colSums(abs(ht_mat),na.rm=TRUE), 
+      Strength = anno_barplot(colSums(abs(ht_mat),na.rm=TRUE), 
       border = FALSE,
       gp = gpar(fill = col_col, col=col_col)),
       show_annotation_name = FALSE)

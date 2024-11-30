@@ -244,14 +244,12 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #'
 #' @param kept_db  data.frame, LR database.
 #' @param expr expression matrix.
-#' @param coord spatial coordinates. 
+#' @param coord spatial coordinates.
+#' @inheritParams auto_select_lapply
 #'
 #' @return list of single molecule field
-#' @import pbapply
-#' @import future
-#' @import future.apply
 #' @export
-calc_database_single_field <- function(kept_db,expr,coord){ 
+calc_database_single_field <- function(kept_db,expr,coord,verbose=TRUE){ 
   single_mol_field <- list()
   spatial_expr_list <- 
     lapply(colnames(expr),function(gene_name){
@@ -262,12 +260,13 @@ calc_database_single_field <- function(kept_db,expr,coord){
   dist_mat <- spa_vectorized_pdist(coord_mat,coord_mat)
   coords_sub_list <- pairwised_mat_subtract(coord_mat,coord_mat)
   single_mol_field <- 
-    pblapply(spatial_expr_list,cl="future",function(spatial_expr){
+    auto_select_lapply(spatial_expr_list,function(spatial_expr){
       single_field_vector(spatial_expr = spatial_expr,
       dist_mat = dist_mat,
       coords_sub_list = coords_sub_list
       )
-    })
+    },verbose=verbose
+    )
   names(single_mol_field) <- colnames(expr)
   return(single_mol_field)
 }
@@ -328,18 +327,16 @@ calc_database_LR_field <- function(kept_db,single_mol_field){
 #' perform calculation of LR pair or family in database in 1 step.
 #' An integrated function of calc_database_single_field and calc_database_LR_field
 #'
-#' @param kept_db  data.frame, LR database.
-#' @param expr expression matrix.
-#' @param coord spatial coordinates. 
+#' @inheritParams calc_database_single_field 
 #'
 #' @return return list of single molecule field, 
 #' LR pair field and LR family field in 3 separated list.
 #' @export
-perform_LR_field_calc <- function(kept_db,expr,coord){
+perform_LR_field_calc <- function(kept_db,expr,coord,verbose=TRUE){
   print("Step1. calc single molecule or complex field")
-  single_mol_field <- calc_database_single_field(kept_db,expr,coord)
+  single_mol_field <- calc_database_single_field(kept_db,expr,coord,verbose = verbose)
   print("Step2. calc LR pair or family field")
-  LR_field_list <- calc_database_LR_field(kept_db,single_mol_field)
+  LR_field_list <- calc_database_LR_field(kept_db,single_mol_field,verbose = verbose)
 
   res_list <- list(
       single_mol_field_list=single_mol_field,
@@ -367,7 +364,6 @@ perform_LR_field_calc <- function(kept_db,expr,coord){
 #'
 #' @details This function is blahblah
 #' 
-#' @importFrom Matrix colSums
 #' 
 #' @return data.frame, each row is a single point field vector of a gene 
 #' at given coordinates.
@@ -429,7 +425,7 @@ single_point_vector <- function(
     E_vec$U=ifelse(is.na(E_vec$U)|is.infinite(E_vec$U),0,E_vec$U)
     sigma_E_vec <- 
       E_vec[,c("Ex","Ey","U")] %>% 
-      Matrix::colSums %>% 
+      colSums %>% 
       matrix(nrow=1,dimnames = list(NULL,c("Ex","Ey","U")))
       merge_df <- cbind(source_mat,sigma_E_vec) %>% as.data.frame()
   })
@@ -446,6 +442,7 @@ single_point_vector <- function(
 #' 
 #' @inheritParams calc_database_single_field
 #' @inheritParams generate_holed_coord
+#' @inheritParams auto_select_lapply
 #'
 #' @details This function is wrapper of \code{\link{single_point_vector}} 
 #' and \code{\link{generate_holed_coord_expr}} to generate a database field vector of 
@@ -464,7 +461,8 @@ calc_database_holed_field <- function(
   kept_db,
   expr,
   meta_coords_list,
-  radius = 500
+  radius = 500,
+  verbose=TRUE
 ){
   #* 这里就是直接对每个i点直接生成merge的空间表达后，直接计算，求和
   meta_coords <- meta_coords_list[[1]]
@@ -476,7 +474,7 @@ calc_database_holed_field <- function(
   all_expr <- rbind.data.frame(spot_expr,meta_expr)
 
   point_vec_list <- 
-  pblapply(seq_len(nrow(spot_expr)),cl="future",
+  auto_select_lapply(seq_len(nrow(spot_expr)),
     function(i){
     temp <- generate_holed_coord_expr(
       meta_coords_list = meta_coords_list,
@@ -488,7 +486,8 @@ calc_database_holed_field <- function(
       single_point_vector(temp$x[center_idx],temp$y[center_idx],temp)
     point_vec$uni_id <- all_expr$cluster[i]
     return(point_vec)
-  })
+  },verbose=verbose
+  )
   gene_vec_list <- list() 
   for(i in seq_len(nrow(point_vec_list[[1]]))){
     temp <- 
@@ -669,22 +668,20 @@ calc_S2S_force_mat <- function(
 #'
 #' @param kept_db data.frame, LR database, must be same with the database used in prep_list
 #' @param prep_list list, the result of prep_database_S2S_list
+#' @inheritParams auto_select_lapply
 #'
 #' @return list of each LR pair of spot2spot interaction force.
-#' @import pbapply
-#' @import future
-#' @import future.apply
 #' @export
-calc_database_S2S_force <- function(kept_db,prep_list){
+calc_database_S2S_force <- function(kept_db,prep_list,verbose=TRUE){
   dist_list <- prep_list$dist
   LR_mat_list <- prep_list$q_list
 
   db_S2S_force_list <- list()
 
     db_S2S_force_list <- 
-      pblapply(LR_mat_list, cl='future',function(id_mat){
+      auto_select_lapply(LR_mat_list,function(id_mat){
         calc_S2S_force_mat(dist_list,id_mat)
-        })
+        },verbose=verbose)
   names(db_S2S_force_list) <- kept_db$id
 
   return(db_S2S_force_list)
@@ -977,15 +974,14 @@ calc_database_C2C_score <- function(
 #' @param shuffle_iter number of shuffle iterations,default 500
 #' @param random_seed random seed used in shuffle. Default is 42, 
 #' the answer to the ultimate question of life, the universe, and everything.
+#' @inheritParams auto_select_lapply
 #'
 #' @return list of each LR pair C2C score summary, score and p value.
-#' @import future
-#' @import future.apply
-#' @import pbapply
 #' @export
 calc_database_C2C_score_paral <- function(
   kept_db,db_S2S_score_list,
-  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42
+  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  verbose=TRUE
 ){
   #require(future)
   #require(future.apply)
@@ -1008,7 +1004,7 @@ calc_database_C2C_score_paral <- function(
   #with_progress({
   #  p <- progressor(along = db_S2S_score_list)
     C2C_score_list <- 
-    pblapply(db_S2S_score_list,cl="future",function(S2S_score){
+    auto_select_lapply(db_S2S_score_list,function(S2S_score){
         calc_C2C_score_loop(
           S2S_score,
           clu_info_list,
@@ -1017,7 +1013,8 @@ calc_database_C2C_score_paral <- function(
         )
       #setTxtProgressBar(pb, i)
       #p(sprintf("x=%g", S2S_score))
-    })
+    },verbose=verbose
+    )
   #})
   #close(pb)
   names(C2C_score_list) <- kept_db$id

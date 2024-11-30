@@ -10,7 +10,8 @@ calc_database_C2C_score_paral(
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 500,
-  random_seed = 42
+  random_seed = 42,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ calc_database_C2C_score_paral(
 
 \item{random_seed}{random seed used in shuffle. Default is 42,
 the answer to the ultimate question of life, the universe, and everything.}
+
+\item{verbose}{whether to print progress, default is TRUE}
 }
 \value{
 list of each LR pair C2C score summary, score and p value.

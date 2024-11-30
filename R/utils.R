@@ -937,7 +937,6 @@ is.color <- function(x){
 #' See \url{https://github.com/zcang/COMMOT}
 #' @importFrom FNN get.knnx
 #' @importFrom stats dnorm quantile
-#' @importFrom Matrix colSums
 #' @return data.frame, contain x,y,Ex,Ey.
 #' @export
 
@@ -979,7 +978,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 
   V_grid <- data.frame()
   for(i in 1:nrow(nbs)){
-    temp <- (V[nbs[i,],]*w[i,]) %>% Matrix::colSums()
+    temp <- (V[nbs[i,],]*w[i,]) %>% colSums()
     V_grid <- rbind.data.frame(V_grid,temp)
   }
   colnames(V_grid) <- c("Ex","Ey")
@@ -1143,4 +1142,37 @@ generate_holed_coord_expr <- function(
   temp <- which(all_expr$cluster %in% holed_coord$uni_id)
   holed_expr <- cbind.data.frame(holed_coord,all_expr[temp,])
   return(holed_expr)
+}
+
+#'lapply warpper 
+#' 
+#' A warpper of lapply series functions, automatically select the proper functions.
+#' 
+#' @param seq_obj sequence object to be processed, such as list or vector
+#' @param func function to be applied
+#' @param verbose whether to print progress, default is TRUE
+#' @param ... arguments to be passed to lapply functions
+#' 
+#' @seealso \code{\link{lapply}} 
+#' @seealso \code{\link[pbapply]{pblapply}}
+#' @seealso  \code{\link[future.apply]{future_lapply}}
+#' 
+#' @import pbapply
+#' @import future
+#' @import future.apply
+auto_select_lapply <- function(seq_obj,func,verbose=TRUE,...){
+  if(!is.vector(seq_obj)){stop("Must give a vector-like object to be processed")}
+  para_set <- class(future::plan())
+  backend <- NULL
+  if(!("sequential" %in% para_set) && ("multiprocess" %in% para_set)){
+    backend <- "future"
+  }
+  if(verbose){
+    list_result <-pbapply::pblapply(X=seq_obj,FUN = func,cl=backend,...)
+  }else if(is.null(backend)){
+    list_result <-lapply(X=seq_obj,FUN = func,...)
+  }else{
+    list_result <-future.apply::future_lapply(X=seq_obj,FUN = func,...)
+  }
+  return(list_result)
 }

@@ -4,7 +4,7 @@
 \alias{calc_database_single_field}
 \title{calculate single molecule field in database}
 \usage{
-calc_database_single_field(kept_db, expr, coord)
+calc_database_single_field(kept_db, expr, coord, verbose = TRUE)
 }
 \arguments{
 \item{kept_db}{data.frame, LR database.}
@@ -12,6 +12,8 @@ calc_database_single_field(kept_db, expr, coord)
 \item{expr}{expression matrix.}
 
 \item{coord}{spatial coordinates.}
+
+\item{verbose}{whether to print progress, default is TRUE}
 }
 \value{
 list of single molecule field

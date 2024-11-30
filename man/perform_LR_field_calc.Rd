@@ -4,7 +4,7 @@
 \alias{perform_LR_field_calc}
 \title{perform calculation of LR pair or family in database}
 \usage{
-perform_LR_field_calc(kept_db, expr, coord)
+perform_LR_field_calc(kept_db, expr, coord, verbose = TRUE)
 }
 \arguments{
 \item{kept_db}{data.frame, LR database.}
@@ -12,6 +12,8 @@ perform_LR_field_calc(kept_db, expr, coord)
 \item{expr}{expression matrix.}
 
 \item{coord}{spatial coordinates.}
+
+\item{verbose}{whether to print progress, default is TRUE}
 }
 \value{
 return list of single molecule field,
