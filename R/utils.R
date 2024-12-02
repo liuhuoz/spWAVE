@@ -998,9 +998,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 #'
 #' @param coord data.frame,spatial coordinates, 
 #' should have column names "x" and "y" and "barcode".
-#' @param n_clu number of clusters, the "k" in kmeans.
-#' defatult is the 1/10 of the sample size.
-#' @param nstart number of random starts, default is 42.
+#' @inheritParams stats::kmeans
 #' 
 #' @seealso \code{\link[stats]{kmeans}}
 #' 
@@ -1011,12 +1009,13 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 #' spot ids.
 #' And single coordinates contain the original coordinates added cluster information.
 #' @export 
-generate_meta_coord <- function(
+generate_kmeans_coord <- function(
   coord,
-  n_clu=nrow(coord)/10,
-  nstart=42
+  centers=nrow(coord)/10,
+  iter.max=10,
+  nstart=1
 ){
-  km_result <- stats::kmeans(coord[,c("x","y")], centers=n_clu, nstart = nstart)
+  km_result <- stats::kmeans(coord[,c("x","y")], centers=centers, nstart = nstart,iter.max = iter.max)
   km_coord <- 
     cbind.data.frame(
       km_result$centers,
