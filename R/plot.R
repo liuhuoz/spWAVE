@@ -205,38 +205,38 @@ plot_field_direction2 <- function(
   if(image=="blank"){
       arrow_color <- ifelse(is.null(arrow_color),"firebrick3",arrow_color)
       arrow_alpha <- ifelse(is.null(arrow_alpha),1,arrow_alpha)
+      point_size <- 
+        ifelse(nrow(arrow_df)<10000,2,
+              ifelse(nrow(arrow_df)<20000,1,0.2)
+              )
     }else{
       arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)
-    }
 
-  if(class(seurat_obj@images[[1]]) %in% c("FOV")){
-    point_size <- ifelse(is.null(point_size),0.2,point_size)
-    #** point_size only works in "blank", so not need to add if statement. Below is same.
-    if(image == "HE"){
-      warning("The centroid methods do not have HE image, using 'cluster' instead.")
-      image <- "cluster"
-    }
-    if(image == "cluster"){
-      SeuratDimPlot <- Seurat::ImageDimPlot
-      arrow_color <- ifelse(is.null(arrow_color),"white",arrow_color)
-    }
-  }else if(class(seurat_obj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
-    point_size <- ifelse(is.null(point_size),2,point_size)
-    if(image != "blank"){
-      temp <- rownames(arrow_df)
-      lo_res_coord <- get_coordinates_in_plot(seurat_obj)
-      arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
-      rownames(arrow_df) <- arrow_df$barcode
-      arrow_df <- arrow_df[temp,]
+      if(class(seurat_obj@images[[1]]) %in% c("FOV")){
+        #** point_size only works in "blank", so not need to add if statement. Below is same.
+        if(image == "HE"){
+          warning("The centroid methods do not have HE image, using 'cluster' instead.")
+          image <- "cluster"
+        }
+        if(image == "cluster"){
+          SeuratDimPlot <- Seurat::ImageDimPlot
+          arrow_color <- ifelse(is.null(arrow_color),"white",arrow_color)
+        }
+      }else if(class(seurat_obj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
+        temp <- rownames(arrow_df)
+        lo_res_coord <- get_coordinates_in_plot(seurat_obj)
+        arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
+        rownames(arrow_df) <- arrow_df$barcode
+        arrow_df <- arrow_df[temp,]
 
-      arrow_color <- ifelse(is.null(arrow_color),"black",arrow_color)
-    }else if(image=="cluster"){
-      SeuratDimPlot <- Seurat::SpatialDimPlot
+        arrow_color <- ifelse(is.null(arrow_color),"black",arrow_color)
+        if(image=="cluster"){
+          SeuratDimPlot <- Seurat::SpatialDimPlot
+        }
+      }else{
+        stop("Invaild Seurat Object! Please check the 'images' slot.")
+      }
     }
-  }else{
-    stop("Invaild Seurat Object! Please check the 'images' slot.")
-  }
-
   if(mode=="grid"){
     #arrow_sf <- ifelse(is.null(arrow_sf),0.2,arrow_sf)
     #line_sf <- ifelse(is.null(line_sf),1,line_sf)
