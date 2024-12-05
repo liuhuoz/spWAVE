@@ -929,11 +929,11 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 ){
   g <- igraph_g
   edge.start <- igraph::ends(g, es=igraph::E(g), names=FALSE)
-  coords<-igraph::layout_(g,layout)
-  if(nrow(coords)!=1){
-    coords_scale=scale(coords)
+  coord<-igraph::layout_(g,layout)
+  if(nrow(coord)!=1){
+    coord_scale=scale(coord)
   }else{
-    coords_scale<-coords
+    coord_scale<-coord
   }
 
   if (is.null(vertex.size.max)) {
@@ -949,7 +949,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
   }
   vertex.weight <- vertex.weight/vertex.weight.max*vertex.size.max+5
 
-  loop.angle<-ifelse(coords_scale[igraph::V(g),1]>0,-atan(coords_scale[igraph::V(g),2]/coords_scale[igraph::V(g),1]),pi-atan(coords_scale[igraph::V(g),2]/coords_scale[igraph::V(g),1]))
+  loop.angle<-ifelse(coord_scale[igraph::V(g),1]>0,-atan(coord_scale[igraph::V(g),2]/coord_scale[igraph::V(g),1]),pi-atan(coord_scale[igraph::V(g),2]/coord_scale[igraph::V(g),1]))
   igraph::V(g)$size<-vertex.weight
   igraph::V(g)$color<-color.use[igraph::V(g)]
   igraph::V(g)$frame.color <- color.use[igraph::V(g)]
@@ -986,7 +986,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
   label.locs <- radian.rescale(x=1:length(igraph::V(g)), direction=-1, start=0)
   label.dist <- vertex.weight/max(vertex.weight)+2
   plot(g,main=main_title,
-        edge.curved=edge.curved,vertex.shape=shape,layout=coords_scale,margin=margin, vertex.label.dist=label.dist,
+        edge.curved=edge.curved,vertex.shape=shape,layout=coord_scale,margin=margin, vertex.label.dist=label.dist,
         vertex.label.degree=label.locs, vertex.label.family="Helvetica", edge.label.family="Helvetica") # "sans"
 }
 

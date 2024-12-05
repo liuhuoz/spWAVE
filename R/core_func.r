@@ -10,7 +10,7 @@
 #' @param dist_mat pre-calced pairwise distance matrix. Default is NULL.
 #' If NULL, it will be calculated automatically.
 #' we recommend to pre-calculate distance matrix for speed up.
-#' @param coords_sub_list pre-calced pairwise subtraction matrix. Default is NULL.
+#' @param coord_sub_list pre-calced pairwise subtraction matrix. Default is NULL.
 #' Treatment and recommendation likes parameter \code{dist_mat}.
 #'
 #' @return data.frame contain, coordinates,expression, vector field
@@ -19,7 +19,7 @@ single_field_vector <- function(
     spatial_expr,
     gene_name=colnames(spatial_expr)[4],
     dist_mat=NULL,
-    coords_sub_list=NULL
+    coord_sub_list=NULL
     ){
   col_idx <- which(colnames(spatial_expr)==gene_name)
   colnames(spatial_expr)[col_idx] <- "gene"
@@ -41,11 +41,11 @@ single_field_vector <- function(
   #avoid the 0 dist which would induce Inf. 
   #1/2 min_dist thought as the spot boundary radius.
   #not so good, it seems manually add a vector to those point which may disrupt the whole vector field
-  if(is.null(coords_sub_list)){
+  if(is.null(coord_sub_list)){
     spatial_sub_list <- 
       pairwised_mat_subtract(source_mat,target_mat)
   }else{
-    spatial_sub_list <- coords_sub_list[idx_temp]
+    spatial_sub_list <- coord_sub_list[idx_temp]
   }
   vec_list <- 
   lapply(seq_len(length(spatial_sub_list)),function(i){
@@ -258,12 +258,12 @@ calc_database_single_field <- function(kept_db,expr,coord,verbose=TRUE){
     )
   coord_mat <- coord[,c("x","y")] %>% as.matrix()
   dist_mat <- spa_vectorized_pdist(coord_mat,coord_mat)
-  coords_sub_list <- pairwised_mat_subtract(coord_mat,coord_mat)
+  coord_sub_list <- pairwised_mat_subtract(coord_mat,coord_mat)
   single_mol_field <- 
     auto_select_lapply(spatial_expr_list,function(spatial_expr){
       single_field_vector(spatial_expr = spatial_expr,
       dist_mat = dist_mat,
-      coords_sub_list = coords_sub_list
+      coord_sub_list = coord_sub_list
       )
     },verbose=verbose
     )
@@ -361,7 +361,7 @@ perform_LR_field_calc <- function(kept_db,expr,coord,verbose=TRUE){
 #' And it will be calculated automatically if NULL. 
 #' For large matrix, we recommend to auto generate the distance matrix in this function.
 #' Because generating one-column matrix is faster than slicing the large fullback matrix.
-#' @param coords_sub_list the pre-calced pairwise subtraction matrix, default is NULL.
+#' @param coord_sub_list the pre-calced pairwise subtraction matrix, default is NULL.
 #' Treatment and recommendation likes parameter \code{dist_mat}.
 #'
 #' @details This function is blahblah
@@ -375,7 +375,7 @@ single_point_vector <- function(
     spatial_expr,
     #gene_name=colnames(spatial_expr)[4],
     dist_mat=NULL,
-    coords_sub_list=NULL
+    coord_sub_list=NULL
   ){
   #col_idx <- which(colnames(spatial_expr)==gene_name)
   #colnames(spatial_expr)[col_idx] <- "gene"
@@ -395,11 +395,11 @@ single_point_vector <- function(
     spatial_dist_mat <- dist_mat
   }
 
-  if(is.null(coords_sub_list)){
+  if(is.null(coord_sub_list)){
     spatial_sub_mat <- 
       rep(1,nrow(target_mat)) %x% source_mat - target_mat
   }else{
-    spatial_sub_mat <- coords_sub_list
+    spatial_sub_mat <- coord_sub_list
   }
   
   expr_point <- expr_point[,-c(1:3,ncol(expr_point))]
@@ -462,24 +462,24 @@ single_point_vector <- function(
 calc_database_holed_field <- function(
   kept_db,
   expr,
-  meta_coords_list,
+  meta_coord_list,
   radius = 500,
   verbose=TRUE
 ){
   #* 这里就是直接对每个i点直接生成merge的空间表达后，直接计算，求和
-  meta_coords <- meta_coords_list[[1]]
-  spot_coords <- meta_coords_list[[2]]
+  meta_coord <- meta_coord_list[[1]]
+  spot_coord <- meta_coord_list[[2]]
   
   spot_expr <- expr
   spot_expr$cluster <- rownames(spot_expr)
-  meta_expr <- generate_meta_expr(expr,spot_coords)
+  meta_expr <- generate_meta_expr(expr,spot_coord)
   all_expr <- rbind.data.frame(spot_expr,meta_expr)
 
   point_vec_list <- 
   auto_select_lapply(seq_len(nrow(spot_expr)),
     function(i){
     temp <- generate_holed_coord_expr(
-      meta_coords_list = meta_coords_list,
+      meta_coord_list = meta_coord_list,
       all_expr=all_expr,
       center=spot_expr$cluster[i],
       radius=radius)
