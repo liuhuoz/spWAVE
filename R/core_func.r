@@ -282,17 +282,19 @@ calc_database_single_field <- function(kept_db,expr,coord,verbose=TRUE){
 #' @return return list of LR pair or family field estimation.
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
-calc_database_LR_field <- function(kept_db,single_mol_field){
+calc_database_LR_field <- function(kept_db,single_mol_field,verbose=TRUE){
   LR_pair_field_list <- list()
-  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  if(verbose){
+    pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
+  }
   for(i in seq_len(nrow(kept_db))){
     LR_pair_field_list[[i]] <- 
       calc_LR_pair_vec(single_mol_field,kept_db$Ligand[i],kept_db$Receptor[i])
     LR_pair_field_list[[i]]$LR_pair <- 
       paste(kept_db$Ligand[i],kept_db$Receptor[i],sep=".")
-    utils::setTxtProgressBar(pb, i)
+    if(verbose){utils::setTxtProgressBar(pb, i)}
   }
-  close(pb)
+  if(verbose){close(pb)}
   names(LR_pair_field_list) <- kept_db$id
 
   family_lig_list <- split(kept_db$Ligand, kept_db$Family)
