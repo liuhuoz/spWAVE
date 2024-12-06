@@ -1023,6 +1023,7 @@ generate_kmeans_coord <- function(
     )
   coord$cluster <- paste0("clu_",km_result$cluster)
   cluster_info <- coord[,c("barcode","cluster")]
+  rownames(km_coord) <- km_coord$barcode
 
   return(list(meta=km_coord,km_cluster=cluster_info))
 }
