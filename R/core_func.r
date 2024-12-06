@@ -278,6 +278,7 @@ calc_database_single_field <- function(kept_db,expr,coord,verbose=TRUE){
 #' @param kept_db data.frame, LR database, must be same with the database used in single_mol_field
 #' @param single_mol_field list of single molecular field, 
 #' usually the result of calc_database_single_field 
+#' @inheritParams auto_select_lapply
 #'
 #' @return return list of LR pair or family field estimation.
 #' @importFrom utils setTxtProgressBar txtProgressBar
