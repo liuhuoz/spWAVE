@@ -462,31 +462,33 @@ single_point_vector <- function(
 calc_database_holed_field <- function(
   kept_db,
   expr,
-  meta_coord_list,
+  coord,
+  km_coord_list,
   radius = 500,
   verbose=TRUE
 ){
   #* 这里就是直接对每个i点直接生成merge的空间表达后，直接计算，求和
-  meta_coord <- meta_coord_list[[1]]
-  spot_coord <- meta_coord_list[[2]]
+  #meta_coord <- km_coord_list[[1]]
+  spot_coord <- coord
   
   spot_expr <- expr
-  spot_expr$cluster <- rownames(spot_expr)
-  meta_expr <- generate_meta_expr(expr,spot_coord)
+  #spot_expr$cluster <- rownames(spot_expr)
+  meta_expr <- generate_meta_expr(expr,km_coord_list$km_cluster)
   all_expr <- rbind.data.frame(spot_expr,meta_expr)
 
   point_vec_list <- 
   auto_select_lapply(seq_len(nrow(spot_expr)),
     function(i){
     temp <- generate_holed_coord_expr(
-      meta_coord_list = meta_coord_list,
+      coord=coord,
+      km_coord_list = km_coord_list,
       all_expr=all_expr,
-      center=spot_expr$cluster[i],
+      center=rownames(spot_expr)[i],
       radius=radius)
-    center_idx <- which(temp$uni_id == all_expr$cluster[i])
+    center_idx <- which(temp$barcode == rownames(spot_expr)[i])
     point_vec <- 
       single_point_vector(temp$x[center_idx],temp$y[center_idx],temp)
-    point_vec$uni_id <- all_expr$cluster[i]
+    point_vec$barcode <- rownames(spot_expr)[i]
     return(point_vec)
   },verbose=verbose
   )
@@ -494,8 +496,8 @@ calc_database_holed_field <- function(
   for(i in seq_len(nrow(point_vec_list[[1]]))){
     temp <- 
       do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
-    rownames(temp) <- temp$barcode <- temp$uni_id
-    temp$uni_id <- NULL
+    rownames(temp) <- temp$barcode
+    #temp$uni_id <- NULL
     gene_vec_list[[i]] <- temp
   }
   names(gene_vec_list) <- rownames(point_vec_list[[1]])

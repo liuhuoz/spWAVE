@@ -4,13 +4,7 @@
 \alias{single_point_vector}
 \title{Calculate a single point vector}
 \usage{
-single_point_vector(
-  X,
-  Y,
-  spatial_expr,
-  dist_mat = NULL,
-  coords_sub_list = NULL
-)
+single_point_vector(X, Y, spatial_expr, dist_mat = NULL, coord_sub_list = NULL)
 }
 \arguments{
 \item{X, Y}{The coordinates of the spot.}
@@ -23,7 +17,7 @@ And it will be calculated automatically if NULL.
 For large matrix, we recommend to auto generate the distance matrix in this function.
 Because generating one-column matrix is faster than slicing the large fullback matrix.}
 
-\item{coords_sub_list}{the pre-calced pairwise subtraction matrix, default is NULL.
+\item{coord_sub_list}{the pre-calced pairwise subtraction matrix, default is NULL.
 Treatment and recommendation likes parameter \code{dist_mat}.}
 }
 \value{

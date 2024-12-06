@@ -8,7 +8,7 @@ single_field_vector(
   spatial_expr,
   gene_name = colnames(spatial_expr)[4],
   dist_mat = NULL,
-  coords_sub_list = NULL
+  coord_sub_list = NULL
 )
 }
 \arguments{
@@ -20,7 +20,7 @@ single_field_vector(
 If NULL, it will be calculated automatically.
 we recommend to pre-calculate distance matrix for speed up.}
 
-\item{coords_sub_list}{pre-calced pairwise subtraction matrix. Default is NULL.
+\item{coord_sub_list}{pre-calced pairwise subtraction matrix. Default is NULL.
 Treatment and recommendation likes parameter \code{dist_mat}.}
 }
 \value{

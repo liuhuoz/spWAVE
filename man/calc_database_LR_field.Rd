@@ -4,7 +4,7 @@
 \alias{calc_database_LR_field}
 \title{calculate LR pair field in database}
 \usage{
-calc_database_LR_field(kept_db, single_mol_field)
+calc_database_LR_field(kept_db, single_mol_field, verbose = TRUE)
 }
 \arguments{
 \item{kept_db}{data.frame, LR database, must be same with the database used in single_mol_field}
