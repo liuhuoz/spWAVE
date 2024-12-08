@@ -1067,12 +1067,12 @@ generate_holed_coord <- function(
     table() %>% names()
 
   inner_part <- coord[inner_idx,]
-  inner_part$uni_id <- inner_part$barcode
+  #inner_part$uni_id <- inner_part$barcode
   inner_part <- inner_part[,c("x","y","barcode")]
 
-  outer_idx <- which(!(meta_coord$cluster %in% holed_clu))
+  outer_idx <- which(!(meta_coord$barcode %in% holed_clu))
   outer_part <- meta_coord[outer_idx,]
-  outer_part$uni_id <- outer_part$cluster
+  #outer_part$uni_id <- outer_part$cluster
   outer_part <- outer_part[,c("x","y","barcode")]
 
   final_coord <- 

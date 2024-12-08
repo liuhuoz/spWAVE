@@ -403,7 +403,7 @@ single_point_vector <- function(
     spatial_sub_mat <- coord_sub_list
   }
   
-  expr_point <- expr_point[,-c(1:3,ncol(expr_point))]
+  expr_point <- expr_point[,-c(1:3)]
   genes <- colnames(expr_point)
   vec <- 
   cbind(spatial_sub_mat,
@@ -446,6 +446,7 @@ single_point_vector <- function(
 #' @inheritParams calc_database_single_field
 #' @inheritParams generate_holed_coord
 #' @inheritParams auto_select_lapply
+#' @param ROI_barcode character vector, the barcode of spots/cells in the region of interest.
 #'
 #' @details This function is wrapper of \code{\link{single_point_vector}} 
 #' and \code{\link{generate_holed_coord_expr}} to generate a database field vector of 
@@ -464,6 +465,7 @@ calc_database_holed_field <- function(
   kept_db,
   expr,
   coord,
+  ROI_barcode=NULL,
   km_coord_list,
   radius = 500,
   verbose=TRUE
@@ -477,19 +479,21 @@ calc_database_holed_field <- function(
   meta_expr <- generate_meta_expr(expr,km_coord_list$km_cluster)
   all_expr <- rbind.data.frame(spot_expr,meta_expr)
 
+  if(is.null(ROI_barcode)){ROI_barcode <- rownames(spot_expr)}
+
   point_vec_list <- 
-  auto_select_lapply(seq_len(nrow(spot_expr)),
+  auto_select_lapply(seq_len(length(ROI_barcode)),
     function(i){
     temp <- generate_holed_coord_expr(
       coord=coord,
       km_coord_list = km_coord_list,
       all_expr=all_expr,
-      center=rownames(spot_expr)[i],
+      center=ROI_barcode[i],
       radius=radius)
-    center_idx <- which(temp$barcode == rownames(spot_expr)[i])
+    center_idx <- which(temp$barcode == ROI_barcode[i])
     point_vec <- 
       single_point_vector(temp$x[center_idx],temp$y[center_idx],temp)
-    point_vec$barcode <- rownames(spot_expr)[i]
+    point_vec$barcode <- ROI_barcode[i]
     return(point_vec)
   },verbose=verbose
   )
