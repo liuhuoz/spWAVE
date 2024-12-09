@@ -26,8 +26,7 @@ should have column names "x" and "y" and "barcode".}
 }
 \value{
 list, meta coordinates contain geometric center of each cluster and
-spot ids.
-And single coordinates contain the original coordinates added cluster information.
+spot ids. And km_cluster contain the barcode and cluster id.
 }
 \description{
 Generate meta coordinates by kmeans methods
