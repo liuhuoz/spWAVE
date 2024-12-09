@@ -497,11 +497,14 @@ calc_database_holed_field <- function(
     return(point_vec)
   },verbose=verbose
   )
-  gene_vec_list <- list() 
+  gene_vec_list <- list()
+  all_expr$barcode <- rownames(all_expr) 
   for(i in seq_len(nrow(point_vec_list[[1]]))){
     temp <- 
       do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
+    temp %<>% left_join(all_expr[,c(ncol(all_expr),i)],by="barcode")
     rownames(temp) <- temp$barcode
+    temp <- temp[,c("x","y","barcode",colnames(all_expr)[i],"Ex","Ey","U")]
     #temp$uni_id <- NULL
     gene_vec_list[[i]] <- temp
   }
