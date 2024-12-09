@@ -205,10 +205,12 @@ plot_field_direction2 <- function(
   if(image=="blank"){
       arrow_color <- ifelse(is.null(arrow_color),"firebrick3",arrow_color)
       arrow_alpha <- ifelse(is.null(arrow_alpha),1,arrow_alpha)
-      point_size <- 
-        ifelse(nrow(arrow_df)<10000,2,
-              ifelse(nrow(arrow_df)<20000,1,0.2)
-              )
+      if(is.null(point_size)){
+        point_size <- 
+          ifelse(nrow(arrow_df)<10000,2,
+                ifelse(nrow(arrow_df)<20000,1,0.2)
+                )
+      }
     }else{
       arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)
 
