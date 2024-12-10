@@ -998,6 +998,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 #'
 #' @param coord data.frame,spatial coordinates, 
 #' should have column names "x" and "y" and "barcode".
+#' @param random_seed random seed of kmeans for reproducibility. Default is 42.
 #' @inheritParams stats::kmeans
 #' 
 #' @seealso \code{\link[stats]{kmeans}}
@@ -1012,8 +1013,10 @@ generate_kmeans_coord <- function(
   coord,
   centers=nrow(coord)/10,
   iter.max=10,
-  nstart=1
+  nstart=1,
+  random_seed=42
 ){
+  set.seed(random_seed)
   km_result <- stats::kmeans(coord[,c("x","y")], centers=centers, nstart = nstart,iter.max = iter.max)
   km_coord <- 
     cbind.data.frame(
@@ -1023,6 +1026,8 @@ generate_kmeans_coord <- function(
   coord$cluster <- paste0("clu_",km_result$cluster)
   cluster_info <- coord[,c("barcode","cluster")]
   rownames(km_coord) <- km_coord$barcode
+  
+  set.seed(NULL)
 
   return(list(meta=km_coord,km_cluster=cluster_info))
 }

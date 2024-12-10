@@ -8,7 +8,8 @@ generate_kmeans_coord(
   coord,
   centers = nrow(coord)/10,
   iter.max = 10,
-  nstart = 1
+  nstart = 1,
+  random_seed = 42
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ should have column names "x" and "y" and "barcode".}
 
 \item{nstart}{if \code{centers} is a number, how many random sets
     should be chosen?}
+
+\item{random_seed}{random seed of kmeans for reproducibility. Default is 42.}
 }
 \value{
 list, meta coordinates contain geometric center of each cluster and
