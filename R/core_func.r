@@ -491,24 +491,29 @@ calc_database_holed_field <- function(
       center=ROI_barcode[i],
       radius=radius)
     center_idx <- which(temp$barcode == ROI_barcode[i])
+    temp_mat <- temp[,-3] %>% as.matrix()
     point_vec <- 
-      single_point_vector(temp$x[center_idx],temp$y[center_idx],temp)
+      single_point_vector_rcpp(temp$x[center_idx],temp$y[center_idx],temp_mat)
     point_vec$barcode <- ROI_barcode[i]
+    point_vec$x <- temp_mat[center_idx,1]
+    point_vec$y <- temp_mat[center_idx,2]
     return(point_vec)
   },verbose=verbose
   )
   gene_vec_list <- list()
-  all_expr$barcode <- rownames(all_expr) 
+  spot_expr_ROI <- spot_expr[ROI_barcode,]
   for(i in seq_len(nrow(point_vec_list[[1]]))){
     temp <- 
       do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
-    temp %<>% left_join(all_expr[,c(ncol(all_expr),i)],by="barcode")
+    #* Align the row order for concatenation
     rownames(temp) <- temp$barcode
-    temp <- temp[,c("x","y","barcode",colnames(all_expr)[i],"Ex","Ey","U")]
-    #temp$uni_id <- NULL
+    temp <- temp[ROI_barcode,]
+    temp %<>% cbind.data.frame(spot_expr_ROI[,i,FALSE])
+
+    temp <- temp[,c("x","y","barcode",colnames(spot_expr)[i],"Ex","Ey","U")]
     gene_vec_list[[i]] <- temp
   }
-  names(gene_vec_list) <- rownames(point_vec_list[[1]])
+  names(gene_vec_list) <- point_vec_list[[1]]$gene
 
   return(gene_vec_list)
 }

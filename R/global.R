@@ -10,3 +10,8 @@ utils::globalVariables(
     )
 )
 
+#This part is used for handle the Rcpp related functions
+#' @useDynLib spWAVE, .registration = TRUE
+#' @exportPattern "^[[:alpha:]]+"
+#' @importFrom Rcpp sourceCpp
+NULL

@@ -1,2 +1,11 @@
 .Rproj.user
 inst/doc
+
+# Ignore Rcpp generated files
+src/*.o
+src/*.so
+src/*.dll
+src/*.dSYM/
+src/*.gcno
+src/*.gcda
+src/*~
