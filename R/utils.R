@@ -1090,10 +1090,11 @@ generate_holed_coord <- function(
   coord$dist <- dist_temp[,1]
   coord$position <- ifelse(coord$dist <= radius, "inner", "outer")
 
-  inner_idx <- which(coord$position=="inner")
-  holed_clu <- km_clu_info$cluster[inner_idx] %>% unique()
+  temp <- which(coord$position=="inner")
+  holed_clu <- km_clu_info$cluster[temp] %>% unique()
+  inner_clu_idx <- which(km_clu_info$cluster %in% holed_clu)
 
-  inner_part <- coord[inner_idx,]
+  inner_part <- coord[inner_clu_idx,]
   #inner_part$uni_id <- inner_part$barcode
   inner_part <- inner_part[,c("x","y","barcode")]
 
