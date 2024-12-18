@@ -444,7 +444,7 @@ single_point_vector <- function(
 #' for the centroid method ST like 10x Xenium 
 #' 
 #' @inheritParams calc_database_single_field
-#' @inheritParams generate_holed_coord
+#' @inheritParams generate_holed_coord_expr
 #' @inheritParams auto_select_lapply
 #' @param ROI_barcode character vector, the barcode of spots/cells in the region of interest.
 #'

@@ -39,16 +39,22 @@ Eigen::MatrixXd mat_transform(
                                                         mat_temp.ncol());
     return(E_mat);
 }
-
+//' Calculate single point vector through rcpp
+//'
+//' Calculate single molecular vector field from spatial coordinate and expression in one point through rcpp.
+//'
+//' @param X        Center point coordinates X.  
+//' @param Y        Center point coordinates Y.  
+//' @param spatial_expr     Spatial expression matrix, require x,y,gene expression.
+//' @return         Dataframe contain Ex, Ey, U.
+//' @seealso \code{\link{single_point_vector}}
+//' @export 
 // [[Rcpp::export]]
 DataFrame single_point_vector_rcpp(
     const double& X,
     const double& Y,
     const NumericMatrix& spatial_expr
 ) {
-    // Extract rownames as barcodes
-    //CharacterVector barcodes = rownames(spatial_expr);
-
     // Convert entire DataFrame (excluding rownames) to MatrixXd
     Eigen::MatrixXd full_mat = mat_transform(spatial_expr);
 
