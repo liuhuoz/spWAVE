@@ -580,7 +580,8 @@ prep_S2S_LR_mat <- function(
   q_mat %<>% as("dgCMatrix")
   rownames(q_mat) <- colnames(q_mat) <- rownames(field_df)
 
-  #** single directional checking whether the LR interaction exist
+  #** single directional checking whether the L to R interaction exist
+  #** col to row ,col as sender, row as receiver
   #** 0: not exist, 1: exist
   temp <- sign(q_net) %*% t(rep(1,length(q_net)))
   LR_kept <- temp - t(temp)
