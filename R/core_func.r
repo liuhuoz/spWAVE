@@ -549,7 +549,7 @@ prep_S2S_dist_mat <- function(kept_db,db_field_result){
   colnames(p_sub_x_mat) <- rownames(p_sub_x_mat)
   colnames(p_sub_y_mat) <- rownames(p_sub_y_mat)
   
-  dist_mat_list <- list(p_dist=pairwise_dist_mat,p_sub_x=p_sub_x_mat,p_sub_y=p_sub_y_mat)
+  dist_mat_list <- list(p_dist=pairwise_dist_mat,p_sub_x=p_sub_x_mat, p_sub_y=p_sub_y_mat)
   return(dist_mat_list)
 }
 
@@ -564,6 +564,7 @@ prep_S2S_dist_mat <- function(kept_db,db_field_result){
 #'
 #' @return return data.frame contain spot2spot interaction matrix
 #' @importFrom methods as
+#' @importFrom MatrixExtra t_shallow
 #' @importClassesFrom Matrix dgCMatrix
 #' @export
 prep_S2S_LR_mat <- function(
@@ -571,27 +572,75 @@ prep_S2S_LR_mat <- function(
   ligand,receptor
 ){
   #** col as receiver, row as sender
-  q2 <- field_df[,receptor] %>% as.matrix()
-  q1 <- field_df[,ligand] %>% as.matrix()
-  q_net <- q1-q2
+  q2 <- field_df[,receptor]
+  q1 <- field_df[,ligand]
+  q_net <- (q1-q2) %>% as.matrix() %>% methods::as("dgCMatrix")
   #q_mat <- q1 %*% t(q2)
   #q_mat <- q_net %*% t(q2)
-  q_mat <- q_net %*% t(q_net)
-  q_mat %<>% as("dgCMatrix")
+  #print(class(q_net))
+  #return(q_net)
+  q_mat <- q_net %*% MatrixExtra::t_shallow(q_net)
+  #q_mat %<>% as("dgCMatrix")
   rownames(q_mat) <- colnames(q_mat) <- rownames(field_df)
 
   #** single directional checking whether the L to R interaction exist
   #** col to row ,col as sender, row as receiver
   #** 0: not exist, 1: exist
-  temp <- sign(q_net) %*% t(rep(1,length(q_net)))
-  LR_kept <- temp - t(temp)
-  LR_kept[LR_kept<2] <- 0
-  LR_kept[LR_kept==2] <- 1
+  #print("prep sign")
+  q_net_sign <- q_net
+  q_net_sign@x %<>% sign()
+  LR_kept <- compute_LR_kept_dgC(q_net_sign)
 
-  q_mat <- q_mat*LR_kept
+  q_mat <- q_mat * LR_kept #** 这里到也可以用@x来计算，不过得先对q_mat先进行处理过滤ij数值
   return(q_mat)
 }
 
+#' prepare spot2spot sparse distance matrix
+#'
+#' Calc distance between selected spot and return sparse matrix
+#'
+#' @param LR_mat LR interaction matrix, the result of prep_S2S_LR_mat
+#' @param coord data.frame, coordinates of spots, 
+#' the rownames should be same as rownames of LR_mat
+#'
+#' @return dgCMatrix, the distance between selected spot
+#' @export
+prep_S2S_dist_sparse <- function(LR_mat,coord){
+  #align row index between LR_mat and coord
+  if(all(rownames(coord) %in% rownames(LR_mat))){
+    if(!all(rownames(coord) == rownames(LR_mat))){
+      coord <- coord[rownames(LR_mat),]
+    }
+  }else(
+    stop("rownames of coord should be same as rownames of LR_mat")
+  )
+  coord <- coord[,c("x","y")]
+
+  LR_mat %<>% methods::as("TsparseMatrix")
+  row_idx <- LR_mat@i
+  col_idx <- LR_mat@j
+
+  row_point <- coord[row_idx+1,]
+  col_point <- coord[col_idx+1,]
+  dist_sub <- (row_point-col_point)
+  dist <- dist_sub^2 %>% rowSums() %>% sqrt()
+
+  dist_mat <- dist_sub_x <- dist_sub_y <- LR_mat
+  dist_mat@x <- dist
+  dist_sub_x@x <- dist_sub[,c("x")]
+  dist_sub_y@x <- dist_sub[,c("y")]
+  #dist_mat %<>% methods::as("CsparseMatrix")
+  #dist_sub_x %<>% methods::as("CsparseMatrix")
+  #dist_sub_y %<>% methods::as("CsparseMatrix") 
+  #** 这个地方drop0了，导致长度不一致，（也可能不需要转换），想想怎么处理
+  #** 还有一种就是手动算ij了，现在先不进行转换也不进行drop0，看看怎么样 
+
+  return(
+    list(p_dist=dist_mat,
+    p_sub_x=dist_sub_x,
+    p_sub_y=dist_sub_y)
+  )
+}
 
 #' Prepare spot2spot interaction and distance matrix
 #'
@@ -610,14 +659,22 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
 
   #** 在循环外进行计算距离矩阵和相互xy，后面共用
 
-  dist_list <- prep_S2S_dist_mat(kept_db,db_field_result)
-
+  #dist_list <- prep_S2S_dist_mat(kept_db,db_field_result)
+  coord <- db_field_result[[1]][[1]][,c("x","y")]
   #** for循环内每次需要提取一次LR_info,提取后再套取S2S_score进行计算
   #** 其中LR_info需要的L与R基因名也可以给到S2S_score
   LR_S2S_mat_list <- list()
+  LR_dist_list <- list()
   field_df_list <- list()
+
   pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   iter=seq_len(nrow(kept_db))
+  # dist_flag <- TRUE
+  # if(nrow(coord)<=13000){
+  #   dist_list <- prep_S2S_dist_mat(kept_db,db_field_result)
+  #   LR_dist_list <- rep(list(dist_list),nrow(kept_db))
+  #   dist_flag <- FALSE
+  # } #** 为了后面直接使用稀疏矩阵计算，这里全部使用后续的计算方式
   for(i in iter){
     
     field_df_list[[i]] <- concatenate_LR_field_info(
@@ -625,18 +682,29 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
         kept_db$Ligand[i],kept_db$Receptor[i]
         )
     
-    
     LR_S2S_mat_list[[i]] <- 
       prep_S2S_LR_mat(
         field_df_list[[i]],
         kept_db$Ligand[i],kept_db$Receptor[i]
         )
+        
+    #if(dist_flag){
+      LR_dist_list[[i]] <- 
+        prep_S2S_dist_sparse(
+          LR_S2S_mat_list[[i]],
+          coord
+          )
+    #}
+
     utils::setTxtProgressBar(pb, i)
     
   }
   close(pb)
   names(LR_S2S_mat_list) <- names(field_df_list) <- kept_db$id
-  prep_list <- list(dist=dist_list,q_list=LR_S2S_mat_list,field_list=field_df_list)
+  prep_list <- 
+    list(dist=LR_dist_list,
+      q_list=LR_S2S_mat_list,
+      field_list=field_df_list)
 
   return(prep_list)
 }
@@ -650,7 +718,9 @@ prep_database_S2S_list <- function(kept_db,db_field_result){
 #'
 #' @param dist_list distance matrix list, the result of prep_S2S_dist_mat
 #' @param LR_mat spot2spot interaction matrix of selected LR pair, in the result of prep_S2S_LR_mat
-#'
+#' 
+#' @importFrom Matrix drop0
+#' 
 #' @return list of spot2spot interaction force, including force components of x,y and norm
 #' @export
 calc_S2S_force_mat <- function(
@@ -664,15 +734,20 @@ calc_S2S_force_mat <- function(
   sub_y <- dist_list$p_sub_y
   #LR_mat <- LR_mat_list[[LR_pair]]
 
-  force_x_mat <- -LR_mat*sub_x/(dist^3)
-  force_y_mat <- -LR_mat*sub_y/(dist^3)
-  force_x_mat[is.na(force_x_mat)] <- 0
-  force_y_mat[is.na(force_y_mat)] <- 0
-  force_norm_mat <- sqrt(force_x_mat^2+force_y_mat^2)
 
-  #force_x_mat %<>% as("dgCMatrix")
-  #force_y_mat %<>% as("dgCMatrix")
-  #force_norm_mat %<>% as("dgCMatrix")
+  force_norm_mat <- force_x_mat <- force_y_mat <- LR_mat
+
+  force_x_mat@x <- -LR_mat@x*sub_x@x/(dist@x^3)
+  force_y_mat@x <- -LR_mat@x*sub_y@x/(dist@x^3)
+
+  force_x_mat@x[is.na(force_x_mat@x)] <- 0
+  force_y_mat@x[is.na(force_y_mat@x)] <- 0
+  force_norm_mat@x <- sqrt(force_x_mat@x^2+force_y_mat@x^2)
+
+  #force_x_mat %<>% Matrix::drop0()
+  #force_y_mat %<>% Matrix::drop0()
+  #force_norm_mat %<>% Matrix::drop0()
+
   force_list <- 
     list(force_x=force_x_mat,force_y=force_y_mat,force_norm=force_norm_mat)
 
@@ -697,8 +772,10 @@ calc_database_S2S_force <- function(kept_db,prep_list,verbose=TRUE){
   db_S2S_force_list <- list()
 
     db_S2S_force_list <- 
-      auto_select_lapply(LR_mat_list,function(id_mat){
-        calc_S2S_force_mat(dist_list,id_mat)
+      auto_select_lapply(seq_len(nrow(kept_db)),function(i){
+        calc_S2S_force_mat(
+          dist_list[[i]],
+          LR_mat_list[[i]])
         },verbose=verbose)
   names(db_S2S_force_list) <- kept_db$id
 
@@ -745,9 +822,9 @@ calc_field_force_mat <- function(
 
   n_row <- rep(1,nrow(field_df)) %>% as.matrix() 
   
-  field_Fx <- n_row %*% t(ori_field_force$Fx) %>% as("dgCMatrix")
-  field_Fy <- n_row %*% t(ori_field_force$Fy) %>% as("dgCMatrix")
-  field_Fnorm <- sqrt(field_Fx^2+field_Fy^2) %>% as("dgCMatrix")
+  field_Fx <- n_row %*% t(ori_field_force$Fx) %>% methods::as("dgCMatrix")
+  field_Fy <- n_row %*% t(ori_field_force$Fy) %>% methods::as("dgCMatrix")
+  field_Fnorm <- sqrt(field_Fx^2+field_Fy^2) %>% methods::as("dgCMatrix")
 
   field_force <- 
     list(force_x=field_Fx,force_y=field_Fy,force_norm=field_Fnorm)
@@ -759,6 +836,61 @@ calc_field_force_mat <- function(
   return(field_force)
 }
 
+
+#' calculation field-spot interaction force
+#'
+#' calculation field-spot interaction force which 
+#' considered as how the whole field affect the spot
+#'
+#' @param field_df data.frame, contain vector field info.
+#' @param ligand Ligand gene.
+#' @param receptor Receptor gene.
+#' @param LR_mat dgCMatrix, spot2spot interaction matrix, can be LR direcional expression or 
+#' LR specific force matrix
+#'
+#' @return return list of matrices including force component of x,y and force norm.
+#' 
+#' @importClassesFrom Matrix dgCMatrix CsparseMatrix
+#' 
+#' @seealso calc_field_force_mat
+#' 
+#' @export
+calc_field_force_SpMat <- function(
+  field_df,
+  ligand,receptor,
+  LR_mat
+){
+  if(all(rownames(field_df) %in% rownames(LR_mat))){
+    if(!all(rownames(field_df) == rownames(LR_mat))){
+      field_df <- field_df[rownames(LR_mat),]
+    }
+  }else(
+    stop("rownames of field_df should be same as rownames of LR_mat")
+  )
+
+  if(!inherits(LR_mat,"dgCMatrix")){
+    LR_mat %<>% methods::as("CsparseMatrix")
+  }
+
+  field_df$q_net <- field_df[,ligand] - field_df[,receptor]
+  field_df$Fx=field_df$q_net*field_df$Ex
+  field_df$Fy=field_df$q_net*field_df$Ey
+  
+  field_Fx <- field_Fy <- field_Fnorm <- LR_mat
+
+  field_Fx@x <- rep(field_df$Fx,times=diff(LR_mat@p)) 
+  field_Fy@x <- rep(field_df$Fy,times=diff(LR_mat@p)) 
+  field_Fnorm@x <- sqrt(field_Fx@x^2+field_Fy@x^2) 
+
+  field_force <- 
+    list(force_x=field_Fx,force_y=field_Fy,force_norm=field_Fnorm)
+  # field_force <- 
+  #   lapply(field_force,function(mat){
+  #     rownames(mat) <- colnames(mat) <- rownames(field_df)
+  #     return(mat)
+  #   })
+  return(field_force)
+}
 
 #' calculation of spot2spot interaction score
 #'
@@ -784,17 +916,21 @@ calc_S2S_score_mat <- function(field_force_list,S2S_force_list){
   S2S_Fy <- S2S_force_list$force_y
   S2S_Fnorm <- S2S_force_list$force_norm
 
-  Ta <- S2S_Fx*field_Fx
-  Tb <- S2S_Fy*field_Fy
+  Ta <- S2S_Fx@x*field_Fx@x
+  Tb <- S2S_Fy@x*field_Fy@x
   temp <- (Ta+Tb)
 
-  S2S_cos_norm <- temp/field_Fnorm
+
+  temp <- temp/field_Fnorm@x
   #S2S_cos <- temp/(field_Fnorm*S2S_Fnorm)
   #df$cos_norm <- (df$Fx*vec$Fx+df$Fy*vec$Fy)/sqrt(vec$Fx^2+vec$Fy^2)
 
   #** devided by 0 introducing NaN, and change the class into dgeMatrix
-  S2S_cos_norm[is.na(S2S_cos_norm)] <- 0
-  S2S_cos_norm %<>% as("CsparseMatrix")
+  temp[is.na(temp)] <- 0
+  S2S_cos_norm <- field_Fnorm
+  S2S_cos_norm@x <- temp
+  S2S_cos_norm %<>% Matrix::drop0()
+  #S2S_cos_norm %<>% methods::as("CsparseMatrix")
 
   #S2S_cos[is.na(S2S_cos)] <- 0
   #S2S_cos %<>% as("CsparseMatrix")
