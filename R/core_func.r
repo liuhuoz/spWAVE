@@ -959,16 +959,17 @@ calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
   pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   iter=seq_len(nrow(kept_db))
   for(i in iter){
-    db_field_force_df <- 
-      calc_field_force_mat(
+    db_field_force <- 
+      calc_field_force_SpMat(
         field_df_list[[i]],
         kept_db$Ligand[i],
-        kept_db$Receptor[i]
+        kept_db$Receptor[i],
+        db_S2S_force_list[[i]][[1]]
         )
     
     db_S2S_score_list[[i]] <- 
       calc_S2S_score_mat(
-        db_field_force_df,
+        db_field_force,
         db_S2S_force_list[[i]]
         )
     utils::setTxtProgressBar(pb, i)
