@@ -27,7 +27,6 @@ Imports:
     ggsci,
     graphics,
     igraph,
-    Matrix,
     matrixStats,
     methods,
     pbapply,
@@ -40,11 +39,13 @@ Imports:
     tibble,
     tidyr,
     utils,
-    viridis
+    viridis,
+    MatrixExtra
 Depends: 
     R (>= 4.0),
     magrittr,
     dplyr,
-    stringr
+    stringr,
+    Matrix
 LazyData: true
 VignetteBuilder: knitr

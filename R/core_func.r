@@ -518,9 +518,9 @@ calc_database_holed_field <- function(
   return(gene_vec_list)
 }
 
-#*******************************
-#** Interaction Score  Module **
-#*******************************
+#******************************
+#** Interaction Score Module **
+#******************************
 
 #*** Spot2Spot Interaction Score
 
@@ -981,7 +981,7 @@ calc_database_S2S_score <- function(kept_db,prep_list,db_S2S_force_list){
   return(db_S2S_score_list)
 }
 
-#*** Cluster2Cluster Interaction Score
+#** Cluster2Cluster Interaction Score
 
 #' calculation of cluster2cluster interaction score matrix
 #'
@@ -1022,7 +1022,6 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list,n_mat){
 #' but each element is a vector of shuffled indices. 
 #' @return list of unfiltered cluster2cluster interaction score summary, score and p-value matrices
 #' @importFrom tibble rownames_to_column
-#' @import dplyr
 #' @importFrom tidyr pivot_longer
 #' @export
 calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list,n_mat){

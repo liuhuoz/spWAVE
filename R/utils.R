@@ -1213,40 +1213,40 @@ auto_select_lapply <- function(seq_obj,func,verbose=TRUE,...){
   return(list_result)
 }
 
-#' Simple Replicate one-col dgCMatrix
-#' 
-#' Simple Replicate one-col dgCMatrix to n-col
-#' 
-#' @param sparse_col one-col dgCMatrix
-#' @param n total number to be extend
-#' 
-#' 
-#' @importFrom Matrix sparseMatrix
-#' @importClassesFrom Matrix dgCMatrix CsparseMatrix
-replicate_sparse_column <- function(sparse_col, n) {
-  # Check if input is a single-column sparse matrix
-  if (!inherits(sparse_col, "dgCMatrix") || ncol(sparse_col) != 1) {
-    stop("Input must be a single-column dgCMatrix.")
-  }
+# ' Simple Replicate one-col dgCMatrix
+# ' 
+# ' Simple Replicate one-col dgCMatrix to n-col
+# ' 
+# ' @param sparse_col one-col dgCMatrix
+# ' @param n total number to be extend
+# ' 
+# ' 
+# ' @importFrom Matrix sparseMatrix
+# ' @importClassesFrom Matrix dgCMatrix CsparseMatrix
+# ' @importFrom methods new
+# replicate_sparse_column <- function(sparse_col, n) {
+#   # Check if input is a single-column sparse matrix
+#   if (!inherits(sparse_col, "dgCMatrix") || ncol(sparse_col) != 1) {
+#     stop("Input must be a single-column dgCMatrix.")
+#   }
   
-  # Create the replicated sparse matrix
-  # replicated <- Matrix::sparseMatrix(
-  #   i = rep(sparse_col@i, n),           # Replicate row indices
-  #   p = seq(0, length(sparse_col@x) * n, length.out = (n + 1)),      # Assign columns sequentially
-  #   x = rep(sparse_col@x, n),                   # Replicate the non-zero values
-  #   index1 = FALSE,  #fit the directly extraction form dgc
-  #   dims = c(nrow(sparse_col), n), # Set dimensions
-  #   repr = "C"  #dgC
-  # )
-  replicated <- new("dgCMatrix",
-                i = rep(sparse_col@i, n) %>% as.integer(),               # Replicate row indices
-                p = seq(0, length(sparse_col@x) * n, length.out = (n + 1)) %>% as.integer(), # Compute column pointers
-                x = rep(sparse_col@x, n),               # Replicate non-zero values
-                Dim = c(nrow(sparse_col), n) %>% as.integer()            # Dimensions
-  )
-  
-  return(replicated)
-}
+#   # Create the replicated sparse matrix
+#   # replicated <- Matrix::sparseMatrix(
+#   #   i = rep(sparse_col@i, n),           # Replicate row indices
+#   #   p = seq(0, length(sparse_col@x) * n, length.out = (n + 1)),      # Assign columns sequentially
+#   #   x = rep(sparse_col@x, n),                   # Replicate the non-zero values
+#   #   index1 = FALSE,  #fit the directly extraction form dgc
+#   #   dims = c(nrow(sparse_col), n), # Set dimensions
+#   #   repr = "C"  #dgC
+#   # )
+#   replicated <- new("dgCMatrix",
+#                 i = rep(sparse_col@i, n) %>% as.integer(),               # Replicate row indices
+#                 p = seq(0, length(sparse_col@x) * n, length.out = (n + 1)) %>% as.integer(), # Compute column pointers
+#                 x = rep(sparse_col@x, n),               # Replicate non-zero values
+#                 Dim = c(nrow(sparse_col), n) %>% as.integer()            # Dimensions
+#   )
+#   return(replicated)
+# }
 
 #' compute LR kept Matrix
 #' 
@@ -1257,7 +1257,7 @@ replicate_sparse_column <- function(sparse_col, n) {
 #' @importFrom Matrix sparseMatrix
 #' @importClassesFrom Matrix dgCMatrix CsparseMatrix
 #' 
-#' @value a dgCMatrix store the LR kept matrix
+#' @return a dgCMatrix store the LR kept matrix
 compute_LR_kept_dgC <- function(q_net_sign) {
   # Check if input is a single-column dgCMatrix
   if (!inherits(q_net_sign, "dgCMatrix") || ncol(q_net_sign) != 1) {
