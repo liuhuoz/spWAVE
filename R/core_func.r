@@ -492,11 +492,12 @@ calc_database_holed_field <- function(
       radius=radius)
     center_idx <- which(temp$barcode == ROI_barcode[i])
     temp_mat <- temp[,-3] %>% as.matrix()
+    nonzero_expr <- which(rowSums(temp_mat[,3:ncol(temp_mat)])!=0)
     point_vec <- 
-      single_point_vector_rcpp(temp$x[center_idx],temp$y[center_idx],temp_mat)
+      single_point_vector_rcpp(temp$x[center_idx],temp$y[center_idx],temp_mat[nonzero_expr,])
     point_vec$barcode <- ROI_barcode[i]
-    point_vec$x <- temp_mat[center_idx,1]
-    point_vec$y <- temp_mat[center_idx,2]
+    point_vec$x <- temp$x[center_idx]
+    point_vec$y <- temp$y[center_idx]
     return(point_vec)
   },verbose=verbose
   )
