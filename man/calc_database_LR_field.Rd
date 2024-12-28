@@ -12,7 +12,7 @@ calc_database_LR_field(kept_db, single_mol_field, verbose = TRUE)
 \item{single_mol_field}{list of single molecular field,
 usually the result of calc_database_single_field}
 
-\item{verbose}{whether to print progress, default is TRUE}
+\item{verbose}{logical, whether to print progress, default is TRUE.}
 }
 \value{
 return list of LR pair or family field estimation.

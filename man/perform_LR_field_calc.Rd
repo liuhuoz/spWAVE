@@ -13,7 +13,7 @@ perform_LR_field_calc(kept_db, expr, coord, verbose = TRUE)
 
 \item{coord}{spatial coordinates.}
 
-\item{verbose}{whether to print progress, default is TRUE}
+\item{verbose}{logical, whether to print progress, default is TRUE.}
 }
 \value{
 return list of single molecule field,

@@ -4,14 +4,23 @@
 \alias{auto_select_lapply}
 \title{lapply warpper}
 \usage{
-auto_select_lapply(seq_obj, func, verbose = TRUE, ...)
+auto_select_lapply(
+  seq_obj,
+  func,
+  verbose = TRUE,
+  backend = c("auto", "none", "future"),
+  ...
+)
 }
 \arguments{
 \item{seq_obj}{sequence object to be processed, such as list or vector}
 
 \item{func}{function to be applied}
 
-\item{verbose}{whether to print progress, default is TRUE}
+\item{verbose}{logical, whether to print progress, default is TRUE.}
+
+\item{backend}{character, must be one of "auto","none","future",
+the backend of parallel computing, default is "auto".}
 
 \item{...}{arguments to be passed to lapply functions}
 }

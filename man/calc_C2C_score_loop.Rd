@@ -4,7 +4,14 @@
 \alias{calc_C2C_score_loop}
 \title{calculation of cluster2cluster interaction score and p-value}
 \usage{
-calc_C2C_score_loop(S2S_score_mat, clu_info_list, clu_shuf_list, n_mat)
+calc_C2C_score_loop(
+  S2S_score_mat,
+  clu_info_list,
+  clu_shuf_list,
+  n_mat,
+  verbose = TRUE,
+  backend = "auto"
+)
 }
 \arguments{
 \item{S2S_score_mat}{S2S score matrix}
@@ -18,6 +25,11 @@ but each element is a vector of shuffled indices.}
 Col as sender, row as receiver.
 The names of the list elements represent the cluster names.
 Each vector corresponds to a cluster, and the elements within each vector are the indices of the matrix.}
+
+\item{verbose}{logical, whether to print progress, default is TRUE.}
+
+\item{backend}{character, must be one of "auto","none","future",
+the backend of parallel computing, default is "auto".}
 }
 \value{
 list of unfiltered cluster2cluster interaction score summary, score and p-value matrices

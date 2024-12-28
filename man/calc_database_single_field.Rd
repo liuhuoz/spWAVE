@@ -13,7 +13,7 @@ calc_database_single_field(kept_db, expr, coord, verbose = TRUE)
 
 \item{coord}{spatial coordinates.}
 
-\item{verbose}{whether to print progress, default is TRUE}
+\item{verbose}{logical, whether to print progress, default is TRUE.}
 }
 \value{
 list of single molecule field

@@ -1186,7 +1186,9 @@ generate_holed_coord_expr <- function(
 #' 
 #' @param seq_obj sequence object to be processed, such as list or vector
 #' @param func function to be applied
-#' @param verbose whether to print progress, default is TRUE
+#' @param verbose logical, whether to print progress, default is TRUE.
+#' @param backend character, must be one of "auto","none","future", 
+#' the backend of parallel computing, default is "auto".
 #' @param ... arguments to be passed to lapply functions
 #' 
 #' @seealso \code{\link{lapply}} 
@@ -1196,11 +1198,19 @@ generate_holed_coord_expr <- function(
 #' @import pbapply
 #' @import future
 #' @import future.apply
-auto_select_lapply <- function(seq_obj,func,verbose=TRUE,...){
+auto_select_lapply <- function(seq_obj,func,verbose=TRUE,backend=c("auto","none","future"),...){
   if(!is.vector(seq_obj)){stop("Must give a vector-like object to be processed")}
   para_set <- class(future::plan())
-  backend <- NULL
-  if(!("sequential" %in% para_set) && ("multiprocess" %in% para_set)){
+  backend <- match.arg(backend)
+
+  if(backend=="auto" && 
+    !("sequential" %in% para_set) && 
+    ("multiprocess" %in% para_set)
+    ){
+    backend <- "future"
+  }else if(backend=="none"){
+    backend <- NULL
+  }else{
     backend <- "future"
   }
   if(verbose){

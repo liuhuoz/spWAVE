@@ -10,7 +10,8 @@ calc_database_C2C_score(
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 500,
-  random_seed = 42
+  random_seed = 42,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -26,11 +27,14 @@ calc_database_C2C_score(
 
 \item{random_seed}{random seed used in shuffle. Default is 42,
 the answer to the ultimate question of life, the universe, and everything.}
+
+\item{verbose}{logical, whether to print progress, default is TRUE.}
 }
 \value{
 list of each LR pair C2C score summary, score and p value.
 }
 \description{
+The parallel version of calc_database_C2C_score. The parallel is based on 'future' package.
 calculation of cluster2cluster interaction score of LR pairs in database
 and shuffle test for p-value
 }

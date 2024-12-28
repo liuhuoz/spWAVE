@@ -11,7 +11,7 @@ calc_database_S2S_force(kept_db, prep_list, verbose = TRUE)
 
 \item{prep_list}{list, the result of prep_database_S2S_list}
 
-\item{verbose}{whether to print progress, default is TRUE}
+\item{verbose}{logical, whether to print progress, default is TRUE.}
 }
 \value{
 list of each LR pair of spot2spot interaction force.

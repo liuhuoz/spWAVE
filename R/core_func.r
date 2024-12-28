@@ -1019,13 +1019,25 @@ calc_C2C_mat <- function(S2S_score_mat,clu_info_list,n_mat){
 #'
 #' 
 #' @inheritParams calc_C2C_mat
+#' @inheritParams auto_select_lapply
 #' @param clu_shuf_list A named list,similar to clu_info_list, 
 #' but each element is a vector of shuffled indices. 
+#' 
 #' @return list of unfiltered cluster2cluster interaction score summary, score and p-value matrices
 #' @importFrom tibble rownames_to_column
 #' @importFrom tidyr pivot_longer
+#' @importFrom pbapply pboptions
 #' @export
-calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list,n_mat){
+calc_C2C_score_loop <- function(
+  S2S_score_mat,clu_info_list,clu_shuf_list,n_mat,
+  verbose=TRUE,backend="auto"
+){
+  #pboptions see '?pbapply::pboptions' example
+  # if(verbose){
+  #   opb <- pbapply::pboptions(type="none")
+  #   on.exit(pbapply::pboptions(opb))
+  # }
+
   #clac the sum force from S2S to C2C
   C2C_score <- calc_C2C_mat(S2S_score_mat,clu_info_list,n_mat)
 
@@ -1037,12 +1049,14 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list,n_mat)
   #   #C2C_p_value[C2C_shuf > C2C_score] <- C2C_p_value[C2C_shuf > C2C_score] + 1
   #   C2C_p_value[[i]] <- (C2C_shuf > C2C_score)
   # }
+
   C2C_p_value <- 
-    lapply(clu_shuf_list, function(clu_shuf){
+    auto_select_lapply(clu_shuf_list, function(clu_shuf){
       C2C_shuf <- calc_C2C_mat(S2S_score_mat,clu_shuf,n_mat)
       #C2C_p_value[C2C_shuf > C2C_score] <- C2C_p_value[C2C_shuf > C2C_score] + 1
       return(C2C_shuf > C2C_score)
-    })
+    },verbose = verbose,backend = backend
+    )
   C2C_p_value <- Reduce("+", C2C_p_value) / shuffle_iter  
 
   rownames(C2C_score) <- names(clu_info_list)
@@ -1068,54 +1082,6 @@ calc_C2C_score_loop <- function(S2S_score_mat,clu_info_list,clu_shuf_list,n_mat)
 }
 
 
-
-#' calculation of cluster2cluster interaction score of LR pairs in database
-#'
-#' calculation of cluster2cluster interaction score of LR pairs in database 
-#' and shuffle test for p-value
-#'
-#' @param kept_db data.frame, LR database, must be same with the database used in db_S2S_score_list.
-#' @param db_S2S_score_list database spot2spot interaction score list, the result of calc_database_S2S_score.
-#' @param seurat_obj Seurat Object, extracting cluster information, optional.
-#' @param cluster cluster info, see \code{\link{cluster_info_identifier}}
-#' @param shuffle_iter number of shuffle iterations,default 500
-#' @param random_seed random seed used in shuffle. Default is 42, 
-#' the answer to the ultimate question of life, the universe, and everything.
-#'
-#' @return list of each LR pair C2C score summary, score and p value.
-#' @importFrom utils setTxtProgressBar txtProgressBar
-#' @export
-calc_database_C2C_score <- function(
-  kept_db,db_S2S_score_list,
-  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42
-){
-  cluster_info <- cluster_info_identifier(seurat_obj,cluster)
-  #clu_info_list <- split(cluster_info$barcode,cluster_info$cluster)
-  clu_info_list <- split(1:nrow(cluster_info),cluster_info$cluster)
-
-  set.seed(random_seed)
-  clu_shuf_list <- generate_shuffle_list(cluster_info,shuffle_iter)
-
-  pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
-  C2C_score_list <- list()
-  iter=seq_len(nrow(kept_db))
-  for(i in iter){
-    C2C_score_list[[i]] <- 
-      calc_C2C_score_loop(
-        db_S2S_score_list[[i]],
-        clu_info_list,
-        clu_shuf_list
-      )
-    utils::setTxtProgressBar(pb, i)
-  }
-  close(pb)
-  names(C2C_score_list) <- kept_db$id
-  set.seed(NULL)
-
-  return(C2C_score_list)
-}
-
-
 #' calculation of cluster2cluster interaction score of LR pairs in database
 #'
 #' The parallel version of calc_database_C2C_score. The parallel is based on 'future' package.
@@ -1133,7 +1099,7 @@ calc_database_C2C_score <- function(
 #'
 #' @return list of each LR pair C2C score summary, score and p value.
 #' @export
-calc_database_C2C_score_paral <- function(
+calc_database_C2C_score <- function(
   kept_db,db_S2S_score_list,
   seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
   verbose=TRUE
@@ -1151,27 +1117,26 @@ calc_database_C2C_score_paral <- function(
   clu_shuf_list <- generate_shuffle_list(cluster_info,shuffle_iter)
   #TODO 需要添加一个防呆设置检测输入s2s_force 还是S2S_score
 
-  #handlers("progress", "beepr")
-  #pb <- txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   C2C_score_list <- list()
   iter=seq_len(nrow(kept_db))
-  #** future_lapply progress bar adapted from https://github.com/HenrikBengtsson/future.apply/issues/34
-  #with_progress({
-  #  p <- progressor(along = db_S2S_score_list)
-    C2C_score_list <- 
-    auto_select_lapply(db_S2S_score_list,function(S2S_score){
-        calc_C2C_score_loop(
-          S2S_score,
-          clu_info_list,
-          clu_shuf_list,
-          n_mat
-        )
-      #setTxtProgressBar(pb, i)
-      #p(sprintf("x=%g", S2S_score))
-    },verbose=verbose
-    )
-  #})
-  #close(pb)
+
+  if(length(iter) >= length(clu_shuf_list)){
+    backend=c("auto","none")
+  }else{
+    backend=c("none","auto")
+  }
+
+  C2C_score_list <- 
+  auto_select_lapply(db_S2S_score_list,function(S2S_score){
+      calc_C2C_score_loop(
+        S2S_score,
+        clu_info_list,
+        clu_shuf_list,
+        n_mat,
+        verbose=verbose,backend = backend[2]
+      )
+  },verbose=verbose,backend = backend[1]
+  )
   names(C2C_score_list) <- kept_db$id
   set.seed(NULL)
 
