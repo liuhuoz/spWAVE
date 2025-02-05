@@ -32,7 +32,7 @@ list, meta coordinates contain geometric center of each cluster and
 spot ids. And km_cluster contain the barcode and cluster id.
 }
 \description{
-The implationof Generate meta coordinates by kmeans methods
+The implation of Generate meta coordinates by kmeans methods
 }
 \seealso{
 \code{\link[stats]{kmeans}}
