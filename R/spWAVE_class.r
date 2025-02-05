@@ -215,25 +215,83 @@ setMethod("generate_meta_expr", "Mat_like", function(expr,clu_info){
   generate_meta_expr_impl(expr,clu_info)
 })
 
-# #' show method for spWAVE
-# #'
-# #' @param spWAVE object
-# #' @param generate_meta_expr 
-# #' @param object object
-# #' @docType methods
-# #'
-# setMethod(f = "generate_meta_expr", signature = "spWAVE", definition = function(object) {
-#   object@meta_expr <- 
-#     generate_meta_expr(object@expr_complex,object@meta_coord$km_cluster)
-#   return(object)
-# })
+#' Perform calculation of LR field using hole method
+#'
+#' Perform calculation of LR field with hole method in 1 step.
+#' 
+#' @inheritParams calc_database_single_field
+#' @inheritParams calc_database_LR_field
+#'
+#' @export
+setGeneric("perform_LR_field_hole_calc", function(
+  kept_db,
+  expr,
+  coord,
+  ROI_barcode=NULL,
+  km_coord_list,
+  radius = 500,
+  verbose=TRUE){
+  standardGeneric("perform_LR_field_hole_calc")
+})
 
-# #*********
-# #** 先对visium的方法做一个封装，并考虑一下slot的组成
+#' @rdname perform_LR_field_hole_calc
+#' @aliases perform_LR_field_hole_calc,spWAVE-method
+#' 
+#' @export
+setMethod("perform_LR_field_hole_calc", "spWAVE", function(
+  kept_db,
+  expr,
+  coord,
+  ROI_barcode=NULL,
+  km_coord_list,
+  radius = 500,
+  verbose=TRUE){
+    meta_coord_list <- list(
+      meta_coord = kept_db@meta_coord,
+      km_cluster = kept_db@meta_coord_clu
+    )
+    kept_db@single_mole_field <- calc_database_holed_field(
+      kept_db=kept_db@kept_db,
+      expr=kept_db@expr_complex,
+      coord=kept_db@coord,
+      ROI_barcode=ROI_barcode,
+      km_coord_list=meta_coord_list,
+      radius=radius,
+      verbose=verbose
+    )
+    LR_field <- 
+      calc_database_LR_field(kept_db@kept_db,kept_db@single_mole_field,verbose=verbose)
+    kept_db@LR_pair_field = LR_field[[1]] 
+    kept_db@LR_family_field = LR_field[[2]]
+    return(kept_db)
+})
 
 
-# setMethod(f = "perform_LR_field_calc", signature = "spWAVE", definition = function(object) {
-#   object@meta_expr <- 
-#     perform_LR_field_calc(object@kept_db,object@expr_complex,object@coord)
-#   return(object)
-# })
+#' @rdname perform_LR_field_hole_calc
+#' @aliases perform_LR_field_hole_calc,Mat_like-method
+#' 
+#' @export
+setMethod("perform_LR_field_hole_calc", "Mat_like", function(
+  kept_db,
+  expr,
+  coord,
+  ROI_barcode=NULL,
+  km_coord_list,
+  radius = 500,
+  verbose=TRUE){
+    single_field <- calc_database_holed_field(
+      kept_db=kept_db,
+      expr=expr,
+      coord=coord,
+      ROI_barcode=ROI_barcode,
+      km_coord_list=km_coord_list, #TODO 这里是list想想怎么改
+      radius=radius,
+      verbose=verbose
+    )
+    LR_field <- calc_database_LR_field(kept_db,single_field,verbose=verbose)
+    whole_db_field <- 
+      list(single_mol_field_list = single_field,
+          "LR_pair_field_list" = LR_field[[1]], 
+          "LR_family_field_list" = LR_field[[2]])
+    return(whole_db_field)
+})

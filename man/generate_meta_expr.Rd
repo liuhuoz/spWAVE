@@ -8,7 +8,7 @@
 \usage{
 generate_meta_expr(expr, clu_info)
 
-\S4method{generate_meta_expr}{spWAVE}(expr)
+\S4method{generate_meta_expr}{spWAVE}(expr, clu_info)
 
 \S4method{generate_meta_expr}{Mat_like}(expr, clu_info)
 }
