@@ -201,7 +201,7 @@ setGeneric("generate_meta_expr", function(expr,clu_info){
 #'
 #' @export
 setMethod(f = "generate_meta_expr", signature = "spWAVE", 
-  definition = function(expr){
+  definition = function(expr,clu_info){
   expr@meta_complex <- generate_meta_expr(expr@expr_complex,expr@meta_coord_clu)
   return(expr)
 })
