@@ -994,7 +994,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 
 #' The implation of Generate Meta coordinates 
 #'
-#' The implationof Generate meta coordinates by kmeans methods
+#' The implation of Generate meta coordinates by kmeans methods
 #'
 #' @param coord data.frame,spatial coordinates, 
 #' should have column names "x" and "y" and "barcode".
@@ -1113,9 +1113,9 @@ generate_holed_coord <- function(
   return(final_coord)
 }
 
-#' Generate Meta Expression
+#' The implation of Generate Meta Expression
 #'
-#' Generate a meta expression data.frame of clustered meta coordinates 
+#' The implation of generating a meta expression data.frame of clustered meta coordinates 
 #' 
 #' @param expr expression matrix or data.frame, commonly the result of generate_complex_data
 #' @param clu_info cluster info, must be contain "barcode" and "cluster". 
@@ -1128,9 +1128,9 @@ generate_holed_coord <- function(
 #' 
 #' @return data.frame, sum-uped meta expression.
 #' @export 
-generate_meta_expr <- function(
-  expr,
-  clu_info
+generate_meta_expr_impl <- function(
+    expr,
+    clu_info
 ){ 
   expr$barcode <- rownames(expr)
   expr %<>% left_join(clu_info[,c("barcode","cluster")],by="barcode")

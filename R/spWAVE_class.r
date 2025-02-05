@@ -37,7 +37,7 @@ spWAVE <-
       #** pre-process
       meta_coord = "data.frame",
       meta_coord_clu = "data.frame",
-      #meta_complex = "Mat_like",
+      meta_complex = "Mat_like",
       #** field result
       single_mole_field = "list",
       LR_pair_field = "list",
@@ -174,6 +174,46 @@ setMethod("generate_kmeans_coord", "data.frame", function(coord,
       random_seed = random_seed)
 })
 
+
+#' Generate Meta Expression
+#'
+#' Generate a meta expression data.frame of clustered meta coordinates 
+#' 
+#' @param expr expression matrix or data.frame, commonly the result of generate_complex_data
+#' @param clu_info cluster info, must be contain "barcode" and "cluster". 
+#' The cluster is the result of Kmenas. 
+#'
+#' @details This function will sum-up the expresion of spot in a cluster. 
+#' For receptor complex, we firstly calculate the complex expression of each spot by
+#' generate_complex_data before this function.
+#' @import dplyr
+#' 
+#' @return data.frame, sum-uped meta expression.
+#' @export
+setGeneric("generate_meta_expr", function(expr,clu_info){
+  standardGeneric("generate_meta_expr")
+})
+
+
+#' @rdname generate_meta_expr
+#' @param expr object of class `spWAVE`.
+#' @aliases generate_meta_expr,spWAVE-method
+#'
+#' @export
+setMethod(f = "generate_meta_expr", signature = "spWAVE", 
+  definition = function(expr){
+  expr@meta_complex <- generate_meta_expr(expr@expr_complex,expr@meta_coord_clu)
+  return(expr)
+})
+
+#' @rdname generate_meta_expr
+#' @param expr object of class `Mat_like`, including "matrix", "dgCMatrix","data.frame".
+#' @aliases generate_meta_expr,Mat_like-method
+#' 
+#' @export
+setMethod("generate_meta_expr", "Mat_like", function(expr,clu_info){
+  generate_meta_expr_impl(expr,clu_info)
+})
 
 # #' show method for spWAVE
 # #'
