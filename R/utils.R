@@ -992,9 +992,9 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 
 #** for xenium like centroid method
 
-#' Generate Meta coordinates
+#' The implation of Generate Meta coordinates 
 #'
-#' Generate meta coordinates by kmeans methods
+#' The implationof Generate meta coordinates by kmeans methods
 #'
 #' @param coord data.frame,spatial coordinates, 
 #' should have column names "x" and "y" and "barcode".
@@ -1009,7 +1009,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
 #' @return list, meta coordinates contain geometric center of each cluster and 
 #' spot ids. And km_cluster contain the barcode and cluster id.
 #' @export 
-generate_kmeans_coord <- function(
+generate_kmeans_coord_impl <- function(
   coord,
   centers=nrow(coord)/10,
   iter.max=10,

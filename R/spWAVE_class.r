@@ -5,8 +5,6 @@
 #' When inputting an data matrix, it takes a digital data matrices as input. Genes should be in rows and cells in columns. rownames and colnames should be included.
 #' The class provides functions for data preprocessing, intercellular communication network inference, communication network analysis, and visualization.
 #'
-#'
-#'# Class definitions
 #' @importFrom methods setClassUnion
 #' @importClassesFrom Matrix dgCMatrix
 setClassUnion(name = 'Mat_like', members = c("matrix", "dgCMatrix","data.frame"))
@@ -44,6 +42,7 @@ spWAVE <-
       single_mole_field = "list",
       LR_pair_field = "list",
       LR_family_field = "list"
+      #** score result
     )
 )
 
@@ -111,38 +110,90 @@ create_spWAVE_object <- function(
 #*********************************
 #* adapt methods for spWAVE obj **
 #*********************************
-#' show method for spWAVE
+#' Generate Meta coordinates
 #'
-#' @param spWAVE object
-#' @param generate_kmeans_coord 
-#' @param object object
-#' @docType methods
+#' Generate meta coordinates by kmeans methods
 #'
-setMethod(f = "generate_kmeans_coord", signature = "spWAVE", definition = function(object) {
-  object@meta_coord <- 
-      generate_kmeans_coord(object@coord,iter.max = 15,nstart = 3)
-  return(object)
+#' @param coord data.frame,spatial coordinates, 
+#' should have column names "x" and "y" and "barcode".
+#' @param random_seed random seed of kmeans for reproducibility. Default is 42.
+#' @inheritParams stats::kmeans
+#' 
+#' @seealso \code{\link[stats]{kmeans}}
+#' 
+#' @import dplyr
+#' @importFrom stats kmeans
+#'
+#' @return If input is data.frame, return a list, meta coordinates contain geometric center of each cluster and 
+#' spot ids. And km_cluster contain the barcode and cluster id. If spWAVE, return spWAVE.
+#' @export 
+setGeneric("generate_kmeans_coord", function(coord,
+  centers=nrow(coord)/10,
+  iter.max=10,
+  nstart=1,
+  random_seed=42){
+  standardGeneric("generate_kmeans_coord")
 })
 
-#' show method for spWAVE
+
+#' @rdname generate_kmeans_coord
+#' @param coord object of class `spWAVE`.
+#' @aliases generate_kmeans_coord,spWAVE-method
 #'
-#' @param spWAVE object
-#' @param generate_meta_expr 
-#' @param object object
-#' @docType methods
-#'
-setMethod(f = "generate_meta_expr", signature = "spWAVE", definition = function(object) {
-  object@meta_expr <- 
-    generate_meta_expr(object@expr_complex,object@meta_coord$km_cluster)
-  return(object)
+#' @export
+setMethod(f = "generate_kmeans_coord", signature = "spWAVE", 
+  definition = function(coord,
+  centers,
+  iter.max=10,
+  nstart=1,
+  random_seed=42) {
+  meta_list <- 
+    generate_kmeans_coord_impl(coord=coord@coord,centers = nrow(coord@coord)/10,
+      iter.max = iter.max,nstart = nstart,random_seed = random_seed)
+  
+  coord@meta_coord <- meta_list$meta
+  coord@meta_coord_clu <- meta_list$km_cluster
+  return(coord)
 })
 
-#*********
-#** 先对visium的方法做一个封装，并考虑一下slot的组成
-
-
-setMethod(f = "perform_LR_field_calc", signature = "spWAVE", definition = function(object) {
-  object@meta_expr <- 
-    perform_LR_field_calc(object@kept_db,object@expr_complex,object@coord)
-  return(object)
+#' @rdname generate_kmeans_coord
+#' @param coord object of class `data.frame`.
+#' @aliases generate_kmeans_coord,data.frame-method
+#' 
+#' @export
+setMethod("generate_kmeans_coord", "data.frame", function(coord,
+  centers=nrow(coord)/10,
+  iter.max=10,
+  nstart=1,
+  random_seed=42){
+  generate_kmeans_coord_impl(
+      coord,
+      centers = centers,
+      iter.max = iter.max,
+      nstart = nstart,
+      random_seed = random_seed)
 })
+
+
+# #' show method for spWAVE
+# #'
+# #' @param spWAVE object
+# #' @param generate_meta_expr 
+# #' @param object object
+# #' @docType methods
+# #'
+# setMethod(f = "generate_meta_expr", signature = "spWAVE", definition = function(object) {
+#   object@meta_expr <- 
+#     generate_meta_expr(object@expr_complex,object@meta_coord$km_cluster)
+#   return(object)
+# })
+
+# #*********
+# #** 先对visium的方法做一个封装，并考虑一下slot的组成
+
+
+# setMethod(f = "perform_LR_field_calc", signature = "spWAVE", definition = function(object) {
+#   object@meta_expr <- 
+#     perform_LR_field_calc(object@kept_db,object@expr_complex,object@coord)
+#   return(object)
+# })
