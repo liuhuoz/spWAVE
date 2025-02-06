@@ -43,7 +43,7 @@ spWAVE <-
       LR_pair_field = "list",
       LR_family_field = "list",
       #** score result
-      S2S_force = "list",
+      #S2S_force = "list", #** too large to store
       S2S_score = "list",
       C2C_score = "list",
       #** other
@@ -406,4 +406,66 @@ setMethod("perform_LR_field_calc", "spWAVE", function(
   return(kept_db)
 })
 
+#' perform calculation of S2S score
+#'
+#' perform calculation of S2S score in 1 step.
+#' 
+#' @inheritParams prep_database_S2S_list
+#' 
+#' @details This function is a warper for integrating multi-steps core functions.
+#' The integrated function of calc_S2S score.
+#' For more details, please check the seealso.
+#' 
+#' @seealso \code{\link{prep_database_S2S_list}}
+#' @seealso \code{\link{calc_database_S2S_force}}
+#' @seealso \code{\link{calc_database_S2S_score}}
+#'
+#' @export
+setGeneric("perform_S2S_score_calc", function(kept_db,db_field_result){
+  standardGeneric("perform_S2S_score_calc")
+})
 
+#' @rdname perform_S2S_score_calc
+#' @aliases perform_S2S_score_calc,spWAVE-method
+#' 
+#' @export
+setMethod("perform_S2S_score_calc", "spWAVE", function(
+    kept_db,db_field_result){
+  slot_check(kept_db,"S2S_force")
+  slot_check(kept_db,"S2S_score")
+  db_field_result <-   
+    list(single_mol_field_list = kept_db@single_mole_field,
+        "LR_pair_field_list" = kept_db@LR_pair_field,
+        "LR_family_field_list" = kept_db@LR_family_field)
+
+  print("Step1. preparing data")
+  prep_list <- 
+    prep_database_S2S_list(kept_db@kept_db,db_field_result)
+  print("Step2. calc S2S force")
+  S2S_force <- 
+    calc_database_S2S_force(kept_db@kept_db,prep_list)
+  print("Step3. calc S2S score")
+  kept_db@S2S_score <- 
+    calc_database_S2S_score(kept_db@kept_db,prep_list,S2S_force)
+
+  return(kept_db)
+})
+
+#' @rdname perform_S2S_score_calc
+#' @aliases perform_S2S_score_calc,Mat_like-method
+#' 
+#' @export
+setMethod("perform_S2S_score_calc", "Mat_like", function(
+    kept_db,db_field_result){
+  print("Step1. preparing data")
+  prep_list <- 
+    prep_database_S2S_list(kept_db,db_field_result)
+  print("Step2. calc S2S force")
+  S2S_force <- 
+    calc_database_S2S_force(kept_db,prep_list)
+  print("Step3. calc S2S score")
+  S2S_score <- 
+    calc_database_S2S_score(kept_db,prep_list,S2S_force)
+
+  return(S2S_score)
+})
