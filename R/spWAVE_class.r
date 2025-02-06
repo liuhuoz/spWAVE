@@ -246,10 +246,14 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
   km_coord_list,
   radius = 500,
   verbose=TRUE){
+    slot_check(kept_db,"single_mole_field")
+    slot_check(kept_db,"LR_pair_field")
+    slot_check(kept_db,"LR_family_field")
     meta_coord_list <- list(
       meta_coord = kept_db@meta_coord,
       km_cluster = kept_db@meta_coord_clu
     )
+    print("Step1. calc single molecule or complex field")
     kept_db@single_mole_field <- calc_database_holed_field(
       kept_db=kept_db@kept_db,
       expr=kept_db@expr_complex,
@@ -259,6 +263,7 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
       radius=radius,
       verbose=verbose
     )
+    print("Step2. calc LR pair or family field")
     LR_field <- 
       calc_database_LR_field(kept_db@kept_db,kept_db@single_mole_field,verbose=verbose)
     kept_db@LR_pair_field = LR_field[[1]] 
@@ -284,7 +289,7 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
       expr=expr,
       coord=coord,
       ROI_barcode=ROI_barcode,
-      km_coord_list=km_coord_list, #TODO 这里是list想想怎么改
+      km_coord_list=km_coord_list,
       radius=radius,
       verbose=verbose
     )
@@ -337,6 +342,9 @@ setMethod("perform_LR_field_calc", "Mat_like", function(
 #' @export
 setMethod("perform_LR_field_calc", "spWAVE", function(
     kept_db,expr,coord,verbose=TRUE){
+  slot_check(kept_db,"single_mole_field")
+  slot_check(kept_db,"LR_pair_field")
+  slot_check(kept_db,"LR_family_field")
   print("Step1. calc single molecule or complex field")
   kept_db@single_mole_field <- 
     calc_database_single_field(kept_db@kept_db,kept_db@expr_complex,kept_db@coord,verbose = verbose)
@@ -349,3 +357,18 @@ setMethod("perform_LR_field_calc", "spWAVE", function(
 
   return(kept_db)
 })
+
+#' slot check
+#'
+#' check whether a slot is empty.
+#'
+#' @param object object of S4 class
+#' @param slot slot name
+#'
+#' @export
+slot_check <- function(object,slot){
+  if(length(slot(object,slot)) !=0){
+    #the slot is not empty
+    warning(paste0("The slot ",slot," is not empty!"))
+  }
+}
