@@ -41,8 +41,13 @@ spWAVE <-
       #** field result
       single_mole_field = "list",
       LR_pair_field = "list",
-      LR_family_field = "list"
+      LR_family_field = "list",
       #** score result
+      S2S_force = "list",
+      S2S_score = "list",
+      C2C_score = "list",
+      #** other
+      others = "list"
     )
 )
 
