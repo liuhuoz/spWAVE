@@ -335,7 +335,7 @@ calc_database_LR_field <- function(kept_db,single_mol_field,verbose=TRUE){
 #' @return return list of single molecule field, 
 #' LR pair field and LR family field in 3 separated list.
 #' @export
-perform_LR_field_calc <- function(kept_db,expr,coord,verbose=TRUE){
+perform_LR_field_calc_impl <- function(kept_db,expr,coord,verbose=TRUE){
   print("Step1. calc single molecule or complex field")
   single_mol_field <- calc_database_single_field(kept_db,expr,coord,verbose = verbose)
   print("Step2. calc LR pair or family field")
