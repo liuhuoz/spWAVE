@@ -77,9 +77,23 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object) {
 # })
 
 
+#' Create spWAVE object
+#' 
+#' Create spWAVE object from Seurat 
+#' 
 #' @inheritParams filter_LR_expr
 #' @inheritParams generate_complex_data
 #' @inheritParams cluster_info_identifier
+#' 
+#' @details This function is a warper of multi helper functions, more details please check seealso link. 
+#' 
+#' @seealso \code{\link{cluster_info_identifier}}
+#' @seealso \code{\link{generate_complex_data}}
+#' @seealso \code{\link{filter_LR_expr}}
+#' 
+#' @return a setup spWAVE object
+#' 
+#' @export
 create_spWAVE_object <- function(
     seurat_obj,database,
     assay="SCT",
@@ -120,12 +134,10 @@ create_spWAVE_object <- function(
 #' @inheritParams stats::kmeans
 #' 
 #' @seealso \code{\link[stats]{kmeans}}
-#' 
-#' @import dplyr
-#' @importFrom stats kmeans
 #'
 #' @return If input is data.frame, return a list, meta coordinates contain geometric center of each cluster and 
-#' spot ids. And km_cluster contain the barcode and cluster id. If spWAVE, return spWAVE.
+#' spot ids. And km_cluster contain the barcode and cluster id. 
+#' If spWAVE, return spWAVE.
 #' @export 
 setGeneric("generate_kmeans_coord", function(coord,
   centers=nrow(coord)/10,
@@ -137,7 +149,7 @@ setGeneric("generate_kmeans_coord", function(coord,
 
 
 #' @rdname generate_kmeans_coord
-#' @param coord object of class `spWAVE`.
+##' @param coord object of class `spWAVE`.
 #' @aliases generate_kmeans_coord,spWAVE-method
 #'
 #' @export
@@ -157,7 +169,7 @@ setMethod(f = "generate_kmeans_coord", signature = "spWAVE",
 })
 
 #' @rdname generate_kmeans_coord
-#' @param coord object of class `data.frame`.
+##' @param coord object of class `data.frame`.
 #' @aliases generate_kmeans_coord,data.frame-method
 #' 
 #' @export
@@ -186,7 +198,6 @@ setMethod("generate_kmeans_coord", "data.frame", function(coord,
 #' @details This function will sum-up the expresion of spot in a cluster. 
 #' For receptor complex, we firstly calculate the complex expression of each spot by
 #' generate_complex_data before this function.
-#' @import dplyr
 #' 
 #' @return data.frame, sum-uped meta expression.
 #' @export
@@ -196,7 +207,7 @@ setGeneric("generate_meta_expr", function(expr,clu_info){
 
 
 #' @rdname generate_meta_expr
-#' @param expr object of class `spWAVE`.
+##' @param expr object of class `spWAVE`.
 #' @aliases generate_meta_expr,spWAVE-method
 #'
 #' @export
@@ -207,7 +218,7 @@ setMethod(f = "generate_meta_expr", signature = "spWAVE",
 })
 
 #' @rdname generate_meta_expr
-#' @param expr object of class `Mat_like`, including "matrix", "dgCMatrix","data.frame".
+##' @param expr object of class `Mat_like`, including "matrix", "dgCMatrix","data.frame".
 #' @aliases generate_meta_expr,Mat_like-method
 #' 
 #' @export
@@ -219,8 +230,15 @@ setMethod("generate_meta_expr", "Mat_like", function(expr,clu_info){
 #'
 #' Perform calculation of LR field with hole method in 1 step.
 #' 
-#' @inheritParams calc_database_single_field
+#' @inheritParams calc_database_holed_field 
 #' @inheritParams calc_database_LR_field
+#' 
+#' @details This function is a warper for integrating multi-steps core functions. 
+#' For more details, please check the seealso.
+#' 
+#' @seealso \code{\link{calc_database_holed_field}}
+#' @seealso \code{\link{calc_database_LR_field}}
+#' 
 #'
 #' @export
 setGeneric("perform_LR_field_hole_calc", function(
@@ -284,6 +302,7 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
   km_coord_list,
   radius = 500,
   verbose=TRUE){
+    print("Step1. calc single molecule or complex field")
     single_field <- calc_database_holed_field(
       kept_db=kept_db,
       expr=expr,
@@ -293,6 +312,7 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
       radius=radius,
       verbose=verbose
     )
+    print("Step2. calc LR pair or family field")
     LR_field <- calc_database_LR_field(kept_db,single_field,verbose=verbose)
     whole_db_field <- 
       list(single_mol_field_list = single_field,
@@ -305,9 +325,15 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
 #' perform calculation of LR pair or family in database
 #'
 #' perform calculation of LR pair or family in database in 1 step.
-#' An integrated function of calc_database_single_field and calc_database_LR_field
-#'
-#' @inheritParams calc_database_single_field 
+#' 
+#' @inheritParams calc_database_single_field
+#' 
+#' @details This function is a warper for integrating multi-steps core functions.
+#' An integrated function of calc_database_single_field and calc_database_LR_field.
+#' For more details, please check the seealso.
+#' 
+#' @seealso \code{\link{calc_database_single_field}}
+#' @seealso \code{\link{calc_database_LR_field}}
 #'
 #' @return return list of single molecule field, 
 #' LR pair field and LR family field in 3 separated list.

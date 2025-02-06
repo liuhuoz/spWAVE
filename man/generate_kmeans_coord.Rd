@@ -46,7 +46,8 @@ generate_kmeans_coord(
 }
 \value{
 If input is data.frame, return a list, meta coordinates contain geometric center of each cluster and
-spot ids. And km_cluster contain the barcode and cluster id. If spWAVE, return spWAVE.
+spot ids. And km_cluster contain the barcode and cluster id.
+If spWAVE, return spWAVE.
 }
 \description{
 Generate meta coordinates by kmeans methods

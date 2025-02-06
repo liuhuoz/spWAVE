@@ -27,5 +27,14 @@ LR pair field and LR family field in 3 separated list.
 }
 \description{
 perform calculation of LR pair or family in database in 1 step.
-An integrated function of calc_database_single_field and calc_database_LR_field
+}
+\details{
+This function is a warper for integrating multi-steps core functions.
+An integrated function of calc_database_single_field and calc_database_LR_field.
+For more details, please check the seealso.
+}
+\seealso{
+\code{\link{calc_database_single_field}}
+
+\code{\link{calc_database_LR_field}}
 }
