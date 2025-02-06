@@ -91,6 +91,8 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object) {
 #' @seealso \code{\link{generate_complex_data}}
 #' @seealso \code{\link{filter_LR_expr}}
 #' 
+#' @importFrom methods new
+#' 
 #' @return a setup spWAVE object
 #' 
 #' @export
@@ -103,7 +105,7 @@ create_spWAVE_object <- function(
     min_pct_cell=0.01,
     complex_min_cell=10
     ){
-  new_object <- new("spWAVE")
+  new_object <- methods::new(Class="spWAVE")
   new_object@expr_raw <- 
       filter_LR_expr(db=database,seurat_obj,assay = assay,
           min_expr=min_expr,  min_n_cell=min_n_cell,   min_pct_cell=min_pct_cell
