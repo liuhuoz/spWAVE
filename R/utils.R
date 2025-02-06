@@ -1203,16 +1203,16 @@ auto_select_lapply <- function(seq_obj,func,verbose=TRUE,backend=c("auto","none"
   para_set <- class(future::plan())
   backend <- match.arg(backend)
 
-  if(backend=="auto" && 
-    !("sequential" %in% para_set) && 
-    ("multiprocess" %in% para_set)
-    ){
-    backend <- "future"
+  if(backend=="auto"){
+    if(!("sequential" %in% para_set) && ("multiprocess" %in% para_set)){
+      backend <- "future"
+    }else{
+      backend <- NULL
+    }
   }else if(backend=="none"){
-    backend <- NULL
-  }else{
-    backend <- "future"
+      backend <- NULL
   }
+  
   if(verbose){
     list_result <-pbapply::pblapply(X=seq_obj,FUN = func,cl=backend,...)
   }else if(is.null(backend)){
