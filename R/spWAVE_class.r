@@ -128,6 +128,21 @@ create_spWAVE_object <- function(
   return(new_object)
 }
 
+#' slot check
+#'
+#' check whether a slot is empty.
+#'
+#' @param object object of S4 class
+#' @param slot slot name
+#'
+#' @export
+slot_check <- function(object,slot){
+  if(length(slot(object,slot)) !=0){
+    #the slot is not empty
+    warning(paste0("The slot ",slot," is not empty!"))
+  }
+}
+
 #*********************************
 #* adapt methods for spWAVE obj **
 #*********************************
@@ -391,17 +406,4 @@ setMethod("perform_LR_field_calc", "spWAVE", function(
   return(kept_db)
 })
 
-#' slot check
-#'
-#' check whether a slot is empty.
-#'
-#' @param object object of S4 class
-#' @param slot slot name
-#'
-#' @export
-slot_check <- function(object,slot){
-  if(length(slot(object,slot)) !=0){
-    #the slot is not empty
-    warning(paste0("The slot ",slot," is not empty!"))
-  }
-}
+
