@@ -148,6 +148,33 @@ check_slot_empty <- function(object,slot){
   }
 }
 
+#' Result list adaptor
+#'
+#' Adaptor for extracting and formatting the result list from spWAVE object
+#'
+#' @param object object of spWAVE
+#'  
+#' @return a list containing single_mole_field, 
+#' LR_pair_field and LR_family_field extract from spWAVE object. 
+#' 
+#' @export
+result_list_adaptor <- function(object){
+  cond1 <- suppressWarnings(check_slot_empty(object,"single_mole_field"))
+  cond2 <- suppressWarnings(check_slot_empty(object,"LR_pair_field"))
+  cond3 <- suppressWarnings(check_slot_empty(object,"LR_family_field"))
+
+  if(cond1 | cond2 | cond3){
+    stop("Empty result slot found!")
+  }
+
+  db_res_list <- list(
+    single_mol_field_list = object@single_mole_field,
+    LR_pair_field_list = object@LR_pair_field,
+    LR_family_field_list = object@LR_family_field
+  )
+  return(db_res_list)
+}
+
 #**********************************
 #** adapt methods for spWAVE obj **
 #**********************************
@@ -448,10 +475,7 @@ setMethod("perform_S2S_score_calc", "spWAVE", function(
     kept_db,db_field_result){
   #check_slot_empty(kept_db,"S2S_force")
   check_slot_empty(kept_db,"S2S_score")
-  db_field_result <-   
-    list(single_mol_field_list = kept_db@single_mole_field,
-        "LR_pair_field_list" = kept_db@LR_pair_field,
-        "LR_family_field_list" = kept_db@LR_family_field)
+  db_field_result <- result_list_adaptor(kept_db)
 
   print("Step1. preparing data")
   prep_list <- 
@@ -567,11 +591,7 @@ setGeneric("perform_field_extract", function(
 #' @export
 setMethod("perform_field_extract", "spWAVE", function(
   database_result,LR,kept_db){
-  db_res <- list(
-    single_mol_field_list = database_result@single_mole_field,
-    LR_pair_field_list = database_result@LR_pair_field,
-    LR_family_field_list = database_result@LR_family_field
-  )
+  db_res <- result_list_adaptor(database_result)
   result_df <- 
     extract_LR_field_result(db_res,
       LR=LR,
