@@ -531,3 +531,37 @@ setMethod("perform_C2C_score_calc", "Mat_like", function(
     )
   return(C2C_score)
 })
+
+#' perform result extraction
+#'
+#' perform result extraction from spWAVE object
+#' 
+#' @inheritParams extract_LR_field_result
+#' 
+#' @seealso \code{\link{extract_LR_field_result}}
+#'
+#' @export
+setGeneric("perform_field_extract", function(
+  database_result,LR,kept_db){
+  standardGeneric("perform_field_extract")
+})
+
+#' @rdname perform_field_extract
+#' @aliases perform_field_extract,spWAVE-method
+#' 
+#' @export
+setMethod("perform_field_extract", "spWAVE", function(
+  database_result,LR,kept_db){
+  db_res <- list(
+    single_mol_field_list = database_result@single_mole_field,
+    LR_pair_field_list = database_result@LR_pair_field,
+    LR_family_field_list = database_result@LR_family_field
+  )
+  result_df <- 
+    extract_LR_field_result(db_res,
+      LR=LR,
+      kept_db = database_result@kept_db)
+  result_df %<>% calc_field_strength()
+
+  return(result_df)
+})
