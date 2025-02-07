@@ -143,9 +143,14 @@ slot_check <- function(object,slot){
   }
 }
 
-#*********************************
-#* adapt methods for spWAVE obj **
-#*********************************
+#**********************************
+#** adapt methods for spWAVE obj **
+#**********************************
+
+#*******************
+#** Set up module **
+#******************* 
+
 #' Generate Meta coordinates
 #'
 #' Generate meta coordinates by kmeans methods
@@ -247,6 +252,11 @@ setMethod(f = "generate_meta_expr", signature = "spWAVE",
 setMethod("generate_meta_expr", "Mat_like", function(expr,clu_info){
   generate_meta_expr_impl(expr,clu_info)
 })
+
+
+#*****************
+#** Core module **
+#*****************
 
 #' Perform calculation of LR field using hole method
 #'
@@ -565,3 +575,8 @@ setMethod("perform_field_extract", "spWAVE", function(
 
   return(result_df)
 })
+
+#*****************
+#** Plot module **
+#*****************
+
