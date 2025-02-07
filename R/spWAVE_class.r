@@ -431,7 +431,7 @@ setGeneric("perform_S2S_score_calc", function(kept_db,db_field_result){
 #' @export
 setMethod("perform_S2S_score_calc", "spWAVE", function(
     kept_db,db_field_result){
-  slot_check(kept_db,"S2S_force")
+  #slot_check(kept_db,"S2S_force")
   slot_check(kept_db,"S2S_score")
   db_field_result <-   
     list(single_mol_field_list = kept_db@single_mole_field,
