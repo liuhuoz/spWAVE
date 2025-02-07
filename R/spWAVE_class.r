@@ -128,18 +128,23 @@ create_spWAVE_object <- function(
   return(new_object)
 }
 
-#' slot check
+#' check slot empty
 #'
 #' check whether a slot is empty.
 #'
 #' @param object object of S4 class
 #' @param slot slot name
 #'
+#' @return Boolean. If it is not empty, return FALSE and print warning.
+#'
 #' @export
-slot_check <- function(object,slot){
+check_slot_empty <- function(object,slot){
   if(length(slot(object,slot)) !=0){
     #the slot is not empty
     warning(paste0("The slot ",slot," is not empty!"))
+    return(FALSE)
+  }else{
+    return(TRUE)
   }
 }
 
@@ -296,9 +301,9 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
   km_coord_list,
   radius = 500,
   verbose=TRUE){
-    slot_check(kept_db,"single_mole_field")
-    slot_check(kept_db,"LR_pair_field")
-    slot_check(kept_db,"LR_family_field")
+    check_slot_empty(kept_db,"single_mole_field")
+    check_slot_empty(kept_db,"LR_pair_field")
+    check_slot_empty(kept_db,"LR_family_field")
     meta_coord_list <- list(
       meta_coord = kept_db@meta_coord,
       km_cluster = kept_db@meta_coord_clu
@@ -400,9 +405,9 @@ setMethod("perform_LR_field_calc", "Mat_like", function(
 #' @export
 setMethod("perform_LR_field_calc", "spWAVE", function(
     kept_db,expr,coord,verbose=TRUE){
-  slot_check(kept_db,"single_mole_field")
-  slot_check(kept_db,"LR_pair_field")
-  slot_check(kept_db,"LR_family_field")
+  check_slot_empty(kept_db,"single_mole_field")
+  check_slot_empty(kept_db,"LR_pair_field")
+  check_slot_empty(kept_db,"LR_family_field")
   print("Step1. calc single molecule or complex field")
   kept_db@single_mole_field <- 
     calc_database_single_field(kept_db@kept_db,kept_db@expr_complex,kept_db@coord,verbose = verbose)
@@ -441,8 +446,8 @@ setGeneric("perform_S2S_score_calc", function(kept_db,db_field_result){
 #' @export
 setMethod("perform_S2S_score_calc", "spWAVE", function(
     kept_db,db_field_result){
-  #slot_check(kept_db,"S2S_force")
-  slot_check(kept_db,"S2S_score")
+  #check_slot_empty(kept_db,"S2S_force")
+  check_slot_empty(kept_db,"S2S_score")
   db_field_result <-   
     list(single_mol_field_list = kept_db@single_mole_field,
         "LR_pair_field_list" = kept_db@LR_pair_field,
@@ -506,7 +511,7 @@ setMethod("perform_C2C_score_calc", "spWAVE", function(
   seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
   verbose=TRUE){
 
-  slot_check(kept_db,"C2C_score")
+  check_slot_empty(kept_db,"C2C_score")
 
   kept_db@C2C_score <- 
     calc_database_C2C_score(
