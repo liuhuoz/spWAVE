@@ -469,3 +469,65 @@ setMethod("perform_S2S_score_calc", "Mat_like", function(
 
   return(S2S_score)
 })
+
+
+#' perform calculation of C2C score
+#'
+#' perform calculation of C2C score.
+#' 
+#' @inheritParams calc_database_C2C_score
+#' 
+#' @seealso \code{\link{calc_database_C2C_score}}
+#'
+#' @export
+setGeneric("perform_C2C_score_calc", function(
+  kept_db,db_S2S_score_list,
+  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  verbose=TRUE){
+  standardGeneric("perform_C2C_score_calc")
+})
+
+#' @rdname perform_C2C_score_calc
+#' @aliases perform_C2C_score_calc,spWAVE-method
+#' 
+#' @export
+setMethod("perform_C2C_score_calc", "spWAVE", function(
+  kept_db,db_S2S_score_list,
+  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  verbose=TRUE){
+
+  slot_check(kept_db,"C2C_score")
+
+  kept_db@C2C_score <- 
+    calc_database_C2C_score(
+      kept_db = kept_db@kept_db,
+      db_S2S_score_list = kept_db@S2S_score,
+      seurat_obj=NULL,
+      cluster=kept_db@cluster_info,
+      shuffle_iter=shuffle_iter,
+      random_seed=random_seed,
+      verbose=verbose
+    )
+  return(kept_db)
+})
+
+#' @rdname perform_C2C_score_calc
+#' @aliases perform_C2C_score_calc,Mat_like-method
+#' 
+#' @export
+setMethod("perform_C2C_score_calc", "Mat_like", function(
+  kept_db,db_S2S_score_list,
+  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  verbose=TRUE){
+  C2C_score <- 
+    calc_database_C2C_score(
+      kept_db = kept_db,
+      db_S2S_score_list = db_S2S_score_list,
+      seurat_obj = seurat_obj,
+      cluster = cluster,
+      shuffle_iter = shuffle_iter,
+      random_seed = random_seed,
+      verbose = verbose
+    )
+  return(C2C_score)
+})
