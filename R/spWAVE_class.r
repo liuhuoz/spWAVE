@@ -1,4 +1,3 @@
-
 #' The spWAVE Class
 #'
 #' The spWAVE object is created from a spatial transcriptomic Seurat V5 object.
@@ -601,7 +600,85 @@ setMethod("perform_field_extract", "spWAVE", function(
   return(result_df)
 })
 
-#*****************
-#** Plot module **
-#*****************
+#******************
+#** Plot module  **
+#******************
 
+#' Plot cluster levels interaction scores dot plot
+#' 
+#' @param object spWAVE object or data list of C2C_score 
+#' @param kept_db The database used in results list.
+#' @param p_val p value cut off, default is 0.05
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
+#' e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
+#' @param LR_family LR family selected to display
+#' @param source_use Ligand source clusters selected to display
+#' @param target_use Receptor target clusters selected to display
+#' @param scale logical, whether to scale the score, default is TRUE
+#' 
+#' @return return a ggplot2 object plot
+#' @export
+setGeneric("plot_db_score_dot", function(
+  db_C2C_score_list,
+  kept_db,
+  p_val=0.05,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL, 
+  target_use=NULL,
+  scale=TRUE){
+  standardGeneric("plot_db_score_dot")
+})
+
+#' @rdname plot_db_score_dot
+#' @aliases plot_db_score_dot,spWAVE-method
+#' 
+#' @export
+setMethod("plot_db_score_dot", "spWAVE", function(
+  db_C2C_score_list,
+  kept_db,
+  p_val=0.05,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  scale=TRUE){
+    if(!suppressWarnings(check_slot_empty(db_C2C_score_list,"C2C_score"))){
+      stop("C2C_score slot is empty, please run 'perform_C2C_score_calc' first")
+    }
+    plot_db_score_dot_impl(
+      db_C2C_score_list=db_C2C_score_list@C2C_score,
+      kept_db=db_C2C_score_list@kept_db,
+      p_val=p_val,
+      LR_pair=LR_pair, 
+      LR_family=LR_family,
+      source_use=source_use,
+      target_use=target_use,
+      scale=scale
+    )
+})
+
+#' @rdname plot_db_score_dot
+#' @aliases plot_db_score_dot,list-method
+#' 
+#' @export
+setMethod("plot_db_score_dot", "list", function(
+  db_C2C_score_list,
+  kept_db,
+  p_val=0.05,
+  LR_pair=NULL,
+  LR_family=NULL, 
+  source_use=NULL,
+  target_use=NULL,
+  scale=TRUE){
+    plot_db_score_dot_impl(
+      db_C2C_score_list=db_C2C_score_list,
+      kept_db=kept_db,
+      p_val=p_val,
+      LR_pair=LR_pair,
+      LR_family=LR_family, 
+      source_use=source_use,
+      target_use=target_use,
+      scale=scale
+    )
+})

@@ -42,7 +42,7 @@ plot_field_direction <- function(
   #check arg
   mode <- match.arg(mode)
   image <- match.arg(image)
-  #create the data.frame for drawing
+  #create the data.frame for drawing  
 
   if(mode=="grid"){
     arrow_sf <- ifelse(is.null(arrow_sf),0.2,arrow_sf)
@@ -53,13 +53,13 @@ plot_field_direction <- function(
     arrow_sf <- ifelse(is.null(arrow_sf),1,arrow_sf)
     line_sf <- ifelse(is.null(line_sf),5,line_sf)
     arrow_draw <- arrow_df
-  }
+  }  
 
   if(show_arrow){
   }else{
     arrow_sf <- 0
     line_sf <- Inf
-  }
+  }  
 
   if(is.null(arrow_color)){
     if(image=="blank"){
@@ -67,19 +67,19 @@ plot_field_direction <- function(
     }else{
       arrow_color <- "black"
     }
-  }
+  }  
 
   arrow_draw %<>% 
     calc_field_strength() %>% 
     optimize.arrow(scale.factor = line_sf,normalize = arrow_normalize)
-  arrow_df %<>% calc_field_strength()
+  arrow_df %<>% calc_field_strength()  
 
   if(arrow_normalize){
     line_sf <- ifelse(is.null(line_sf),50,line_sf)
     arrow_size <- line_sf/4000
   }else{
     arrow_size <- arrow_draw$E_strength/arrow_sf
-  }
+  }  
 
   #draw image in each layer
   switch(image,
@@ -142,7 +142,7 @@ plot_field_direction <- function(
     }
   )
   return(p_arrow)
-}
+}  
 
 #' Another Plot field projection on image
 #'
@@ -212,7 +212,7 @@ plot_field_direction2 <- function(
                 )
       }
     }else{
-      arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)
+      arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)  
 
       if(class(seurat_obj@images[[1]]) %in% c("FOV")){
         #** point_size only works in "blank", so not need to add if statement. Below is same.
@@ -229,7 +229,7 @@ plot_field_direction2 <- function(
         lo_res_coord <- get_coordinates_in_plot(seurat_obj)
         arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
         rownames(arrow_df) <- arrow_df$barcode
-        arrow_df <- arrow_df[temp,]
+        arrow_df <- arrow_df[temp,]  
 
         arrow_color <- ifelse(is.null(arrow_color),"black",arrow_color)
         if(image=="cluster"){
@@ -248,7 +248,7 @@ plot_field_direction2 <- function(
     #arrow_sf <- ifelse(is.null(arrow_sf),1,arrow_sf)
     #line_sf <- ifelse(is.null(line_sf),5,line_sf)
     arrow_draw <- arrow_df
-  }
+  }  
 
   if(show_arrow){
     arrow_sf <- autocalc_arrow_sf(arrow_draw)*arrow_sf
@@ -347,7 +347,7 @@ plot_field_direction2 <- function(
 #' @import stringr
 #' @return return a ggplot2 object plot
 #' @export 
-plot_db_score_dot <- function(
+plot_db_score_dot_impl <- function(
   db_C2C_score_list,
   kept_db,
   p_val=0.05,
@@ -524,7 +524,7 @@ plot_LR_cluster_chord <- function(
   #** assign color to all clusters
   C2C_score_df <- 
     aggregate_C2C_score(db_C2C_score_list,kept_db)
-  
+
   #** get the color of each cluster
   if(is.null(cluster_color)){
     grid_col <- assign_cluster_color(C2C_score_df)
@@ -624,12 +624,12 @@ chord_gene_core_function <- function(
       text = "Sender",cex = 1.2, facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
   highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^R")], track.index = 1,col = NA,
       text = "Receiver",cex = 1.2,facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
-  
+
   legend <- ComplexHeatmap::Legend(at = names(legend_col), type = "grid", legend_gp = grid::gpar(fill = legend_col), title = "Cluster")
   ComplexHeatmap::draw(legend, x = unit(1, "npc")-unit(20, "mm"), just = c("right"))
 
   graphics::title(main_title)
-  
+
   circos.clear()
 }
 
@@ -778,7 +778,7 @@ plot_LR_cluster_heatmap <- function(
   normalize=FALSE,
   ht_col=NULL
 ){
-  
+
   C2C_score_df <- 
       aggregate_C2C_score(db_C2C_score_list,kept_db)
   if(is.null(cluster_color)){

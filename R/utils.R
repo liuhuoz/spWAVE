@@ -498,7 +498,7 @@ aggregate_C2C_score <- function(db_C2C_score_list,kept_db){
   aggregate_df <- do.call(rbind,db_prep_list)
 
   aggregate_df %<>% 
-    arrange(desc(raw_score)) %>% 
+    dplyr::arrange(desc(raw_score)) %>% 
     left_join(kept_db[,c("id","Family")],by="id")
   return(aggregate_df)
 } #** for plot
