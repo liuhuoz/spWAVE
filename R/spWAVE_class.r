@@ -643,7 +643,7 @@ setMethod("plot_db_score_dot", "spWAVE", function(
   source_use=NULL,
   target_use=NULL,
   scale=TRUE){
-    if(!suppressWarnings(check_slot_empty(db_C2C_score_list,"C2C_score"))){
+    if(suppressWarnings(check_slot_empty(db_C2C_score_list,"C2C_score"))){
       stop("C2C_score slot is empty, please run 'perform_C2C_score_calc' first")
     }
     plot_db_score_dot_impl(
