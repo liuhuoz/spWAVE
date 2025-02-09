@@ -787,6 +787,8 @@ plot_LR_cluster_heatmap_impl <- function(
     clu_col <- check_cluster_color(cluster_color,C2C_score_df,source_use,target_use)
   }
 
+  method_use <- match.arg(method_use)
+
   ht_mat <- 
     prep_plot_matrix(
       C2C_score_df,
@@ -1045,6 +1047,8 @@ plot_LR_cluster_net_impl <- function(
   }else{
     clu_col <- check_cluster_color(cluster_color,C2C_score_df,source_use=cluster_use,target_use=cluster_use)
   }
+
+  method_use <- match.arg(method_use)
 
   ht_mat <- 
     prep_plot_matrix(
