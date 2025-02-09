@@ -764,7 +764,7 @@ plot_LR_gene_chord_impl <- function(
 #' @import grid
 #' @import stringr
 #' @export 
-plot_LR_cluster_heatmap <- function(
+plot_LR_cluster_heatmap_impl <- function(
   db_C2C_score_list,
   kept_db,
   #C2C_score_df,

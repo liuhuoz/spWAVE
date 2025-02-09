@@ -857,3 +857,104 @@ setMethod("plot_LR_gene_chord", "list", function(
       scale=scale
     )
 })
+
+
+#' Plot clusters level interactions in heatmap
+#' 
+#' @param object spWAVE object or data list of C2C_score 
+#' @param kept_db The database used in results list
+#' @param cluster_color named vector, the values are colors and the names are cluster
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
+#' e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
+#' @param LR_family LR family selected to display
+#' @param source_use Ligand source clusters selected to display
+#' @param target_use Receptor target clusters selected to display
+#' @param title character, plot title
+#' Default is NULL and can be generated automatically when single LR pair or family given
+#' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
+#' refelecting the number of interactions or the sum of strength in C2C scores, respectively
+#' @param normalize logical, whether to normalize the score in heatmap, default is FALSE
+#' @param ht_col heatmap tiles color. Support sequential palettes in \code{\link{RColorBrewer}} or single color. 
+#' Default is "Reds" in the palettes
+#' 
+#' @return heatmap using based on ComplexHeatmap package
+#' @export
+setGeneric("plot_LR_cluster_heatmap", function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  normalize=FALSE,
+  ht_col=NULL){
+  standardGeneric("plot_LR_cluster_heatmap")
+})
+
+#' @rdname plot_LR_cluster_heatmap
+#' @aliases plot_LR_cluster_heatmap,spWAVE-method
+#' 
+#' @export
+setMethod("plot_LR_cluster_heatmap", "spWAVE", function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  normalize=FALSE,
+  ht_col=NULL){
+    if(suppressWarnings(check_slot_empty(db_C2C_score_list,"C2C_score"))){
+      stop("C2C_score slot is empty, please run 'perform_C2C_score_calc' first")
+    }
+    plot_LR_cluster_heatmap_impl(
+      db_C2C_score_list=db_C2C_score_list@C2C_score,
+      kept_db=db_C2C_score_list@kept_db,
+      cluster_color=cluster_color,
+      LR_pair=LR_pair,
+      LR_family=LR_family,
+      source_use=source_use,
+      target_use=target_use,
+      title=title,
+      method_use=method_use,
+      normalize=normalize,
+      ht_col=ht_col
+    )
+})
+
+#' @rdname plot_LR_cluster_heatmap
+#' @aliases plot_LR_cluster_heatmap,list-method
+#' 
+#' @export
+setMethod("plot_LR_cluster_heatmap", "list", function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  normalize=FALSE,
+  ht_col=NULL){
+    plot_LR_cluster_heatmap_impl(
+      db_C2C_score_list=db_C2C_score_list,
+      kept_db=kept_db,
+      cluster_color=cluster_color,
+      LR_pair=LR_pair,
+      LR_family=LR_family,
+      source_use=source_use,
+      target_use=target_use,
+      title=title,
+      method_use=method_use,
+      normalize=normalize,
+      ht_col=ht_col
+    )
+})
