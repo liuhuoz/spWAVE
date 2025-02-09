@@ -1024,7 +1024,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #' @importFrom stats sd
 #' @import stringr
 #' @export 
-plot_LR_cluster_net <- function(
+plot_LR_cluster_net_impl <- function(
   db_C2C_score_list,
   kept_db,
   cluster_color=NULL,

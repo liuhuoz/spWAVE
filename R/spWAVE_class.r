@@ -958,3 +958,103 @@ setMethod("plot_LR_cluster_heatmap", "list", function(
       ht_col=ht_col
     )
 })
+
+
+#' Plot clusters level interactions in network
+#' 
+#' @param object spWAVE object or data list of C2C_score
+#' @param kept_db database used in results list
+#' @param cluster_color named vector, the values are colors and the names are cluster
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
+#' @param LR_family LR family selected to display
+#' @param cluster_use cluster selected to display
+#' @param title character, plot title
+#' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
+#' refelecting the number of interactions or the sum of strength in C2C scores, respectively
+#' @param mat_scale logical, whether to scale score matrix, default is FALSE. 
+#' Differ from weight.scale, see details
+#' @param weight.scale logical, whether to scale edge weight and refelecting in plot, default is FALSE. 
+#' Differ from mat_scale, see details
+#' @param ... args passing to plot_net_core_function which adopted from CellChat netVisual_circle function
+#' 
+#' @return network plot based on igraph package
+#' @export
+setGeneric("plot_LR_cluster_net", function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  LR_pair=NULL,
+  LR_family=NULL,
+  cluster_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  mat_scale=FALSE,
+  weight.scale=FALSE,
+  ...){
+  standardGeneric("plot_LR_cluster_net")
+})
+
+#' @rdname plot_LR_cluster_net
+#' @aliases plot_LR_cluster_net,spWAVE-method
+#' 
+#' @export
+setMethod("plot_LR_cluster_net", "spWAVE", function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  LR_pair=NULL,
+  LR_family=NULL,
+  cluster_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  mat_scale=FALSE,
+  weight.scale=FALSE,
+  ...){
+    if(suppressWarnings(check_slot_empty(db_C2C_score_list,"C2C_score"))){
+      stop("C2C_score slot is empty, please run 'perform_C2C_score_calc' first")
+    }
+    plot_LR_cluster_net_impl(
+      db_C2C_score_list=db_C2C_score_list@C2C_score,
+      kept_db=db_C2C_score_list@kept_db,
+      cluster_color=cluster_color,
+      LR_pair=LR_pair,
+      LR_family=LR_family,
+      cluster_use=cluster_use,
+      title=title,
+      method_use=method_use,
+      mat_scale=mat_scale,
+      weight.scale=weight.scale,
+      ...
+    )
+})
+
+#' @rdname plot_LR_cluster_net
+#' @aliases plot_LR_cluster_net,list-method
+#' 
+#' @export
+setMethod("plot_LR_cluster_net", "list", function(
+  db_C2C_score_list,
+  kept_db,
+  cluster_color=NULL,
+  LR_pair=NULL,
+  LR_family=NULL,
+  cluster_use=NULL,
+  title=NULL,
+  method_use=c("count","strength"),
+  mat_scale=FALSE,
+  weight.scale=FALSE,
+  ...){
+    plot_LR_cluster_net_impl(
+      db_C2C_score_list=db_C2C_score_list,
+      kept_db=kept_db,
+      cluster_color=cluster_color,
+      LR_pair=LR_pair,
+      LR_family=LR_family,
+      cluster_use=cluster_use,
+      title=title,
+      method_use=method_use,
+      mat_scale=mat_scale,
+      weight.scale=weight.scale,
+      ...
+    )
+})
