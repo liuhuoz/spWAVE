@@ -509,7 +509,7 @@ chord_cluster_core_function <- function(
 #' @import stringr
 #' @import dplyr
 #' @export 
-plot_LR_cluster_chord <- function(
+plot_LR_cluster_chord_impl <- function(
   db_C2C_score_list,
   kept_db,
   #C2C_score_df,
@@ -654,7 +654,7 @@ chord_gene_core_function <- function(
 #' @import dplyr
 #' @import stringr
 #' @export 
-plot_LR_gene_chord <- function(
+plot_LR_gene_chord_impl <- function(
   db_C2C_score_list,
   kept_db,
   #C2C_score_df,
