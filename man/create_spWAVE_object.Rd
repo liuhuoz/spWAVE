@@ -18,6 +18,8 @@ create_spWAVE_object(
 \arguments{
 \item{seurat_obj}{Seurat object.}
 
+\item{database}{The ligand-receptor database you loaded.}
+
 \item{assay}{assay slot in Seurat object. default "RNA".}
 
 \item{cluster}{cluster info. Default is NULL and will using active.ident in Seurat object.

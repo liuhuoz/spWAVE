@@ -40,6 +40,8 @@ plot_db_score_dot(
 )
 }
 \arguments{
+\item{db_C2C_score_list}{spWAVE object or data list of C2C_score}
+
 \item{kept_db}{The database used in results list.}
 
 \item{p_val}{p value cut off, default is 0.05}
@@ -54,8 +56,6 @@ e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"}
 \item{target_use}{Receptor target clusters selected to display}
 
 \item{scale}{logical, whether to scale the score, default is TRUE}
-
-\item{object}{spWAVE object or data list of C2C_score}
 }
 \value{
 return a ggplot2 object plot

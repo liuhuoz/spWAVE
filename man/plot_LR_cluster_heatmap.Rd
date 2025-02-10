@@ -49,6 +49,8 @@ plot_LR_cluster_heatmap(
 )
 }
 \arguments{
+\item{db_C2C_score_list}{spWAVE object or data list of C2C_score}
+
 \item{kept_db}{The database used in results list}
 
 \item{cluster_color}{named vector, the values are colors and the names are cluster}
@@ -72,8 +74,6 @@ refelecting the number of interactions or the sum of strength in C2C scores, res
 
 \item{ht_col}{heatmap tiles color. Support sequential palettes in \code{\link{RColorBrewer}} or single color.
 Default is "Reds" in the palettes}
-
-\item{object}{spWAVE object or data list of C2C_score}
 }
 \value{
 heatmap using based on ComplexHeatmap package

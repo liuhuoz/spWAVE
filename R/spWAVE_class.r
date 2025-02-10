@@ -85,6 +85,7 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object) {
 #' 
 #' Create spWAVE object from Seurat 
 #' 
+#' @param database The ligand-receptor database you loaded.
 #' @inheritParams filter_LR_expr
 #' @inheritParams generate_complex_data
 #' @inheritParams cluster_info_identifier
@@ -101,7 +102,8 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object) {
 #' 
 #' @export
 create_spWAVE_object <- function(
-    seurat_obj,database,
+    seurat_obj,
+    database,
     assay="SCT",
     cluster=NULL,
     min_expr=0.1,
@@ -606,7 +608,7 @@ setMethod("perform_field_extract", "spWAVE", function(
 
 #' Plot cluster levels interaction scores dot plot
 #' 
-#' @param object spWAVE object or data list of C2C_score 
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score 
 #' @param kept_db The database used in results list.
 #' @param p_val p value cut off, default is 0.05
 #' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
@@ -687,7 +689,7 @@ setMethod("plot_db_score_dot", "list", function(
 
 #' Plot clusters level interactions in chord diagram
 #' 
-#' @param object spWAVE object or data list of C2C_score 
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score 
 #' @param kept_db The database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
 #' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
@@ -774,7 +776,7 @@ setMethod("plot_LR_cluster_chord", "list", function(
 
 #' Plot genes in Ligand-receptor pairs with chord diagram
 #' 
-#' @param object spWAVE object or data list of C2C_score
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score
 #' @param kept_db The database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
 #' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
@@ -861,7 +863,7 @@ setMethod("plot_LR_gene_chord", "list", function(
 
 #' Plot clusters level interactions in heatmap
 #' 
-#' @param object spWAVE object or data list of C2C_score 
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score 
 #' @param kept_db The database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
 #' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
@@ -962,7 +964,7 @@ setMethod("plot_LR_cluster_heatmap", "list", function(
 
 #' Plot clusters level interactions in network
 #' 
-#' @param object spWAVE object or data list of C2C_score
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score
 #' @param kept_db database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
 #' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"

@@ -43,6 +43,8 @@ plot_LR_cluster_chord(
 )
 }
 \arguments{
+\item{db_C2C_score_list}{spWAVE object or data list of C2C_score}
+
 \item{kept_db}{The database used in results list}
 
 \item{cluster_color}{named vector, the values are colors and the names are cluster}
@@ -60,8 +62,6 @@ e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"}
 Default is NULL and can be generated automatically when single LR pair or family given}
 
 \item{scale}{logical, whether to scale the arc of each chord in plot, default is FALSE}
-
-\item{object}{spWAVE object or data list of C2C_score}
 }
 \value{
 plot using based on circlize package

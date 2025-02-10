@@ -49,6 +49,8 @@ plot_LR_cluster_net(
 )
 }
 \arguments{
+\item{db_C2C_score_list}{spWAVE object or data list of C2C_score}
+
 \item{kept_db}{database used in results list}
 
 \item{cluster_color}{named vector, the values are colors and the names are cluster}
@@ -71,8 +73,6 @@ Differ from weight.scale, see details}
 Differ from mat_scale, see details}
 
 \item{...}{args passing to plot_net_core_function which adopted from CellChat netVisual_circle function}
-
-\item{object}{spWAVE object or data list of C2C_score}
 }
 \value{
 network plot based on igraph package
