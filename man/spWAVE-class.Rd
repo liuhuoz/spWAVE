@@ -6,29 +6,41 @@
 \alias{spWAVE}
 \title{slots of class spWAVE}
 \description{
-slots of class spWAVE
+#** setup
 }
 \section{Slots}{
 
 \describe{
-\item{\code{expr_raw}}{unfiltered normalized expr matrix for seurat}
+\item{\code{expr_raw}}{normalized expr matrix from seurat}
 
-\item{\code{expr_complex}}{calculated and filtered receptors complex expr matrix}
+\item{\code{expr_complex}}{calculated and filtered ligands and receptors complex expr matrix}
 
-\item{\code{kept_db}}{database after filtering}
+\item{\code{kept_db}}{filtered database}
 
 \item{\code{coord}}{spatial coordinates of cells}
 
-\item{\code{cluster_info}}{functional annotation cluster info of cells}
+\item{\code{cluster_info}}{functional annotation cluster info of cells
+#** pre-process}
 
 \item{\code{meta_coord}}{geometric center of meta clustered cells' coordinates}
 
 \item{\code{meta_coord_clu}}{cells barcode with meta cluster info}
 
+\item{\code{meta_complex}}{filtered ligands and receptors complex expr matrix of meta cluster
+#** field result}
+
 \item{\code{single_mole_field}}{single molecular field list}
 
 \item{\code{LR_pair_field}}{ligand-receptor pair field list}
 
-\item{\code{LR_family_field}}{ligand-receptor family field list}
+\item{\code{LR_family_field}}{ligand-receptor family field list
+#** score result}
+
+\item{\code{S2S_score}}{ligand-receptor pair score list}
+
+\item{\code{C2C_score}}{ligand-receptor family score list
+#** other}
+
+\item{\code{others}}{other list, only for storing unexpected results, commonly not used.}
 }}
 

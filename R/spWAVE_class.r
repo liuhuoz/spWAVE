@@ -11,16 +11,25 @@ setClassUnion(name = 'Mat_like', members = c("matrix", "dgCMatrix","data.frame")
 
 #' slots of class spWAVE
 #'
-#' @slot expr_raw unfiltered normalized expr matrix for seurat
-#' @slot expr_complex calculated and filtered receptors complex expr matrix
-#' @slot kept_db database after filtering
+#' #** setup
+#' @slot expr_raw normalized expr matrix from seurat
+#' @slot expr_complex calculated and filtered ligands and receptors complex expr matrix
+#' @slot kept_db filtered database
 #' @slot coord spatial coordinates of cells
 #' @slot cluster_info functional annotation cluster info of cells
+#' #** pre-process
 #' @slot meta_coord geometric center of meta clustered cells' coordinates 
 #' @slot meta_coord_clu cells barcode with meta cluster info
+#' @slot meta_complex filtered ligands and receptors complex expr matrix of meta cluster
+#' #** field result
 #' @slot single_mole_field single molecular field list
 #' @slot LR_pair_field ligand-receptor pair field list
 #' @slot LR_family_field ligand-receptor family field list
+#' #** score result
+#' @slot S2S_score ligand-receptor pair score list
+#' @slot C2C_score ligand-receptor family score list
+#' #** other
+#' @slot others other list, only for storing unexpected results, commonly not used.
 #' 
 #' @exportClass spWAVE
 #' @importFrom methods setClass
