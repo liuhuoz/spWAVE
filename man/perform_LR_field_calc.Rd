@@ -14,9 +14,21 @@ perform_LR_field_calc(
   verbose = TRUE
 )
 
-\S4method{perform_LR_field_calc}{Mat_like}(kept_db, expr, coord, verbose = TRUE)
+\S4method{perform_LR_field_calc}{Mat_like}(
+  kept_db,
+  expr,
+  coord,
+  skip_subunit = TRUE,
+  verbose = TRUE
+)
 
-\S4method{perform_LR_field_calc}{spWAVE}(kept_db, expr, coord, verbose = TRUE)
+\S4method{perform_LR_field_calc}{spWAVE}(
+  kept_db,
+  expr,
+  coord,
+  skip_subunit = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{kept_db}{data.frame, LR database.}
