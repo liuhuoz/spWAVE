@@ -319,7 +319,19 @@ generate_complex_data <- function(db,expr_mat,complex_min_cell=10){
 }
 #** 发现expr_LR_list中会存在colnames 重复的情况，不过考虑到一个部分后面不会用到，先不考虑特别处理。
 #** 甚至后续可以把这一项删除。
-
+#' Filter out subunit 
+#'
+#' Filter out subunit 
+#'
+#' @param kept_db dataframe of LR database.
+#' @param expr expression matrix.
+#' 
+#' @return expr dataframe without subunit expression
+filter_subunit <- function(kept_db,expr){
+    all_LR <- c(kept_db$Ligand,kept_db$Receptor) %>% unique()
+    kept_LR <- intersect(all_LR,colnames(expr))
+    return(expr[,kept_LR])
+}
 
 #' concatenate Coordinates and Expression
 #' 

@@ -6,7 +6,13 @@
 \alias{perform_LR_field_calc,spWAVE-method}
 \title{perform calculation of LR pair or family in database}
 \usage{
-perform_LR_field_calc(kept_db, expr, coord, verbose = TRUE)
+perform_LR_field_calc(
+  kept_db,
+  expr,
+  coord,
+  skip_subunit = TRUE,
+  verbose = TRUE
+)
 
 \S4method{perform_LR_field_calc}{Mat_like}(kept_db, expr, coord, verbose = TRUE)
 
@@ -18,6 +24,8 @@ perform_LR_field_calc(kept_db, expr, coord, verbose = TRUE)
 \item{expr}{expression matrix.}
 
 \item{coord}{spatial coordinates.}
+
+\item{skip_subunit}{logical, default is TURE and will not calc fields of receptor subunit.}
 
 \item{verbose}{logical, whether to print progress, default is TRUE.}
 }

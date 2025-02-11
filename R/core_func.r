@@ -245,12 +245,16 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #' @param kept_db  data.frame, LR database.
 #' @param expr expression matrix.
 #' @param coord spatial coordinates.
+#' @param skip_subunit logical, default is TURE and will not calc fields of receptor subunit.
 #' @inheritParams auto_select_lapply
 #'
 #' @return list of single molecule field
 #' @export
-calc_database_single_field <- function(kept_db,expr,coord,verbose=TRUE){ 
+calc_database_single_field <- function(kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){ 
   single_mol_field <- list()
+  if(skip_subunit){
+    expr <- filter_subunit(kept_db=kept_db,expr=expr)
+  }
   spatial_expr_list <- 
     lapply(colnames(expr),function(gene_name){
       concatenate_coord_expr(expr=expr,genes=gene_name,coord_info=coord)
@@ -447,6 +451,7 @@ single_point_vector <- function(
 #' @inheritParams generate_holed_coord_expr
 #' @inheritParams auto_select_lapply
 #' @param ROI_barcode character vector, the barcode of spots/cells in the region of interest.
+#' @param skip_subunit logical, default is TURE and will not calc fields of receptor subunit.
 #'
 #' @details This function is wrapper of \code{\link{single_point_vector}} 
 #' and \code{\link{generate_holed_coord_expr}} to generate a database field vector of 
@@ -468,6 +473,7 @@ calc_database_holed_field <- function(
   ROI_barcode=NULL,
   km_coord_list,
   radius = 500,
+  skip_subunit=TRUE,
   verbose=TRUE
 ){
   #* 这里就是直接对每个i点直接生成merge的空间表达后，直接计算，求和
@@ -478,7 +484,9 @@ calc_database_holed_field <- function(
   #spot_expr$cluster <- rownames(spot_expr)
   meta_expr <- generate_meta_expr(expr,km_coord_list$km_cluster)
   all_expr <- rbind.data.frame(spot_expr,meta_expr)
-
+  if(skip_subunit){
+    all_expr <- filter_subunit(kept_db=kept_db,expr=all_expr)
+  }
   if(is.null(ROI_barcode)){ROI_barcode <- rownames(spot_expr)}
 
   point_vec_list <- 

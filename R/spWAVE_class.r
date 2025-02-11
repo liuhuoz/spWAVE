@@ -322,6 +322,7 @@ setGeneric("perform_LR_field_hole_calc", function(
   ROI_barcode=NULL,
   km_coord_list,
   radius = 500,
+  skip_subunit=TRUE,
   verbose=TRUE){
   standardGeneric("perform_LR_field_hole_calc")
 })
@@ -337,6 +338,7 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
   ROI_barcode=NULL,
   km_coord_list,
   radius = 500,
+  skip_subunit=TRUE,
   verbose=TRUE){
     check_slot_empty(kept_db,"single_mole_field")
     check_slot_empty(kept_db,"LR_pair_field")
@@ -353,6 +355,7 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
       ROI_barcode=ROI_barcode,
       km_coord_list=meta_coord_list,
       radius=radius,
+      skip_subunit=skip_subunit,
       verbose=verbose
     )
     print("Step2. calc LR pair or family field")
@@ -375,6 +378,7 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
   ROI_barcode=NULL,
   km_coord_list,
   radius = 500,
+  skip_subunit=TRUE,
   verbose=TRUE){
     print("Step1. calc single molecule or complex field")
     single_field <- calc_database_holed_field(
@@ -384,6 +388,7 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
       ROI_barcode=ROI_barcode,
       km_coord_list=km_coord_list,
       radius=radius,
+      skip_subunit=skip_subunit,
       verbose=verbose
     )
     print("Step2. calc LR pair or family field")
@@ -413,7 +418,7 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
 #' LR pair field and LR family field in 3 separated list.
 #' @export
 setGeneric("perform_LR_field_calc", function(
-  kept_db,expr,coord,verbose=TRUE){
+  kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){
   standardGeneric("perform_LR_field_calc")
 })
 
@@ -422,9 +427,9 @@ setGeneric("perform_LR_field_calc", function(
 #' 
 #' @export
 setMethod("perform_LR_field_calc", "Mat_like", function(
-  kept_db,expr,coord,verbose=TRUE){
+  kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){
   print("Step1. calc single molecule or complex field")
-  single_mol_field <- calc_database_single_field(kept_db,expr,coord,verbose = verbose)
+  single_mol_field <- calc_database_single_field(kept_db,expr,coord,skip_subunit=skip_subunit,verbose = verbose)
   print("Step2. calc LR pair or family field")
   LR_field_list <- calc_database_LR_field(kept_db,single_mol_field,verbose = verbose)
 
@@ -441,13 +446,13 @@ setMethod("perform_LR_field_calc", "Mat_like", function(
 #' 
 #' @export
 setMethod("perform_LR_field_calc", "spWAVE", function(
-    kept_db,expr,coord,verbose=TRUE){
+    kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){
   check_slot_empty(kept_db,"single_mole_field")
   check_slot_empty(kept_db,"LR_pair_field")
   check_slot_empty(kept_db,"LR_family_field")
   print("Step1. calc single molecule or complex field")
   kept_db@single_mole_field <- 
-    calc_database_single_field(kept_db@kept_db,kept_db@expr_complex,kept_db@coord,verbose = verbose)
+    calc_database_single_field(kept_db@kept_db,kept_db@expr_complex,kept_db@coord,skip_subunit=skip_subunit,verbose = verbose)
   print("Step2. calc LR pair or family field")
   LR_field_list <- 
     calc_database_LR_field(kept_db@kept_db,kept_db@single_mole_field,verbose = verbose)
