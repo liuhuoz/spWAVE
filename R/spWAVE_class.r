@@ -536,7 +536,7 @@ setMethod("perform_S2S_score_calc", "Mat_like", function(
 #' @export
 setGeneric("perform_C2C_score_calc", function(
   kept_db,db_S2S_score_list,
-  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
   standardGeneric("perform_C2C_score_calc")
 })
@@ -546,16 +546,18 @@ setGeneric("perform_C2C_score_calc", function(
 #' 
 #' @export
 setMethod("perform_C2C_score_calc", "spWAVE", function(
-  kept_db,db_S2S_score_list,
-  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  kept_db,db_S2S_score_list=NULL,
+  seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
 
   check_slot_empty(kept_db,"C2C_score")
-
+  if(is.null(db_S2S_score_list)){
+    db_S2S_score_list <- kept_db@S2S_score
+  }
   kept_db@C2C_score <- 
     calc_database_C2C_score(
       kept_db = kept_db@kept_db,
-      db_S2S_score_list = kept_db@S2S_score,
+      db_S2S_score_list = db_S2S_score_list,
       seurat_obj=NULL,
       cluster=kept_db@cluster_info,
       shuffle_iter=shuffle_iter,
@@ -571,7 +573,7 @@ setMethod("perform_C2C_score_calc", "spWAVE", function(
 #' @export
 setMethod("perform_C2C_score_calc", "Mat_like", function(
   kept_db,db_S2S_score_list,
-  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
   C2C_score <- 
     calc_database_C2C_score(

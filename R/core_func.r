@@ -1100,7 +1100,8 @@ calc_C2C_score_loop <- function(
 #' @param db_S2S_score_list database spot2spot interaction score list, the result of calc_database_S2S_score.
 #' @param seurat_obj Seurat Object, extracting cluster information, optional.
 #' @param cluster cluster info, see \code{\link{cluster_info_identifier}}
-#' @param shuffle_iter number of shuffle iterations,default 500
+#' @param shuffle_iter number of shuffle iterations, default is 343, 
+#' the cube of 7 and the Spark.
 #' @param random_seed random seed used in shuffle. Default is 42, 
 #' the answer to the ultimate question of life, the universe, and everything.
 #' @inheritParams auto_select_lapply
@@ -1110,7 +1111,7 @@ calc_C2C_score_loop <- function(
 #' @export
 calc_database_C2C_score <- function(
   kept_db,db_S2S_score_list,
-  seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
+  seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE
 ){
   cluster_info <- cluster_info_identifier(seurat_obj,cluster)
@@ -1139,7 +1140,7 @@ calc_database_C2C_score <- function(
         clu_info_list,
         clu_shuf_list,
         n_mat,
-        verbose=FALSE,backend = backend[2]
+        verbose=TRUE,backend = backend[2]
       )
   },verbose=verbose,backend = backend[1]
   )

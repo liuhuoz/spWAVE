@@ -11,17 +11,17 @@ perform_C2C_score_calc(
   db_S2S_score_list,
   seurat_obj,
   cluster = NULL,
-  shuffle_iter = 500,
+  shuffle_iter = 343,
   random_seed = 42,
   verbose = TRUE
 )
 
 \S4method{perform_C2C_score_calc}{spWAVE}(
   kept_db,
-  db_S2S_score_list,
+  db_S2S_score_list = NULL,
   seurat_obj,
   cluster = NULL,
-  shuffle_iter = 500,
+  shuffle_iter = 343,
   random_seed = 42,
   verbose = TRUE
 )
@@ -31,7 +31,7 @@ perform_C2C_score_calc(
   db_S2S_score_list,
   seurat_obj,
   cluster = NULL,
-  shuffle_iter = 500,
+  shuffle_iter = 343,
   random_seed = 42,
   verbose = TRUE
 )
@@ -45,7 +45,8 @@ perform_C2C_score_calc(
 
 \item{cluster}{cluster info, see \code{\link{cluster_info_identifier}}}
 
-\item{shuffle_iter}{number of shuffle iterations,default 500}
+\item{shuffle_iter}{number of shuffle iterations, default is 343,
+the cube of 7 and the Spark.}
 
 \item{random_seed}{random seed used in shuffle. Default is 42,
 the answer to the ultimate question of life, the universe, and everything.}
