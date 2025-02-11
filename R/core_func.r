@@ -1105,7 +1105,6 @@ calc_C2C_score_loop <- function(
 #' the answer to the ultimate question of life, the universe, and everything.
 #' @inheritParams auto_select_lapply
 #' 
-#' @importFrom future plan
 #'
 #' @return list of each LR pair C2C score summary, score and p value.
 #' @export
@@ -1114,9 +1113,6 @@ calc_database_C2C_score <- function(
   seurat_obj,cluster=NULL,shuffle_iter=500,random_seed=42,
   verbose=TRUE
 ){
-  #require(future)
-  #require(future.apply)
-
   cluster_info <- cluster_info_identifier(seurat_obj,cluster)
   #clu_info_list <- split(cluster_info$barcode,cluster_info$cluster)
   clu_info_list <- split(1:nrow(cluster_info),cluster_info$cluster)
@@ -1136,11 +1132,6 @@ calc_database_C2C_score <- function(
     backend=c("none","auto")
   }
 
-  para_set <- class(future::plan())
-  if(("sequential" %in% para_set) && !("multiprocess" %in% para_set)){
-    verbose <- c(TRUE,FALSE)
-  }
-
   C2C_score_list <- 
   auto_select_lapply(db_S2S_score_list,function(S2S_score){
       calc_C2C_score_loop(
@@ -1148,9 +1139,9 @@ calc_database_C2C_score <- function(
         clu_info_list,
         clu_shuf_list,
         n_mat,
-        verbose=verbose[2],backend = backend[2]
+        verbose=FALSE,backend = backend[2]
       )
-  },verbose=verbose[1],backend = backend[1]
+  },verbose=verbose,backend = backend[1]
   )
   names(C2C_score_list) <- kept_db$id
   set.seed(NULL)
