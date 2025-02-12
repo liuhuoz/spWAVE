@@ -167,7 +167,7 @@ load_database <- function(
   db_species=c("human","mouse","zebrafish"),
   filter_type="None"
 ){
-  if(db_source=="CellPhoneDB" & db_species=="zebrafish"){
+  if(db_source=="CellPhoneDB" && db_species=="zebrafish"){
     warning(
       "CellPhoneDB does not contain database of zebrafish, using CellChat database instead."
       )
@@ -470,7 +470,7 @@ generate_shuffle_list <- function(cluster_info,shuffle_iter=500){
   for (i in 1:shuffle_iter){
     clu_shuffle <- 
     data.frame(
-      index=sample(1:nrow(cluster_info)),
+      index=sample(seq_len(nrow(cluster_info))),
       cluster=cluster_info$cluster
     )
     clu_shuf_list[[i]] <- split(clu_shuffle$index,clu_shuffle$cluster)
@@ -989,7 +989,7 @@ generate_grid_vector <- function(spatial_vector, grid_density = 1,grid_knn=NULL,
   grid_pts <- grid_pts[w_sum > grid_thresh, ]
 
   V_grid <- data.frame()
-  for(i in 1:nrow(nbs)){
+  for(i in seq_len(nrow(nbs))){
     temp <- (V[nbs[i,],]*w[i,]) %>% colSums()
     V_grid <- rbind.data.frame(V_grid,temp)
   }

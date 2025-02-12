@@ -173,7 +173,7 @@ result_list_adaptor <- function(object){
   cond2 <- suppressWarnings(check_slot_empty(object,"LR_pair_field"))
   cond3 <- suppressWarnings(check_slot_empty(object,"LR_family_field"))
 
-  if(cond1 | cond2 | cond3){
+  if(cond1 || cond2 || cond3){
     stop("Empty result slot found!")
   }
 

@@ -1116,7 +1116,7 @@ calc_database_C2C_score <- function(
 ){
   cluster_info <- cluster_info_identifier(seurat_obj,cluster)
   #clu_info_list <- split(cluster_info$barcode,cluster_info$cluster)
-  clu_info_list <- split(1:nrow(cluster_info),cluster_info$cluster)
+  clu_info_list <- split(seq_len(nrow(cluster_info)),cluster_info$cluster)
   n_vec <- lapply(clu_info_list,length) %>% as.numeric()
   n_mat <- n_vec %*% t(n_vec)
 
