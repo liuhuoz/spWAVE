@@ -67,8 +67,16 @@ spWAVE <-
 #' @param object object
 #' @docType methods
 #'
-setMethod(f = "show", signature = "spWAVE", definition = function(object) {
-  dplyr::glimpse(object)
+setMethod(f = "show", signature = "spWAVE", definition = function(object){
+  nrow(object@kept_db)
+  cat("An object of class", class(object), "\n",
+      nrow(object@coord), "cells or spots in", 
+      length(unique(object@cluster_info$cluster)), "clusters. \n",
+      nrow(object@kept_db), "LR pairs and",
+      length(unique(object@kept_db$Family)), "LR families. \n")
+  cat("LR sets: ",head(names(object@single_mole_field)),"...\n")
+  cat("LR familes: ",head(names(object@LR_family_field)),"...\n")
+  #dplyr::glimpse(object)
   invisible(x = NULL)
 })
 
