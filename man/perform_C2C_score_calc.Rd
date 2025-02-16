@@ -8,7 +8,7 @@
 \usage{
 perform_C2C_score_calc(
   kept_db,
-  db_S2S_score_list,
+  db_S2S_score_list = NULL,
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 343,
@@ -28,7 +28,7 @@ perform_C2C_score_calc(
 
 \S4method{perform_C2C_score_calc}{Mat_like}(
   kept_db,
-  db_S2S_score_list,
+  db_S2S_score_list = NULL,
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 343,

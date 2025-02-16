@@ -543,7 +543,7 @@ setMethod("perform_S2S_score_calc", "Mat_like", function(
 #'
 #' @export
 setGeneric("perform_C2C_score_calc", function(
-  kept_db,db_S2S_score_list,
+  kept_db,db_S2S_score_list=NULL,
   seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
   standardGeneric("perform_C2C_score_calc")

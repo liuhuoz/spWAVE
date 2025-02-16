@@ -1140,7 +1140,7 @@ calc_database_C2C_score <- function(
         clu_info_list,
         clu_shuf_list,
         n_mat,
-        verbose=TRUE,backend = backend[2]
+        verbose=FALSE,backend = backend[2]
       )
   },verbose=verbose,backend = backend[1]
   )
