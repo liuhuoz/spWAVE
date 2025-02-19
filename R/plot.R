@@ -974,7 +974,7 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
   }
 
   igraph::E(g)$arrow.width<-arrow.width
-  igraph::E(g)$arrow.size<-arrow.size
+  igraph::E(g)$arrow.size<-(igraph::E(g)$width/10)-0.3
   igraph::E(g)$label.color<-edge.label.color
   igraph::E(g)$label.cex<-edge.label.cex
   igraph::E(g)$color<- grDevices::adjustcolor(igraph::V(g)$color[edge.start[,1]],alpha.edge)
@@ -1059,6 +1059,7 @@ plot_LR_cluster_net_impl <- function(
       target_use=cluster_use,
       method_use=method_use
     )
+  clu_col <- clu_col[rownames(ht_mat)]
 
   #** scale matrix
   if(mat_scale){
