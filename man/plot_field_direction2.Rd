@@ -16,6 +16,8 @@ plot_field_direction2(
   image = c("blank", "HE", "cluster"),
   arrow_color = NULL,
   arrow_alpha = NULL,
+  arrow_shadow = TRUE,
+  shadow_adj = 0.3,
   point_color = "navy",
   arrow_normalize = FALSE,
   ...
@@ -48,6 +50,10 @@ And may only effect in mode="point", because of the ggquiver behavior. See detai
 But in 'cluster' of centroid result, the color is white to match the black background.}
 
 \item{arrow_alpha}{arrow alpha. Default: 1 in blank, 0.7 in other.}
+
+\item{arrow_shadow}{whether add shadow under arrow. Default: TRUE.}
+
+\item{shadow_adj}{shadow position adjust. Default: 0.3.}
 
 \item{point_color}{point color of value. Default is navy.}
 

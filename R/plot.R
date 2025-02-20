@@ -165,6 +165,8 @@ plot_field_direction <- function(
 #' @param arrow_color arrow color. Default: firebrick3 in blank, black in other. 
 #' But in 'cluster' of centroid result, the color is white to match the black background.  
 #' @param arrow_alpha arrow alpha. Default: 1 in blank, 0.7 in other.
+#' @param arrow_shadow whether add shadow under arrow. Default: TRUE.
+#' @param shadow_adj shadow position adjust. Default: 0.3.
 #' @param point_color point color of value. Default is navy.
 #' @param arrow_normalize logical, TRUE means only show the direction without arrow length, default is FALSE.
 #' @param ... Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImageDimPlot}} in Seurat.
@@ -192,6 +194,8 @@ plot_field_direction2 <- function(
   image=c("blank","HE","cluster"),
   arrow_color=NULL,
   arrow_alpha=NULL,
+  arrow_shadow=TRUE,
+  shadow_adj=0.3,
   point_color="navy",
   arrow_normalize=FALSE,
   ...
@@ -271,6 +275,7 @@ plot_field_direction2 <- function(
   arrow_df %<>% calc_field_strength()
 
   #draw image in each layer
+  #bg layer
   switch(image,
     blank={
       p_arrow <- 
@@ -281,53 +286,48 @@ plot_field_direction2 <- function(
             size=point_size, shape = 23, stroke = 0.1
           )+ 
           scale_fill_gradient(low="lightgrey", high=point_color) +
-          geom_quiver(
-            data=arrow_draw,
-            aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey),
-            linewidth = 1, color = arrow_color,alpha=arrow_alpha
-            #arrow = arrow(length = unit(arrow_size, "npc"))
-          )+
         #scale_colour_hue(l = 45) + 
-          theme_classic() + 
-          theme(axis.text.x = element_text(face = "bold", color = "black",
-                                            size = 12, angle = 0, hjust = 1),
-                axis.text.y = element_text(face = "bold", color = "black",
-                                            size = 12, angle = 0))+
-          coord_equal()
+          theme_classic()
     },
     HE={
       p_arrow <- 
-        (SpatialFeaturePlot(seurat_obj, features = NULL, alpha = c(0)) + NoLegend())+
-          geom_quiver(
-            data=arrow_draw,
-            aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
-            linewidth = 1, color = arrow_color,alpha=arrow_alpha
-          )+
-        #scale_colour_hue(l = 45) + 
-          #theme_classic() + 
-          theme(axis.text.x = element_text(face = "bold", color = "black",
-                                            size = 12, angle = 0, hjust = 1),
-                axis.text.y = element_text(face = "bold", color = "black",
-                                            size = 12, angle = 0))+
-          coord_equal()
+        SpatialFeaturePlot(seurat_obj, features = NULL, alpha = c(0)) + NoLegend()
     },
     cluster={
       p_arrow <- 
-        (SeuratDimPlot(seurat_obj,...) + NoLegend())+
-          geom_quiver(
-            data=arrow_draw,
-            aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
-            linewidth = 1, color = arrow_color,alpha=arrow_alpha
-          )+
-        #scale_colour_hue(l = 45) + 
-          #theme_classic() + 
-          theme(axis.text.x = element_text(face = "bold", color = "black",
-                                            size = 12, angle = 0, hjust = 1),
-                axis.text.y = element_text(face = "bold", color = "black",
-                                            size = 12, angle = 0))+
-          coord_equal()
+        SeuratDimPlot(seurat_obj,...) + NoLegend()
     }
   )
+
+  #arrow layer
+  if(show_arrow){
+    if(arrow_shadow){ # add arrow shadow
+      p_arrow <- 
+        p_arrow +
+          geom_quiver(
+            data=arrow_draw,
+            aes(x=x+shadow_adj,y=y+shadow_adj,
+                u=arrow_sf*Ex+shadow_adj,v=arrow_sf*Ey+shadow_adj,fill=NULL),
+            linewidth = 1, color = "#333333",alpha=0.5
+          )
+    }
+    p_arrow <- 
+      p_arrow +
+        geom_quiver(
+          data=arrow_draw,
+          aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
+          linewidth = 1, color = arrow_color,alpha=arrow_alpha
+        )
+  }
+
+  #theme adjust
+  p_arrow <- 
+    p_arrow +
+      theme(axis.text.x = element_text(face = "bold", color = "black",
+                                      size = 12, angle = 0, hjust = 1),
+            axis.text.y = element_text(face = "bold", color = "black",
+                                            size = 12, angle = 0))+
+      coord_equal()
   return(p_arrow)
 }
 
