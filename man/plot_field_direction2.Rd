@@ -10,15 +10,18 @@ plot_field_direction2(
   mode = c("grid", "point"),
   point = "E_strength",
   point_size = NULL,
-  show_arrow = TRUE,
-  arrow_sf = 2,
+  point_color = "navy",
   grid_density = NULL,
   image = c("blank", "HE", "cluster"),
+  show_arrow = TRUE,
+  arrow_sf = 2,
+  arrow_linewidth = 1,
   arrow_color = NULL,
   arrow_alpha = NULL,
   arrow_shadow = TRUE,
   shadow_adj = 0.3,
-  point_color = "navy",
+  shadow_color = "#c3c3c3",
+  shadow_alpha = 0.7,
   arrow_normalize = FALSE,
   ...
 )
@@ -37,14 +40,18 @@ Only support "point" or "grid", default is "grid".}
 \item{point_size}{point (spot) size. In 10x Visium result, default is 2.
 In centroid result, default is 0.2.}
 
+\item{point_color}{point color of value. Default is navy.}
+
+\item{grid_density}{grid density of arrow, smaller value means sparser arrow over image, default is 0.5.}
+
+\item{image}{image type, "blank" or "HE" or "cluster", default is "blank".}
+
 \item{show_arrow}{logical, whether to show arrow, default is TRUE.}
 
 \item{arrow_sf}{scale factor of arrow, smaller value means smaller size. Default is 2.
 And may only effect in mode="point", because of the ggquiver behavior. See details.}
 
-\item{grid_density}{grid density of arrow, smaller value means sparser arrow over image, default is 0.5.}
-
-\item{image}{image type, "blank" or "HE" or "cluster", default is "blank".}
+\item{arrow_linewidth}{the linewidth of arrow. Default: 1}
 
 \item{arrow_color}{arrow color. Default: firebrick3 in blank, black in other.
 But in 'cluster' of centroid result, the color is white to match the black background.}
@@ -55,7 +62,11 @@ But in 'cluster' of centroid result, the color is white to match the black backg
 
 \item{shadow_adj}{shadow position adjust. Default: 0.3.}
 
-\item{point_color}{point color of value. Default is navy.}
+\item{shadow_color}{shadow color. Default: "#c3c3c3".}
+
+\item{shadow_alpha}{shadow alpha. Default: 0.7.
+while shadow_alpha larger than arrow_alpha,
+shadow_alpha will be adjust by the arrow_alpha.}
 
 \item{arrow_normalize}{logical, TRUE means only show the direction without arrow length, default is FALSE.}
 

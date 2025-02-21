@@ -157,17 +157,22 @@ plot_field_direction <- function(
 #' @param point point (spot) value to show, must be in colnames of arrow_df.
 #' @param point_size point (spot) size. In 10x Visium result, default is 2. 
 #' In centroid result, default is 0.2.
+#' @param point_color point color of value. Default is navy.
+#' @param grid_density grid density of arrow, smaller value means sparser arrow over image, default is 0.5.
+#' @param image image type, "blank" or "HE" or "cluster", default is "blank".
 #' @param show_arrow logical, whether to show arrow, default is TRUE.
 #' @param arrow_sf scale factor of arrow, smaller value means smaller size. Default is 2.
 #' And may only effect in mode="point", because of the ggquiver behavior. See details. 
-#' @param grid_density grid density of arrow, smaller value means sparser arrow over image, default is 0.5.
-#' @param image image type, "blank" or "HE" or "cluster", default is "blank".
+#' @param arrow_linewidth the linewidth of arrow. Default: 1
 #' @param arrow_color arrow color. Default: firebrick3 in blank, black in other. 
 #' But in 'cluster' of centroid result, the color is white to match the black background.  
 #' @param arrow_alpha arrow alpha. Default: 1 in blank, 0.7 in other.
 #' @param arrow_shadow whether add shadow under arrow. Default: TRUE.
 #' @param shadow_adj shadow position adjust. Default: 0.3.
-#' @param point_color point color of value. Default is navy.
+#' @param shadow_color shadow color. Default: "#c3c3c3".
+#' @param shadow_alpha shadow alpha. Default: 0.7. 
+#' while shadow_alpha larger than arrow_alpha, 
+#' shadow_alpha will be adjust by the arrow_alpha.
 #' @param arrow_normalize logical, TRUE means only show the direction without arrow length, default is FALSE.
 #' @param ... Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImageDimPlot}} in Seurat.
 #' @details we do recommend to use "grid" instead of "point". 
@@ -188,15 +193,18 @@ plot_field_direction2 <- function(
   mode=c("grid","point"),
   point="E_strength",
   point_size=NULL,
-  show_arrow=TRUE,
-  arrow_sf=2,
+  point_color="navy",
   grid_density=NULL,
   image=c("blank","HE","cluster"),
+  show_arrow=TRUE,
+  arrow_sf=2,
+  arrow_linewidth=1,
   arrow_color=NULL,
   arrow_alpha=NULL,
   arrow_shadow=TRUE,
   shadow_adj=0.3,
-  point_color="navy",
+  shadow_color="#c3c3c3",
+  shadow_alpha=0.7,
   arrow_normalize=FALSE,
   ...
   #alpha=c(0.5,1),
@@ -302,13 +310,16 @@ plot_field_direction2 <- function(
   #arrow layer
   if(show_arrow){
     if(arrow_shadow){ # add arrow shadow
+      if(shadow_alpha>arrow_alpha){
+        shadow_alpha <- arrow_alpha*shadow_alpha
+      }
       p_arrow <- 
         p_arrow +
           geom_quiver(
             data=arrow_draw,
             aes(x=x+shadow_adj,y=y+shadow_adj,
                 u=arrow_sf*Ex+shadow_adj,v=arrow_sf*Ey+shadow_adj,fill=NULL),
-            linewidth = 1, color = "#333333",alpha=0.5
+            linewidth = arrow_linewidth, color = shadow_color,alpha=shadow_alpha
           )
     }
     p_arrow <- 
@@ -316,7 +327,7 @@ plot_field_direction2 <- function(
         geom_quiver(
           data=arrow_draw,
           aes(x=x,y=y,u=arrow_sf*Ex, v=arrow_sf*Ey,fill=NULL),
-          linewidth = 1, color = arrow_color,alpha=arrow_alpha
+          linewidth = arrow_linewidth, color = arrow_color,alpha=arrow_alpha
         )
   }
 
