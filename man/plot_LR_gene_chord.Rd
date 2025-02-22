@@ -9,7 +9,7 @@
 plot_LR_gene_chord(
   db_C2C_score_list,
   kept_db,
-  cluster_color = NULL,
+  LR_color = NULL,
   LR_pair = NULL,
   LR_family = NULL,
   source_use = NULL,
@@ -21,7 +21,7 @@ plot_LR_gene_chord(
 \S4method{plot_LR_gene_chord}{spWAVE}(
   db_C2C_score_list,
   kept_db,
-  cluster_color = NULL,
+  LR_color = NULL,
   LR_pair = NULL,
   LR_family = NULL,
   source_use = NULL,
@@ -33,7 +33,7 @@ plot_LR_gene_chord(
 \S4method{plot_LR_gene_chord}{list}(
   db_C2C_score_list,
   kept_db,
-  cluster_color = NULL,
+  LR_color = NULL,
   LR_pair = NULL,
   LR_family = NULL,
   source_use = NULL,
@@ -46,8 +46,6 @@ plot_LR_gene_chord(
 \item{db_C2C_score_list}{spWAVE object or data list of C2C_score}
 
 \item{kept_db}{The database used in results list}
-
-\item{cluster_color}{named vector, the values are colors and the names are cluster}
 
 \item{LR_pair}{LR pair selected to display, must be the format of Ligand.Receptor,
 e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"}
@@ -62,6 +60,8 @@ e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"}
 Default is NULL and can be generated automatically when single LR pair or family given}
 
 \item{scale}{logical, whether to scale the arc of each chord in plot, default is FALSE}
+
+\item{cluster_color}{named vector, the values are colors and the names are cluster}
 }
 \value{
 plot using based on circlize package

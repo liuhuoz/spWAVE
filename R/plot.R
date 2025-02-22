@@ -565,8 +565,6 @@ plot_LR_cluster_chord_impl <- function(
       #dplyr::filter(Source!=Target) %>%
       dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) 
 
-  #print(pic_df)
-
   temp <- which(chord_order %in% c(pic_df$Source,pic_df$Target))
   chord_order <- chord_order[temp]
   grid_col <- grid_col[temp]
@@ -609,7 +607,7 @@ chord_gene_core_function <- function(
 ){
   circos.clear()
   circos.par(start.degree = 176)
-  chordDiagram(pic_df[,c("source_lig","target_rec","raw_score")],
+  chordDiagram(pic_df[,c("lig","rec","raw_score")],
       grid.col = grid_col,
       #col=link_color,
       directional = 1,big.gap = 10,
@@ -626,18 +624,18 @@ chord_gene_core_function <- function(
       xlim = get.cell.meta.data("xlim")
       xplot = get.cell.meta.data("xplot")
       ylim = get.cell.meta.data("ylim")
-      temp = stringr::str_split_fixed(get.cell.meta.data("sector.index"),pattern = "[@\\.]",n=3)
-      sector.name = temp[,3]
+      temp = stringr::str_split_fixed(get.cell.meta.data("sector.index"),pattern = "[@\\.]",n=2)
+      sector.name = temp[,2]
       circos.text(mean(xlim), ylim[2], sector.name, facing = "clockwise", niceFacing = TRUE, adj = c(-0.1, 0.5),cex = 1)
     }, bg.border = NA) # here set bg.border to NA is important
 
   highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^S")], track.index = 1,col = NA,
-      text = "Sender",cex = 1.2, facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
+      text = "Ligands",cex = 1.2, facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
   highlight.sector(chord_order[stringr::str_detect(chord_order,pattern = "^R")], track.index = 1,col = NA,
-      text = "Receiver",cex = 1.2,facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
+      text = "Receptors",cex = 1.2,facing = "bending.outside", niceFacing = TRUE, text.vjust = 2.2)
 
-  legend <- ComplexHeatmap::Legend(at = names(legend_col), type = "grid", legend_gp = grid::gpar(fill = legend_col), title = "Cluster")
-  ComplexHeatmap::draw(legend, x = unit(1, "npc")-unit(20, "mm"), just = c("right"))
+  #legend <- ComplexHeatmap::Legend(at = names(legend_col), type = "grid", legend_gp = grid::gpar(fill = legend_col), title = "Cluster")
+  #ComplexHeatmap::draw(legend, x = unit(1, "npc")-unit(20, "mm"), just = c("right"))
 
   graphics::title(main_title)
 
@@ -669,7 +667,7 @@ plot_LR_gene_chord_impl <- function(
   db_C2C_score_list,
   kept_db,
   #C2C_score_df,
-  cluster_color=NULL,
+  LR_color=NULL,
   LR_pair=NULL,
   LR_family=NULL,
   source_use=NULL,
@@ -693,44 +691,53 @@ plot_LR_gene_chord_impl <- function(
       ) %>%
       dplyr::filter(p_value<0.05) %>%
       #dplyr::filter(Source!=Target) %>%
-      dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) %>%
-      dplyr::mutate(Source=stringr::str_replace_all(Source,pattern = "\\.",replacement = "_"),
-            Target=stringr::str_replace_all(Target,pattern = "\\.",replacement = "_")) %>%
+      #dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) %>%
+      #dplyr::mutate(Source=stringr::str_replace_all(Source,pattern = "\\.",replacement = "_"),
+      #      Target=stringr::str_replace_all(Target,pattern = "\\.",replacement = "_")) %>%
       #dplyr::mutate(Source = paste0(Source,"_",id),Target = paste0(Target,"_",id))
       dplyr::mutate("lig"=stringr::str_split(id,pattern = "\\.",simplify = TRUE)[,1],
             "rec"=stringr::str_split(id,pattern = "\\.",simplify = TRUE)[,2]) %>%
-      dplyr::mutate(source_lig=paste0(Source,".",lig),
-            target_rec=paste0(Target,".",rec))
+      dplyr::mutate(lig=paste0("S@",lig),rec=paste0("R@",rec)) #%>%
+      # dplyr::mutate(source_lig=paste0(Source,".",lig),
+      #       target_rec=paste0(Target,".",rec))
 
 
-  #** get the color of each cluster
-  if(is.null(cluster_color)){
-    clu_color <- assign_clu_col_lite(C2C_score_df)
+  #** get the color of each LR
+  if(is.null(LR_color)){
+    LR_color <- MD2_color_picker(length(c(pic_df$lig,pic_df$rec) %>% unique()))
+    names(LR_color) <- c(pic_df$lig,pic_df$rec) %>% unique()
   }else{
-    clu_color <- check_cluster_color(cluster_color,C2C_score_df,source_use,target_use)
+    #message("The clusters in plot will follow the order of cluster_color names.")
+    temp1 <- which(paste0("S@",names(LR_color)) %in% pic_df$lig)
+    temp2 <- which(paste0("R@",names(LR_color)) %in% pic_df$rec)
+    names(LR_color)[temp1] <- paste0("S@",names(LR_color)[temp1])
+    names(LR_color)[temp2] <- paste0("R@",names(LR_color)[temp2])
+    LR_color <- c(LR_color[temp1],LR_color[temp2])
   }
 
-  #** assign the color of each cluster and ligand/receptor
-  color_df <- clu_color %>% as.data.frame()
-  colnames(color_df) <- "color"
-  color_df$clu <- rownames(color_df)
-  LR_clu <- c(pic_df$source_lig,pic_df$target_rec) %>% table() %>% names() %>%
-    stringr::str_split_fixed(pattern="[@\\.]",n=3) %>% as.data.frame()
-  colnames(LR_clu) <- c("SR","clu","LR")
 
-  LR_clu %<>% dplyr::left_join(color_df,by="clu")
-  grid_col <- LR_clu$color
+  #** assign the color of each cluster and ligand/receptor
+  # color_df <- clu_color %>% as.data.frame()
+  # colnames(color_df) <- "color"
+  # color_df$clu <- rownames(color_df)
+  # LR_clu <- c(pic_df$source_lig,pic_df$target_rec) %>% unique() %>%
+  #   stringr::str_split_fixed(pattern="[@\\.]",n=3) %>% as.data.frame()
+  # colnames(LR_clu) <- c("SR","clu","LR")
+
+  # LR_clu %<>% dplyr::left_join(color_df,by="clu")
+  # grid_col <- LR_clu$color
   chord_order <- 
-    names(grid_col) <- c(pic_df$source_lig,pic_df$target_rec) %>% table() %>% names()
+    #names(grid_col) <- 
+      c(pic_df$lig,pic_df$rec) %>% unique()
 
 
   #** filter out not used color,and this arg is used in legend
-  clu_color_use <- clu_color[LR_clu$clu %>% table %>% names]
+  #clu_color_use <- clu_color[LR_clu$clu %>% unique()]
 
   #** filter out not used color,and those args is used in chord plot
-  temp <- which(chord_order %in% c(pic_df$source_lig,pic_df$target_rec))
-  chord_order <- chord_order[temp]
-  grid_col <- grid_col[temp]
+  #temp <- which(chord_order %in% c(pic_df$lig,pic_df$rec))
+  #chord_order <- chord_order[temp]
+  grid_col <- LR_color[chord_order]
   chord_group <- stringr::str_split(chord_order,pattern = "@",simplify = TRUE)[,1]
   names(chord_group) <- chord_order
 

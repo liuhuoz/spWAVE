@@ -817,7 +817,7 @@ setMethod("plot_LR_cluster_chord", "list", function(
 setGeneric("plot_LR_gene_chord", function(
   db_C2C_score_list,
   kept_db,
-  cluster_color=NULL,
+  LR_color=NULL,
   LR_pair=NULL,
   LR_family=NULL,
   source_use=NULL,
@@ -834,7 +834,7 @@ setGeneric("plot_LR_gene_chord", function(
 setMethod("plot_LR_gene_chord", "spWAVE", function(
   db_C2C_score_list,
   kept_db,
-  cluster_color=NULL,
+  LR_color=NULL,
   LR_pair=NULL,
   LR_family=NULL,
   source_use=NULL,
@@ -847,7 +847,7 @@ setMethod("plot_LR_gene_chord", "spWAVE", function(
     plot_LR_gene_chord_impl(
       db_C2C_score_list=db_C2C_score_list@C2C_score,
       kept_db=db_C2C_score_list@kept_db,
-      cluster_color=cluster_color,
+      LR_color=LR_color,
       LR_pair=LR_pair,
       LR_family=LR_family,
       source_use=source_use,
@@ -864,7 +864,7 @@ setMethod("plot_LR_gene_chord", "spWAVE", function(
 setMethod("plot_LR_gene_chord", "list", function(
   db_C2C_score_list,
   kept_db,
-  cluster_color=NULL,
+  LR_color=NULL,
   LR_pair=NULL,
   LR_family=NULL,
   source_use=NULL,
@@ -874,7 +874,7 @@ setMethod("plot_LR_gene_chord", "list", function(
     plot_LR_gene_chord_impl(
       db_C2C_score_list=db_C2C_score_list,
       kept_db=kept_db,
-      cluster_color=cluster_color,
+      LR_color=LR_color,
       LR_pair=LR_pair,
       LR_family=LR_family,
       source_use=source_use,
