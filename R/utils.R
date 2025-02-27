@@ -23,7 +23,7 @@
 get_spatial_expr <- function(SrtObj,gene,assay="SCT"){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
     coord_info <- Seurat::GetTissueCoordinates(SrtObj,scale=NULL)
-    scale_spot <- SrtObj@images$slice1@scale.factors$spot
+    scale_spot <- SrtObj@images[[1]]@scale.factors$spot
     scale_micrometer <- 65/scale_spot
     coord_info$imagerow <-
       max(coord_info$imagerow) - coord_info$imagerow + min(coord_info$imagerow)
@@ -895,7 +895,7 @@ subset_ratio <- function(SeuObj){
 get_coordinates_in_plot <- function(SrtObj){
   if(class(SrtObj@images[[1]]) %in% c("VisiumV1","VisiumV2")){
     coord_info <- Seurat::GetTissueCoordinates(SrtObj)
-    scale_spot <- SrtObj@images$slice1@scale.factors$spot
+    scale_spot <- SrtObj@images[[1]]@scale.factors$spot
     #scale_micrometer <- 65/scale_spot
     coord_info$imagerow <-
       max(coord_info$imagerow) - coord_info$imagerow + min(coord_info$imagerow)
