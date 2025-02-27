@@ -21,6 +21,8 @@ plot_LR_gene_chord_impl(
 
 \item{kept_db}{The database used in results list.}
 
+\item{LR_color}{named vector, the values are colors and the names are ligand and receptor.}
+
 \item{LR_pair}{LR pair selected to display, must be the format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".}
 
 \item{LR_family}{LR family selected to display.}
@@ -33,8 +35,6 @@ plot_LR_gene_chord_impl(
 Default is NULL and can be generated automatically when single LR pair or family given.}
 
 \item{scale}{logical, whether to scale the arc of each chord in plot, default is FALSE.}
-
-\item{cluster_color}{named vector, the values are colors and the names are cluster.}
 }
 \value{
 plot using based on circlize package

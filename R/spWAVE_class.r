@@ -800,17 +800,7 @@ setMethod("plot_LR_cluster_chord", "list", function(
 
 #' Plot genes in Ligand-receptor pairs with chord diagram
 #' 
-#' @param db_C2C_score_list spWAVE object or data list of C2C_score
-#' @param kept_db The database used in results list
-#' @param cluster_color named vector, the values are colors and the names are cluster
-#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
-#' e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
-#' @param LR_family LR family selected to display
-#' @param source_use Ligand source clusters selected to display
-#' @param target_use Receptor target clusters selected to display
-#' @param title character, plot title
-#' Default is NULL and can be generated automatically when single LR pair or family given
-#' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE
+#' @inheritParams plot_LR_gene_chord_impl
 #'
 #' @return plot using based on circlize package
 #' @export

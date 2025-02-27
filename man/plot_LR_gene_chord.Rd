@@ -43,25 +43,24 @@ plot_LR_gene_chord(
 )
 }
 \arguments{
-\item{db_C2C_score_list}{spWAVE object or data list of C2C_score}
+\item{db_C2C_score_list}{C2C score result list.}
 
-\item{kept_db}{The database used in results list}
+\item{kept_db}{The database used in results list.}
 
-\item{LR_pair}{LR pair selected to display, must be the format of Ligand.Receptor,
-e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"}
+\item{LR_color}{named vector, the values are colors and the names are ligand and receptor.}
 
-\item{LR_family}{LR family selected to display}
+\item{LR_pair}{LR pair selected to display, must be the format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".}
 
-\item{source_use}{Ligand source clusters selected to display}
+\item{LR_family}{LR family selected to display.}
 
-\item{target_use}{Receptor target clusters selected to display}
+\item{source_use}{Ligand source clusters selected to display.}
 
-\item{title}{character, plot title
-Default is NULL and can be generated automatically when single LR pair or family given}
+\item{target_use}{Receptor target clusters selected to display.}
 
-\item{scale}{logical, whether to scale the arc of each chord in plot, default is FALSE}
+\item{title}{character, plot title.
+Default is NULL and can be generated automatically when single LR pair or family given.}
 
-\item{cluster_color}{named vector, the values are colors and the names are cluster}
+\item{scale}{logical, whether to scale the arc of each chord in plot, default is FALSE.}
 }
 \value{
 plot using based on circlize package

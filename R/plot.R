@@ -650,7 +650,7 @@ chord_gene_core_function <- function(
 #'
 #' @param db_C2C_score_list C2C score result list.
 #' @param kept_db The database used in results list.
-#' @param cluster_color named vector, the values are colors and the names are cluster.
+#' @param LR_color named vector, the values are colors and the names are ligand and receptor.
 #' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".
 #' @param LR_family LR family selected to display.
 #' @param source_use Ligand source clusters selected to display.
@@ -751,7 +751,7 @@ plot_LR_gene_chord_impl <- function(
 
   chord_gene_core_function(
       pic_df,
-      grid_col,clu_color_use,
+      grid_col,legend_col=NULL,
       chord_order,chord_group,title
   )
 }

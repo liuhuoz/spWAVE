@@ -374,7 +374,7 @@ plot_layers_score_dot <- function(
         )
   if(scale && nrow(draw_df)!=1){
     draw_df <- draw_df %>% 
-      dplyr::mutate(scale_score = scale(.data[["raw_score"]]))
+      dplyr::mutate(scale_score = scale(.data[["raw_score"]],center = FALSE))
     score_title <- "scaled score"
   }else{
     if(nrow(draw_df)==1){message("Only one row in filtered data. Will not scale.")}
@@ -395,4 +395,58 @@ plot_layers_score_dot <- function(
           strip.background = element_rect(fill = "white")
         )
   return(plot)
+}
+
+#** adapt for spWAVE class
+#' Plot multi layers C2C score as Dot Plot for spWAVE class list
+#'
+#' Plot multi C2C score as Dot Plot for list of spWAVE class object
+#' 
+#' @param merge_db_C2C_list list of C2C score result list.
+#' @param merge_kept_db_list list of matching kept_db, Default is NULL. optional.
+#' @param p_val p_val threshold, default is 0.05.
+#' @param LR_pair LR pair to be shown, must in format "Ligand.Receptor".
+#' @param LR_family LR family to be shown.
+#' @param source_use Source cluster to be shown.
+#' @param target_use Target cluster to be shown.
+#' @param scale logical, whether to scale the score, default is TRUE.
+#' 
+#' @seealso \link{plot_layers_score_dot}
+#'
+#' @return return a dot plot
+#' @importFrom purrr map2
+#' @import stringr
+#' @import dplyr
+#' @export
+plot_layers_score_dot_spWAVE <- function(
+  merge_db_C2C_list,
+  merge_kept_db_list=NULL,
+  p_val=0.05,
+  LR_pair=NULL,
+  LR_family=NULL,
+  source_use=NULL,
+  target_use=NULL,
+  scale=TRUE
+){
+  check_class <- sapply(merge_db_C2C_list,function(x) is(x,"spWAVE"))
+  if(!all(check_class)){
+    stop("The input contents in list must be spWAVE class!")
+  }
+  extract_db_field_list <- lapply(merge_db_C2C_list,function(x) x@C2C_score)
+  names(extract_db_field_list) <- names(merge_db_C2C_list)
+  if(is.null(merge_kept_db_list)){
+    extract_kept_db_list <- lapply(merge_db_C2C_list,function(x) x@kept_db)
+    names(extract_kept_db_list) <- names(merge_db_C2C_list)
+  }
+
+  plot_layers_score_dot(
+    merge_db_C2C_list=extract_db_field_list,
+    merge_kept_db_list=extract_kept_db_list,
+    p_val=p_val,
+    LR_pair=LR_pair,
+    LR_family=LR_family,
+    source_use=source_use,
+    target_use=target_use,
+    scale=scale
+  )
 }
