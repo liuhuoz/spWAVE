@@ -82,7 +82,7 @@ run_LR_tradeSeq <- function(
   }
   data_check <- 
     any(
-      all(!is.null(database_result),!is.null(LR),!is.null(kept_db)),
+      all(!is.null(database_result),!is.null(LR)),
       !is.null(field_df)
   )
   if(!data_check){
@@ -92,7 +92,7 @@ run_LR_tradeSeq <- function(
   #** prep data
   if(is.null(field_df)){
     field_df <- 
-      extract_LR_field_result(database_result=database_result,LR=LR,kept_db=kept_db)
+      perform_field_extract(database_result=database_result,LR=LR,kept_db=kept_db)
     field_df %<>% calc_field_strength()
   }
   if(!(traj_arg %in% colnames(field_df))){
