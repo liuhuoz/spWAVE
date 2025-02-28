@@ -626,6 +626,21 @@ setMethod("perform_field_extract", "spWAVE", function(
   return(result_df)
 })
 
+#' @rdname perform_field_extract
+#' @aliases perform_field_extract,list-method
+#' 
+#' @export
+setMethod("perform_field_extract", "list", function(
+  database_result,LR,kept_db){
+  result_df <- 
+    extract_LR_field_result(database_result,
+      LR=LR,
+      kept_db = kept_db)
+  result_df %<>% calc_field_strength()
+
+  return(result_df)
+})
+
 #******************
 #** Plot module  **
 #******************

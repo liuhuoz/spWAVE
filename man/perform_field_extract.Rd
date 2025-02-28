@@ -3,11 +3,14 @@
 \name{perform_field_extract}
 \alias{perform_field_extract}
 \alias{perform_field_extract,spWAVE-method}
+\alias{perform_field_extract,list-method}
 \title{perform result extraction}
 \usage{
 perform_field_extract(database_result, LR, kept_db)
 
 \S4method{perform_field_extract}{spWAVE}(database_result, LR, kept_db)
+
+\S4method{perform_field_extract}{list}(database_result, LR, kept_db)
 }
 \arguments{
 \item{database_result}{database result list from spWAVE.}
