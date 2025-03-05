@@ -518,7 +518,7 @@ calc_database_holed_field <- function(
     #* Align the row order for concatenation
     rownames(temp) <- temp$barcode
     temp <- temp[ROI_barcode,]
-    temp %<>% cbind.data.frame(spot_expr_ROI[,i,FALSE])
+    temp %<>% cbind.data.frame(spot_expr_ROI[,char_index[[i]],FALSE])
 
     temp <- temp[,c("x","y","barcode",char_index[[i]],"Ex","Ey","U")]
     gene_vec_list[[i]] <- temp
