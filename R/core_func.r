@@ -511,7 +511,8 @@ calc_database_holed_field <- function(
   )
   gene_vec_list <- list()
   spot_expr_ROI <- spot_expr[ROI_barcode,]
-  for(i in seq_len(nrow(point_vec_list[[1]]))){
+  char_index <- point_vec_list[[1]]$gene
+  for(i in seq_len(char_index)){
     temp <- 
       do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
     #* Align the row order for concatenation
@@ -519,10 +520,10 @@ calc_database_holed_field <- function(
     temp <- temp[ROI_barcode,]
     temp %<>% cbind.data.frame(spot_expr_ROI[,i,FALSE])
 
-    temp <- temp[,c("x","y","barcode",colnames(spot_expr)[i],"Ex","Ey","U")]
+    temp <- temp[,c("x","y","barcode",char_index[[i]],"Ex","Ey","U")]
     gene_vec_list[[i]] <- temp
   }
-  names(gene_vec_list) <- point_vec_list[[1]]$gene
+  names(gene_vec_list) <- char_index
 
   return(gene_vec_list)
 }
