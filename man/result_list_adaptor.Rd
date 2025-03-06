@@ -4,10 +4,12 @@
 \alias{result_list_adaptor}
 \title{Result list adaptor}
 \usage{
-result_list_adaptor(object)
+result_list_adaptor(object, ROI_barcode = NULL)
 }
 \arguments{
 \item{object}{object of spWAVE}
+
+\item{ROI_barcode}{ROI barcode, default is NULL}
 }
 \value{
 a list containing single_mole_field,

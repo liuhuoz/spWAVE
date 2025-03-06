@@ -6,9 +6,9 @@
 \alias{perform_S2S_score_calc,Mat_like-method}
 \title{perform calculation of S2S score}
 \usage{
-perform_S2S_score_calc(kept_db, db_field_result)
+perform_S2S_score_calc(kept_db, db_field_result, ROI_barcode = NULL)
 
-\S4method{perform_S2S_score_calc}{spWAVE}(kept_db, db_field_result)
+\S4method{perform_S2S_score_calc}{spWAVE}(kept_db, db_field_result, ROI_barcode = NULL)
 
 \S4method{perform_S2S_score_calc}{Mat_like}(kept_db, db_field_result)
 }
@@ -16,6 +16,8 @@ perform_S2S_score_calc(kept_db, db_field_result)
 \item{kept_db}{data.frame, LR database, must be same with the database used in db_field_result}
 
 \item{db_field_result}{list, result of perform_LR_field_calc}
+
+\item{ROI_barcode}{ROI barcode, default is NULL.}
 }
 \description{
 perform calculation of S2S score in 1 step.

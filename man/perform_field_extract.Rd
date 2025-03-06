@@ -6,11 +6,11 @@
 \alias{perform_field_extract,list-method}
 \title{perform result extraction}
 \usage{
-perform_field_extract(database_result, LR, kept_db)
+perform_field_extract(database_result, LR, kept_db, ROI_barcode = NULL)
 
-\S4method{perform_field_extract}{spWAVE}(database_result, LR, kept_db)
+\S4method{perform_field_extract}{spWAVE}(database_result, LR, kept_db, ROI_barcode = NULL)
 
-\S4method{perform_field_extract}{list}(database_result, LR, kept_db)
+\S4method{perform_field_extract}{list}(database_result, LR, kept_db, ROI_barcode = NULL)
 }
 \arguments{
 \item{database_result}{database result list from spWAVE.}
@@ -18,6 +18,8 @@ perform_field_extract(database_result, LR, kept_db)
 \item{LR}{LR pair or family. LR pair must be format of Ligand.Receptor, e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2".}
 
 \item{kept_db}{The database used in results list.}
+
+\item{ROI_barcode}{ROI barcode, default is NULL}
 }
 \description{
 perform result extraction from spWAVE object
