@@ -18,7 +18,7 @@ setClassUnion(name = 'Mat_like', members = c("matrix", "dgCMatrix","data.frame")
 #' @slot coord spatial coordinates of cells
 #' @slot cluster_info functional annotation cluster info of cells
 #' #** pre-process
-#' @slot meta_coord geometric center of meta clustered cells' coordinates 
+#' @slot meta_coord geometric center of meta clustered cells' coordinates
 #' @slot meta_coord_clu cells barcode with meta cluster info
 #' @slot meta_complex filtered ligands and receptors complex expr matrix of meta cluster
 #' #** field result
@@ -30,11 +30,11 @@ setClassUnion(name = 'Mat_like', members = c("matrix", "dgCMatrix","data.frame")
 #' @slot C2C_score ligand-receptor family score list
 #' #** other
 #' @slot others other list, only for storing unexpected results, commonly not used.
-#' 
+#'
 #' @exportClass spWAVE
 #' @importFrom methods setClass
-spWAVE <- 
-  methods::setClass("spWAVE", slots = 
+spWAVE <-
+  methods::setClass("spWAVE", slots =
     c(
       #** setup
       expr_raw = 'Mat_like',
@@ -70,7 +70,7 @@ spWAVE <-
 setMethod(f = "show", signature = "spWAVE", definition = function(object){
   nrow(object@kept_db)
   cat("An object of class", class(object), "\n",
-      nrow(object@coord), "cells or spots in", 
+      nrow(object@coord), "cells or spots in",
       length(unique(object@cluster_info$cluster)), "clusters. \n",
       nrow(object@kept_db), "LR pairs and",
       length(unique(object@kept_db$Family)), "LR families. \n")
@@ -99,24 +99,24 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object){
 
 
 #' Create spWAVE object
-#' 
-#' Create spWAVE object from Seurat 
-#' 
+#'
+#' Create spWAVE object from Seurat
+#'
 #' @param database The ligand-receptor database you loaded.
 #' @inheritParams filter_LR_expr
 #' @inheritParams generate_complex_data
 #' @inheritParams cluster_info_identifier
-#' 
-#' @details This function is a warper of multi helper functions, more details please check seealso link. 
-#' 
+#'
+#' @details This function is a warper of multi helper functions, more details please check seealso link.
+#'
 #' @seealso \code{\link{cluster_info_identifier}}
 #' @seealso \code{\link{generate_complex_data}}
 #' @seealso \code{\link{filter_LR_expr}}
-#' 
+#'
 #' @importFrom methods new
-#' 
+#'
 #' @return a setup spWAVE object
-#' 
+#'
 #' @export
 create_spWAVE_object <- function(
     seurat_obj,
@@ -129,15 +129,15 @@ create_spWAVE_object <- function(
     complex_min_cell=10
     ){
   new_object <- methods::new(Class="spWAVE")
-  new_object@expr_raw <- 
+  new_object@expr_raw <-
       filter_LR_expr(db=database,seurat_obj,assay = assay,
           min_expr=min_expr,  min_n_cell=min_n_cell,   min_pct_cell=min_pct_cell
       )
-  
-  complex_data <- 
+
+  complex_data <-
     generate_complex_data(database,new_object@expr_raw,
       complex_min_cell=complex_min_cell)
-  
+
   new_object@expr_complex <- complex_data$expr_LR_df
   new_object@kept_db <- complex_data$kept_db
   new_object@coord <- get_coordinates(seurat_obj)
@@ -171,12 +171,13 @@ check_slot_empty <- function(object,slot){
 #' Adaptor for extracting and formatting the result list from spWAVE object
 #'
 #' @param object object of spWAVE
-#'  
-#' @return a list containing single_mole_field, 
-#' LR_pair_field and LR_family_field extract from spWAVE object. 
-#' 
+#' @param ROI_barcode ROI barcode, default is NULL
+#'
+#' @return a list containing single_mole_field,
+#' LR_pair_field and LR_family_field extract from spWAVE object.
+#'
 #' @export
-result_list_adaptor <- function(object){
+result_list_adaptor <- function(object,ROI_barcode=NULL){
   cond1 <- suppressWarnings(check_slot_empty(object,"single_mole_field"))
   cond2 <- suppressWarnings(check_slot_empty(object,"LR_pair_field"))
   cond3 <- suppressWarnings(check_slot_empty(object,"LR_family_field"))
@@ -185,11 +186,22 @@ result_list_adaptor <- function(object){
     stop("Empty result slot found!")
   }
 
-  db_res_list <- list(
-    single_mol_field_list = object@single_mole_field,
-    LR_pair_field_list = object@LR_pair_field,
-    LR_family_field_list = object@LR_family_field
-  )
+  if(is.null(ROI_barcode)){
+    db_res_list <- list(
+      single_mol_field_list = object@single_mole_field,
+      LR_pair_field_list = object@LR_pair_field,
+      LR_family_field_list = object@LR_family_field
+    )
+  }else{
+    db_res_list <- list(
+      single_mol_field_list =
+        lapply(object@single_mole_field,function(x) x[ROI_barcode,]),
+      LR_pair_field_list =
+        lapply(object@LR_pair_field,function(x) x[ROI_barcode,]),
+      LR_family_field_list =
+        lapply(object@LR_family_field,function(x) x[ROI_barcode,])
+    )
+  }
   return(db_res_list)
 }
 
@@ -199,23 +211,23 @@ result_list_adaptor <- function(object){
 
 #*******************
 #** Set up module **
-#******************* 
+#*******************
 
 #' Generate Meta coordinates
 #'
 #' Generate meta coordinates by kmeans methods
 #'
-#' @param coord data.frame,spatial coordinates, 
+#' @param coord data.frame,spatial coordinates,
 #' should have column names "x" and "y" and "barcode".
 #' @param random_seed random seed of kmeans for reproducibility. Default is 42.
 #' @inheritParams stats::kmeans
-#' 
+#'
 #' @seealso \code{\link[stats]{kmeans}}
 #'
-#' @return If input is data.frame, return a list, meta coordinates contain geometric center of each cluster and 
-#' spot ids. And km_cluster contain the barcode and cluster id. 
+#' @return If input is data.frame, return a list, meta coordinates contain geometric center of each cluster and
+#' spot ids. And km_cluster contain the barcode and cluster id.
 #' If spWAVE, return spWAVE.
-#' @export 
+#' @export
 setGeneric("generate_kmeans_coord", function(coord,
   centers=nrow(coord)/10,
   iter.max=10,
@@ -230,16 +242,16 @@ setGeneric("generate_kmeans_coord", function(coord,
 #' @aliases generate_kmeans_coord,spWAVE-method
 #'
 #' @export
-setMethod(f = "generate_kmeans_coord", signature = "spWAVE", 
+setMethod(f = "generate_kmeans_coord", signature = "spWAVE",
   definition = function(coord,
   centers,
   iter.max=10,
   nstart=1,
   random_seed=42) {
-  meta_list <- 
+  meta_list <-
     generate_kmeans_coord_impl(coord=coord@coord,centers = nrow(coord@coord)/10,
       iter.max = iter.max,nstart = nstart,random_seed = random_seed)
-  
+
   coord@meta_coord <- meta_list$meta
   coord@meta_coord_clu <- meta_list$km_cluster
   return(coord)
@@ -248,7 +260,7 @@ setMethod(f = "generate_kmeans_coord", signature = "spWAVE",
 #' @rdname generate_kmeans_coord
 ##' @param coord object of class `data.frame`.
 #' @aliases generate_kmeans_coord,data.frame-method
-#' 
+#'
 #' @export
 setMethod("generate_kmeans_coord", "data.frame", function(coord,
   centers=nrow(coord)/10,
@@ -266,16 +278,16 @@ setMethod("generate_kmeans_coord", "data.frame", function(coord,
 
 #' Generate Meta Expression
 #'
-#' Generate a meta expression data.frame of clustered meta coordinates 
-#' 
-#' @param expr expression matrix or data.frame, commonly the result of generate_complex_data
-#' @param clu_info cluster info, must be contain "barcode" and "cluster". 
-#' The cluster is the result of Kmenas. 
+#' Generate a meta expression data.frame of clustered meta coordinates
 #'
-#' @details This function will sum-up the expresion of spot in a cluster. 
+#' @param expr expression matrix or data.frame, commonly the result of generate_complex_data
+#' @param clu_info cluster info, must be contain "barcode" and "cluster".
+#' The cluster is the result of Kmenas.
+#'
+#' @details This function will sum-up the expresion of spot in a cluster.
 #' For receptor complex, we firstly calculate the complex expression of each spot by
 #' generate_complex_data before this function.
-#' 
+#'
 #' @return data.frame, sum-uped meta expression.
 #' @export
 setGeneric("generate_meta_expr", function(expr,clu_info){
@@ -288,7 +300,7 @@ setGeneric("generate_meta_expr", function(expr,clu_info){
 #' @aliases generate_meta_expr,spWAVE-method
 #'
 #' @export
-setMethod(f = "generate_meta_expr", signature = "spWAVE", 
+setMethod(f = "generate_meta_expr", signature = "spWAVE",
   definition = function(expr,clu_info){
   expr@meta_complex <- generate_meta_expr(expr@expr_complex,expr@meta_coord_clu)
   return(expr)
@@ -297,7 +309,7 @@ setMethod(f = "generate_meta_expr", signature = "spWAVE",
 #' @rdname generate_meta_expr
 ##' @param expr object of class `Mat_like`, including "matrix", "dgCMatrix","data.frame".
 #' @aliases generate_meta_expr,Mat_like-method
-#' 
+#'
 #' @export
 setMethod("generate_meta_expr", "Mat_like", function(expr,clu_info){
   generate_meta_expr_impl(expr,clu_info)
@@ -311,16 +323,16 @@ setMethod("generate_meta_expr", "Mat_like", function(expr,clu_info){
 #' Perform calculation of LR field using hole method
 #'
 #' Perform calculation of LR field with hole method in 1 step.
-#' 
-#' @inheritParams calc_database_holed_field 
+#'
+#' @inheritParams calc_database_holed_field
 #' @inheritParams calc_database_LR_field
-#' 
-#' @details This function is a warper for integrating multi-steps core functions. 
+#'
+#' @details This function is a warper for integrating multi-steps core functions.
 #' For more details, please check the seealso.
-#' 
+#'
 #' @seealso \code{\link{calc_database_holed_field}}
 #' @seealso \code{\link{calc_database_LR_field}}
-#' 
+#'
 #'
 #' @export
 setGeneric("perform_LR_field_hole_calc", function(
@@ -337,7 +349,7 @@ setGeneric("perform_LR_field_hole_calc", function(
 
 #' @rdname perform_LR_field_hole_calc
 #' @aliases perform_LR_field_hole_calc,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("perform_LR_field_hole_calc", "spWAVE", function(
   kept_db,
@@ -367,9 +379,9 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
       verbose=verbose
     )
     print("Step2. calc LR pair or family field")
-    LR_field <- 
+    LR_field <-
       calc_database_LR_field(kept_db@kept_db,kept_db@single_mole_field,verbose=verbose)
-    kept_db@LR_pair_field = LR_field[[1]] 
+    kept_db@LR_pair_field = LR_field[[1]]
     kept_db@LR_family_field = LR_field[[2]]
     return(kept_db)
 })
@@ -377,7 +389,7 @@ setMethod("perform_LR_field_hole_calc", "spWAVE", function(
 
 #' @rdname perform_LR_field_hole_calc
 #' @aliases perform_LR_field_hole_calc,Mat_like-method
-#' 
+#'
 #' @export
 setMethod("perform_LR_field_hole_calc", "Mat_like", function(
   kept_db,
@@ -401,9 +413,9 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
     )
     print("Step2. calc LR pair or family field")
     LR_field <- calc_database_LR_field(kept_db,single_field,verbose=verbose)
-    whole_db_field <- 
+    whole_db_field <-
       list(single_mol_field_list = single_field,
-          "LR_pair_field_list" = LR_field[[1]], 
+          "LR_pair_field_list" = LR_field[[1]],
           "LR_family_field_list" = LR_field[[2]])
     return(whole_db_field)
 })
@@ -412,17 +424,17 @@ setMethod("perform_LR_field_hole_calc", "Mat_like", function(
 #' perform calculation of LR pair or family in database
 #'
 #' perform calculation of LR pair or family in database in 1 step.
-#' 
+#'
 #' @inheritParams calc_database_single_field
-#' 
+#'
 #' @details This function is a warper for integrating multi-steps core functions.
 #' An integrated function of calc_database_single_field and calc_database_LR_field.
 #' For more details, please check the seealso.
-#' 
+#'
 #' @seealso \code{\link{calc_database_single_field}}
 #' @seealso \code{\link{calc_database_LR_field}}
 #'
-#' @return return list of single molecule field, 
+#' @return return list of single molecule field,
 #' LR pair field and LR family field in 3 separated list.
 #' @export
 setGeneric("perform_LR_field_calc", function(
@@ -432,7 +444,7 @@ setGeneric("perform_LR_field_calc", function(
 
 #' @rdname perform_LR_field_calc
 #' @aliases perform_LR_field_calc,Mat_like-method
-#' 
+#'
 #' @export
 setMethod("perform_LR_field_calc", "Mat_like", function(
   kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){
@@ -451,7 +463,7 @@ setMethod("perform_LR_field_calc", "Mat_like", function(
 
 #' @rdname perform_LR_field_calc
 #' @aliases perform_LR_field_calc,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("perform_LR_field_calc", "spWAVE", function(
     kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){
@@ -459,10 +471,10 @@ setMethod("perform_LR_field_calc", "spWAVE", function(
   check_slot_empty(kept_db,"LR_pair_field")
   check_slot_empty(kept_db,"LR_family_field")
   print("Step1. calc single molecule or complex field")
-  kept_db@single_mole_field <- 
+  kept_db@single_mole_field <-
     calc_database_single_field(kept_db@kept_db,kept_db@expr_complex,kept_db@coord,skip_subunit=skip_subunit,verbose = verbose)
   print("Step2. calc LR pair or family field")
-  LR_field_list <- 
+  LR_field_list <-
     calc_database_LR_field(kept_db@kept_db,kept_db@single_mole_field,verbose = verbose)
 
   kept_db@LR_pair_field <- LR_field_list[[1]]
@@ -474,40 +486,41 @@ setMethod("perform_LR_field_calc", "spWAVE", function(
 #' perform calculation of S2S score
 #'
 #' perform calculation of S2S score in 1 step.
-#' 
+#'
 #' @inheritParams prep_database_S2S_list
-#' 
+#' @param ROI_barcode ROI barcode, default is NULL.
+#'
 #' @details This function is a warper for integrating multi-steps core functions.
 #' The integrated function of calc_S2S score.
 #' For more details, please check the seealso.
-#' 
+#'
 #' @seealso \code{\link{prep_database_S2S_list}}
 #' @seealso \code{\link{calc_database_S2S_force}}
 #' @seealso \code{\link{calc_database_S2S_score}}
 #'
 #' @export
-setGeneric("perform_S2S_score_calc", function(kept_db,db_field_result){
+setGeneric("perform_S2S_score_calc", function(kept_db,db_field_result,ROI_barcode=NULL){
   standardGeneric("perform_S2S_score_calc")
 })
 
 #' @rdname perform_S2S_score_calc
 #' @aliases perform_S2S_score_calc,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("perform_S2S_score_calc", "spWAVE", function(
-    kept_db,db_field_result){
+    kept_db,db_field_result,ROI_barcode=NULL){
   #check_slot_empty(kept_db,"S2S_force")
   check_slot_empty(kept_db,"S2S_score")
-  db_field_result <- result_list_adaptor(kept_db)
+  db_field_result <- result_list_adaptor(kept_db,ROI_barcode)
 
   print("Step1. preparing data")
-  prep_list <- 
+  prep_list <-
     prep_database_S2S_list(kept_db@kept_db,db_field_result)
   print("Step2. calc S2S force")
-  S2S_force <- 
+  S2S_force <-
     calc_database_S2S_force(kept_db@kept_db,prep_list)
   print("Step3. calc S2S score")
-  kept_db@S2S_score <- 
+  kept_db@S2S_score <-
     calc_database_S2S_score(kept_db@kept_db,prep_list,S2S_force)
 
   return(kept_db)
@@ -515,18 +528,18 @@ setMethod("perform_S2S_score_calc", "spWAVE", function(
 
 #' @rdname perform_S2S_score_calc
 #' @aliases perform_S2S_score_calc,Mat_like-method
-#' 
+#'
 #' @export
 setMethod("perform_S2S_score_calc", "Mat_like", function(
     kept_db,db_field_result){
   print("Step1. preparing data")
-  prep_list <- 
+  prep_list <-
     prep_database_S2S_list(kept_db,db_field_result)
   print("Step2. calc S2S force")
-  S2S_force <- 
+  S2S_force <-
     calc_database_S2S_force(kept_db,prep_list)
   print("Step3. calc S2S score")
-  S2S_score <- 
+  S2S_score <-
     calc_database_S2S_score(kept_db,prep_list,S2S_force)
 
   return(S2S_score)
@@ -536,9 +549,9 @@ setMethod("perform_S2S_score_calc", "Mat_like", function(
 #' perform calculation of C2C score
 #'
 #' perform calculation of C2C score.
-#' 
+#'
 #' @inheritParams calc_database_C2C_score
-#' 
+#'
 #' @seealso \code{\link{calc_database_C2C_score}}
 #'
 #' @export
@@ -551,7 +564,7 @@ setGeneric("perform_C2C_score_calc", function(
 
 #' @rdname perform_C2C_score_calc
 #' @aliases perform_C2C_score_calc,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("perform_C2C_score_calc", "spWAVE", function(
   kept_db,db_S2S_score_list=NULL,
@@ -562,7 +575,7 @@ setMethod("perform_C2C_score_calc", "spWAVE", function(
   if(is.null(db_S2S_score_list)){
     db_S2S_score_list <- kept_db@S2S_score
   }
-  kept_db@C2C_score <- 
+  kept_db@C2C_score <-
     calc_database_C2C_score(
       kept_db = kept_db@kept_db,
       db_S2S_score_list = db_S2S_score_list,
@@ -577,13 +590,13 @@ setMethod("perform_C2C_score_calc", "spWAVE", function(
 
 #' @rdname perform_C2C_score_calc
 #' @aliases perform_C2C_score_calc,Mat_like-method
-#' 
+#'
 #' @export
 setMethod("perform_C2C_score_calc", "Mat_like", function(
   kept_db,db_S2S_score_list,
   seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
-  C2C_score <- 
+  C2C_score <-
     calc_database_C2C_score(
       kept_db = kept_db,
       db_S2S_score_list = db_S2S_score_list,
@@ -599,25 +612,26 @@ setMethod("perform_C2C_score_calc", "Mat_like", function(
 #' perform result extraction
 #'
 #' perform result extraction from spWAVE object
-#' 
+#'
 #' @inheritParams extract_LR_field_result
-#' 
+#' @param ROI_barcode ROI barcode, default is NULL
+#'
 #' @seealso \code{\link{extract_LR_field_result}}
 #'
 #' @export
 setGeneric("perform_field_extract", function(
-  database_result,LR,kept_db){
+  database_result,LR,kept_db,ROI_barcode=NULL){
   standardGeneric("perform_field_extract")
 })
 
 #' @rdname perform_field_extract
 #' @aliases perform_field_extract,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("perform_field_extract", "spWAVE", function(
-  database_result,LR,kept_db){
-  db_res <- result_list_adaptor(database_result)
-  result_df <- 
+  database_result,LR,kept_db,ROI_barcode=NULL){
+  db_res <- result_list_adaptor(database_result,ROI_barcode)
+  result_df <-
     extract_LR_field_result(db_res,
       LR=LR,
       kept_db = database_result@kept_db)
@@ -628,11 +642,11 @@ setMethod("perform_field_extract", "spWAVE", function(
 
 #' @rdname perform_field_extract
 #' @aliases perform_field_extract,list-method
-#' 
+#'
 #' @export
 setMethod("perform_field_extract", "list", function(
-  database_result,LR,kept_db){
-  result_df <- 
+  database_result,LR,kept_db,ROI_barcode=NULL){
+  result_df <-
     extract_LR_field_result(database_result,
       LR=LR,
       kept_db = kept_db)
@@ -646,17 +660,17 @@ setMethod("perform_field_extract", "list", function(
 #******************
 
 #' Plot cluster levels interaction scores dot plot
-#' 
-#' @param db_C2C_score_list spWAVE object or data list of C2C_score 
+#'
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score
 #' @param kept_db The database used in results list.
 #' @param p_val p value cut off, default is 0.05
-#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor,
 #' e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
 #' @param LR_family LR family selected to display
 #' @param source_use Ligand source clusters selected to display
 #' @param target_use Receptor target clusters selected to display
 #' @param scale logical, whether to scale the score, default is TRUE
-#' 
+#'
 #' @return return a ggplot2 object plot
 #' @export
 setGeneric("plot_db_score_dot", function(
@@ -665,7 +679,7 @@ setGeneric("plot_db_score_dot", function(
   p_val=0.05,
   LR_pair=NULL,
   LR_family=NULL,
-  source_use=NULL, 
+  source_use=NULL,
   target_use=NULL,
   scale=TRUE){
   standardGeneric("plot_db_score_dot")
@@ -673,7 +687,7 @@ setGeneric("plot_db_score_dot", function(
 
 #' @rdname plot_db_score_dot
 #' @aliases plot_db_score_dot,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("plot_db_score_dot", "spWAVE", function(
   db_C2C_score_list,
@@ -691,7 +705,7 @@ setMethod("plot_db_score_dot", "spWAVE", function(
       db_C2C_score_list=db_C2C_score_list@C2C_score,
       kept_db=db_C2C_score_list@kept_db,
       p_val=p_val,
-      LR_pair=LR_pair, 
+      LR_pair=LR_pair,
       LR_family=LR_family,
       source_use=source_use,
       target_use=target_use,
@@ -701,14 +715,14 @@ setMethod("plot_db_score_dot", "spWAVE", function(
 
 #' @rdname plot_db_score_dot
 #' @aliases plot_db_score_dot,list-method
-#' 
+#'
 #' @export
 setMethod("plot_db_score_dot", "list", function(
   db_C2C_score_list,
   kept_db,
   p_val=0.05,
   LR_pair=NULL,
-  LR_family=NULL, 
+  LR_family=NULL,
   source_use=NULL,
   target_use=NULL,
   scale=TRUE){
@@ -717,7 +731,7 @@ setMethod("plot_db_score_dot", "list", function(
       kept_db=kept_db,
       p_val=p_val,
       LR_pair=LR_pair,
-      LR_family=LR_family, 
+      LR_family=LR_family,
       source_use=source_use,
       target_use=target_use,
       scale=scale
@@ -727,11 +741,11 @@ setMethod("plot_db_score_dot", "list", function(
 
 
 #' Plot clusters level interactions in chord diagram
-#' 
-#' @param db_C2C_score_list spWAVE object or data list of C2C_score 
+#'
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score
 #' @param kept_db The database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
-#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor,
 #' e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
 #' @param LR_family LR family selected to display
 #' @param source_use Ligand source clusters selected to display
@@ -739,7 +753,7 @@ setMethod("plot_db_score_dot", "list", function(
 #' @param title character, plot title
 #' Default is NULL and can be generated automatically when single LR pair or family given
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE
-#' 
+#'
 #' @return plot using based on circlize package
 #' @export
 setGeneric("plot_LR_cluster_chord", function(
@@ -757,7 +771,7 @@ setGeneric("plot_LR_cluster_chord", function(
 
 #' @rdname plot_LR_cluster_chord
 #' @aliases plot_LR_cluster_chord,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_cluster_chord", "spWAVE", function(
   db_C2C_score_list,
@@ -787,7 +801,7 @@ setMethod("plot_LR_cluster_chord", "spWAVE", function(
 
 #' @rdname plot_LR_cluster_chord
 #' @aliases plot_LR_cluster_chord,list-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_cluster_chord", "list", function(
   db_C2C_score_list,
@@ -801,7 +815,7 @@ setMethod("plot_LR_cluster_chord", "list", function(
   scale=FALSE){
     plot_LR_cluster_chord_impl(
       db_C2C_score_list=db_C2C_score_list,
-      kept_db=kept_db, 
+      kept_db=kept_db,
       cluster_color=cluster_color,
       LR_pair=LR_pair,
       LR_family=LR_family,
@@ -814,7 +828,7 @@ setMethod("plot_LR_cluster_chord", "list", function(
 
 
 #' Plot genes in Ligand-receptor pairs with chord diagram
-#' 
+#'
 #' @inheritParams plot_LR_gene_chord_impl
 #'
 #' @return plot using based on circlize package
@@ -834,7 +848,7 @@ setGeneric("plot_LR_gene_chord", function(
 
 #' @rdname plot_LR_gene_chord
 #' @aliases plot_LR_gene_chord,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_gene_chord", "spWAVE", function(
   db_C2C_score_list,
@@ -864,7 +878,7 @@ setMethod("plot_LR_gene_chord", "spWAVE", function(
 
 #' @rdname plot_LR_gene_chord
 #' @aliases plot_LR_gene_chord,list-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_gene_chord", "list", function(
   db_C2C_score_list,
@@ -891,11 +905,11 @@ setMethod("plot_LR_gene_chord", "list", function(
 
 
 #' Plot clusters level interactions in heatmap
-#' 
-#' @param db_C2C_score_list spWAVE object or data list of C2C_score 
+#'
+#' @param db_C2C_score_list spWAVE object or data list of C2C_score
 #' @param kept_db The database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
-#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor, 
+#' @param LR_pair LR pair selected to display, must be the format of Ligand.Receptor,
 #' e.g. "FGF1.FGFR1", "TGFB1.TGFBR1_TGFBR2"
 #' @param LR_family LR family selected to display
 #' @param source_use Ligand source clusters selected to display
@@ -905,9 +919,9 @@ setMethod("plot_LR_gene_chord", "list", function(
 #' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
 #' refelecting the number of interactions or the sum of strength in C2C scores, respectively
 #' @param normalize logical, whether to normalize the score in heatmap, default is FALSE
-#' @param ht_col heatmap tiles color. Support sequential palettes in \code{\link{RColorBrewer}} or single color. 
+#' @param ht_col heatmap tiles color. Support sequential palettes in \code{\link{RColorBrewer}} or single color.
 #' Default is "Reds" in the palettes
-#' 
+#'
 #' @return heatmap using based on ComplexHeatmap package
 #' @export
 setGeneric("plot_LR_cluster_heatmap", function(
@@ -927,7 +941,7 @@ setGeneric("plot_LR_cluster_heatmap", function(
 
 #' @rdname plot_LR_cluster_heatmap
 #' @aliases plot_LR_cluster_heatmap,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_cluster_heatmap", "spWAVE", function(
   db_C2C_score_list,
@@ -961,7 +975,7 @@ setMethod("plot_LR_cluster_heatmap", "spWAVE", function(
 
 #' @rdname plot_LR_cluster_heatmap
 #' @aliases plot_LR_cluster_heatmap,list-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_cluster_heatmap", "list", function(
   db_C2C_score_list,
@@ -992,7 +1006,7 @@ setMethod("plot_LR_cluster_heatmap", "list", function(
 
 
 #' Plot clusters level interactions in network
-#' 
+#'
 #' @param db_C2C_score_list spWAVE object or data list of C2C_score
 #' @param kept_db database used in results list
 #' @param cluster_color named vector, the values are colors and the names are cluster
@@ -1002,12 +1016,12 @@ setMethod("plot_LR_cluster_heatmap", "list", function(
 #' @param title character, plot title
 #' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
 #' refelecting the number of interactions or the sum of strength in C2C scores, respectively
-#' @param mat_scale logical, whether to scale score matrix, default is FALSE. 
+#' @param mat_scale logical, whether to scale score matrix, default is FALSE.
 #' Differ from weight.scale, see details
-#' @param weight.scale logical, whether to scale edge weight and refelecting in plot, default is FALSE. 
+#' @param weight.scale logical, whether to scale edge weight and refelecting in plot, default is FALSE.
 #' Differ from mat_scale, see details
 #' @param ... args passing to plot_net_core_function which adopted from CellChat netVisual_circle function
-#' 
+#'
 #' @return network plot based on igraph package
 #' @export
 setGeneric("plot_LR_cluster_net", function(
@@ -1027,7 +1041,7 @@ setGeneric("plot_LR_cluster_net", function(
 
 #' @rdname plot_LR_cluster_net
 #' @aliases plot_LR_cluster_net,spWAVE-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_cluster_net", "spWAVE", function(
   db_C2C_score_list,
@@ -1061,7 +1075,7 @@ setMethod("plot_LR_cluster_net", "spWAVE", function(
 
 #' @rdname plot_LR_cluster_net
 #' @aliases plot_LR_cluster_net,list-method
-#' 
+#'
 #' @export
 setMethod("plot_LR_cluster_net", "list", function(
   db_C2C_score_list,
