@@ -9,6 +9,7 @@
 perform_C2C_score_calc(
   kept_db,
   db_S2S_score_list = NULL,
+  ROI_barcode = NULL,
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 343,
@@ -19,6 +20,7 @@ perform_C2C_score_calc(
 \S4method{perform_C2C_score_calc}{spWAVE}(
   kept_db,
   db_S2S_score_list = NULL,
+  ROI_barcode = NULL,
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 343,
@@ -29,6 +31,7 @@ perform_C2C_score_calc(
 \S4method{perform_C2C_score_calc}{Mat_like}(
   kept_db,
   db_S2S_score_list = NULL,
+  ROI_barcode = NULL,
   seurat_obj,
   cluster = NULL,
   shuffle_iter = 343,
@@ -40,6 +43,8 @@ perform_C2C_score_calc(
 \item{kept_db}{data.frame, LR database, must be same with the database used in db_S2S_score_list.}
 
 \item{db_S2S_score_list}{database spot2spot interaction score list, the result of calc_database_S2S_score.}
+
+\item{ROI_barcode}{ROI barcode default is NULL.}
 
 \item{seurat_obj}{Seurat Object, extracting cluster information, optional.}
 

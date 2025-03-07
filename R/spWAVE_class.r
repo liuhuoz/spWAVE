@@ -551,12 +551,13 @@ setMethod("perform_S2S_score_calc", "Mat_like", function(
 #' perform calculation of C2C score.
 #'
 #' @inheritParams calc_database_C2C_score
+#' @param ROI_barcode ROI barcode default is NULL.
 #'
 #' @seealso \code{\link{calc_database_C2C_score}}
 #'
 #' @export
 setGeneric("perform_C2C_score_calc", function(
-  kept_db,db_S2S_score_list=NULL,
+  kept_db,db_S2S_score_list=NULL,ROI_barcode=NULL,
   seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
   standardGeneric("perform_C2C_score_calc")
@@ -567,7 +568,7 @@ setGeneric("perform_C2C_score_calc", function(
 #'
 #' @export
 setMethod("perform_C2C_score_calc", "spWAVE", function(
-  kept_db,db_S2S_score_list=NULL,
+  kept_db,db_S2S_score_list=NULL,ROI_barcode=NULL,
   seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
 
@@ -575,12 +576,17 @@ setMethod("perform_C2C_score_calc", "spWAVE", function(
   if(is.null(db_S2S_score_list)){
     db_S2S_score_list <- kept_db@S2S_score
   }
+  if(is.null(ROI_barcode)){
+    kept_clu <- kept_db@cluster_info
+  }else{
+    kept_clu <- kept_db@cluster_info[ROI_barcode,]
+  }
   kept_db@C2C_score <-
     calc_database_C2C_score(
       kept_db = kept_db@kept_db,
       db_S2S_score_list = db_S2S_score_list,
       seurat_obj=NULL,
-      cluster=kept_db@cluster_info,
+      cluster=kept_clu,
       shuffle_iter=shuffle_iter,
       random_seed=random_seed,
       verbose=verbose
@@ -593,7 +599,7 @@ setMethod("perform_C2C_score_calc", "spWAVE", function(
 #'
 #' @export
 setMethod("perform_C2C_score_calc", "Mat_like", function(
-  kept_db,db_S2S_score_list,
+  kept_db,db_S2S_score_list,ROI_barcode=NULL,
   seurat_obj,cluster=NULL,shuffle_iter=343,random_seed=42,
   verbose=TRUE){
   C2C_score <-
