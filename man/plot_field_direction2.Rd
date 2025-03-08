@@ -11,6 +11,9 @@ plot_field_direction2(
   point = "E_strength",
   point_size = NULL,
   point_color = "navy",
+  hexified = FALSE,
+  hex_bins = NULL,
+  hex_binwidth = c(50, 50),
   grid_density = NULL,
   image = c("blank", "HE", "cluster"),
   show_arrow = TRUE,
@@ -23,6 +26,7 @@ plot_field_direction2(
   shadow_color = "#c3c3c3",
   shadow_alpha = 0.7,
   arrow_normalize = FALSE,
+  return_data = FALSE,
   ...
 )
 }
@@ -41,6 +45,13 @@ Only support "point" or "grid", default is "grid".}
 In centroid result, default is 0.2.}
 
 \item{point_color}{point color of value. Default is navy.}
+
+\item{hexified}{hexified the point display, default is FALSE.}
+
+\item{hex_bins}{hexified bin number, default is NULL.}
+
+\item{hex_binwidth}{hexified bin width, numeric vector giving bin width in both vertical and horizontal directions.
+Default is c(50,50) micron. Overrides hex_bins if both set.}
 
 \item{grid_density}{grid density of arrow, smaller value means sparser arrow over image, default is 0.5.}
 
@@ -69,6 +80,8 @@ while shadow_alpha larger than arrow_alpha,
 shadow_alpha will be adjust by the arrow_alpha.}
 
 \item{arrow_normalize}{logical, TRUE means only show the direction without arrow length, default is FALSE.}
+
+\item{return_data}{default is FALSE, whether return drawing data for custom plot function.}
 
 \item{...}{Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImageDimPlot}} in Seurat.}
 }

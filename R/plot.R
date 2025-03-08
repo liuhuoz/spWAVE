@@ -3,10 +3,10 @@
 #' Plot given LR field projection over image of HE，cluster,
 #' expression or other quantity.
 #'
-#' @param arrow_df data.frame, contain barcode, coordinates, field vector, expression and other quantities. 
+#' @param arrow_df data.frame, contain barcode, coordinates, field vector, expression and other quantities.
 #' Usually using the output from \code{\link{extract_LR_field_result}}.
 #' @param seurat_obj Seurat object, used to extract image.
-#' @param mode arrow show in each point (spot) or in grid. 
+#' @param mode arrow show in each point (spot) or in grid.
 #' Only support "point" or "grid", default is "grid".
 #' @param point point (spot) value to show, must be in colnames of arrow_df.
 #' @param point_size point (spot) size, default is 2.
@@ -42,7 +42,7 @@ plot_field_direction <- function(
   #check arg
   mode <- match.arg(mode)
   image <- match.arg(image)
-  #create the data.frame for drawing  
+  #create the data.frame for drawing
 
   if(mode=="grid"){
     arrow_sf <- ifelse(is.null(arrow_sf),0.2,arrow_sf)
@@ -53,13 +53,13 @@ plot_field_direction <- function(
     arrow_sf <- ifelse(is.null(arrow_sf),1,arrow_sf)
     line_sf <- ifelse(is.null(line_sf),5,line_sf)
     arrow_draw <- arrow_df
-  }  
+  }
 
   if(show_arrow){
   }else{
     arrow_sf <- 0
     line_sf <- Inf
-  }  
+  }
 
   if(is.null(arrow_color)){
     if(image=="blank"){
@@ -67,30 +67,30 @@ plot_field_direction <- function(
     }else{
       arrow_color <- "black"
     }
-  }  
+  }
 
-  arrow_draw %<>% 
-    calc_field_strength() %>% 
+  arrow_draw %<>%
+    calc_field_strength() %>%
     optimize.arrow(scale.factor = line_sf,normalize = arrow_normalize)
-  arrow_df %<>% calc_field_strength()  
+  arrow_df %<>% calc_field_strength()
 
   if(arrow_normalize){
     line_sf <- ifelse(is.null(line_sf),50,line_sf)
     arrow_size <- line_sf/4000
   }else{
     arrow_size <- arrow_draw$E_strength/arrow_sf
-  }  
+  }
 
   #draw image in each layer
   switch(image,
     blank={
-      p_arrow <- 
+      p_arrow <-
         ggplot(data = arrow_df,aes(x=x,y=y)) +
           geom_point(
             data=arrow_df,
             aes(x=x,y=y,fill=.data[[point]]),
             size=point_size, shape = 23, stroke = 0.1
-          )+ 
+          )+
           scale_fill_gradient(low="lightgrey", high=point_color) +
           geom_segment(
             data=arrow_draw,
@@ -98,8 +98,8 @@ plot_field_direction <- function(
             linewidth = 1, color = arrow_color,
             arrow = arrow(length = unit(arrow_size, "npc"))
           )+
-        #scale_colour_hue(l = 45) + 
-          theme_classic() + 
+        #scale_colour_hue(l = 45) +
+          theme_classic() +
           theme(axis.text.x = element_text(face = "bold", color = "black",
                                             size = 12, angle = 0, hjust = 1),
                 axis.text.y = element_text(face = "bold", color = "black",
@@ -107,7 +107,7 @@ plot_field_direction <- function(
           coord_equal()
     },
     HE={
-      p_arrow <- 
+      p_arrow <-
         (SpatialFeaturePlot(seurat_obj, features = NULL, alpha = c(0)) + NoLegend())+
           geom_segment(
             data=arrow_draw,
@@ -115,8 +115,8 @@ plot_field_direction <- function(
             linewidth = 1, color = arrow_color,
             arrow = arrow(length = unit(arrow_size, "npc"))
           )+
-        #scale_colour_hue(l = 45) + 
-          theme_classic() + 
+        #scale_colour_hue(l = 45) +
+          theme_classic() +
           theme(axis.text.x = element_text(face = "bold", color = "black",
                                             size = 12, angle = 0, hjust = 1),
                 axis.text.y = element_text(face = "bold", color = "black",
@@ -124,7 +124,7 @@ plot_field_direction <- function(
           coord_equal()
     },
     cluster={
-      p_arrow <- 
+      p_arrow <-
         (SpatialDimPlot(seurat_obj, label = FALSE,...) + NoLegend())+
           geom_segment(
             data=arrow_draw,
@@ -132,8 +132,8 @@ plot_field_direction <- function(
             linewidth = 1, color = arrow_color,
             arrow = arrow(length = unit(arrow_size, "npc"))
           )+
-        #scale_colour_hue(l = 45) + 
-          theme_classic() + 
+        #scale_colour_hue(l = 45) +
+          theme_classic() +
           theme(axis.text.x = element_text(face = "bold", color = "black",
                                             size = 12, angle = 0, hjust = 1),
                 axis.text.y = element_text(face = "bold", color = "black",
@@ -142,51 +142,56 @@ plot_field_direction <- function(
     }
   )
   return(p_arrow)
-}  
+}
 
 #' Another Plot field projection on image
 #'
 #' Plot given LR field projection over image of HE，cluster,
 #' expression or other quantity, using ggquiver.
 #'
-#' @param arrow_df data.frame, contain barcode, coordinates, field vector, expression and other quantities. 
+#' @param arrow_df data.frame, contain barcode, coordinates, field vector, expression and other quantities.
 #' Usually using the output from \code{\link{extract_LR_field_result}}.
 #' @param seurat_obj Seurat object, used to extract image.
-#' @param mode arrow show in each point (spot) or in grid. 
+#' @param mode arrow show in each point (spot) or in grid.
 #' Only support "point" or "grid", default is "grid".
 #' @param point point (spot) value to show, must be in colnames of arrow_df.
-#' @param point_size point (spot) size. In 10x Visium result, default is 2. 
+#' @param point_size point (spot) size. In 10x Visium result, default is 2.
 #' In centroid result, default is 0.2.
 #' @param point_color point color of value. Default is navy.
+#' @param hexified hexified the point display, default is FALSE.
+#' @param hex_bins hexified bin number, default is NULL.
+#' @param hex_binwidth hexified bin width, numeric vector giving bin width in both vertical and horizontal directions.
+#' Default is c(50,50) micron. Overrides hex_bins if both set.
 #' @param grid_density grid density of arrow, smaller value means sparser arrow over image, default is 0.5.
 #' @param image image type, "blank" or "HE" or "cluster", default is "blank".
 #' @param show_arrow logical, whether to show arrow, default is TRUE.
 #' @param arrow_sf scale factor of arrow, smaller value means smaller size. Default is 2.
-#' And may only effect in mode="point", because of the ggquiver behavior. See details. 
+#' And may only effect in mode="point", because of the ggquiver behavior. See details.
 #' @param arrow_linewidth the linewidth of arrow. Default: 1
-#' @param arrow_color arrow color. Default: firebrick3 in blank, black in other. 
-#' But in 'cluster' of centroid result, the color is white to match the black background.  
+#' @param arrow_color arrow color. Default: firebrick3 in blank, black in other.
+#' But in 'cluster' of centroid result, the color is white to match the black background.
 #' @param arrow_alpha arrow alpha. Default: 1 in blank, 0.7 in other.
 #' @param arrow_shadow whether add shadow under arrow. Default: TRUE.
 #' @param shadow_adj shadow position adjust. Default: 0.3.
 #' @param shadow_color shadow color. Default: "#c3c3c3".
-#' @param shadow_alpha shadow alpha. Default: 0.7. 
-#' while shadow_alpha larger than arrow_alpha, 
+#' @param shadow_alpha shadow alpha. Default: 0.7.
+#' while shadow_alpha larger than arrow_alpha,
 #' shadow_alpha will be adjust by the arrow_alpha.
 #' @param arrow_normalize logical, TRUE means only show the direction without arrow length, default is FALSE.
+#' @param return_data default is FALSE, whether return drawing data for custom plot function.
 #' @param ... Other args passing to \code{\link{SpatialPlot}} or \code{\link{ImageDimPlot}} in Seurat.
-#' @details we do recommend to use "grid" instead of "point". 
+#' @details we do recommend to use "grid" instead of "point".
 #' This function using ggquiver to draw the vector field projection differed from plot_field_direction().
-#' ggquiver will auto resize the arrow in grid mode, but not in point mode. 
-# ' The `arrow_sf` is a scale factor used to fine-tuning the size of the arrows. 
-# ' The final size is determined by arrow_sf multiplied with a scaling magnitude, 
+#' ggquiver will auto resize the arrow in grid mode, but not in point mode.
+# ' The `arrow_sf` is a scale factor used to fine-tuning the size of the arrows.
+# ' The final size is determined by arrow_sf multiplied with a scaling magnitude,
 # ' which is determined based on the magnitude of the vectors.
-#' 
+#'
 #' @return field projection plot
 #' @import ggplot2
 #' @import ggquiver
 #' @importFrom Seurat SpatialDimPlot ImageDimPlot SpatialFeaturePlot
-#' @export 
+#' @export
 plot_field_direction2 <- function(
   arrow_df,
   seurat_obj,
@@ -194,6 +199,9 @@ plot_field_direction2 <- function(
   point="E_strength",
   point_size=NULL,
   point_color="navy",
+  hexified=FALSE,
+  hex_bins=NULL,
+  hex_binwidth=c(50,50),
   grid_density=NULL,
   image=c("blank","HE","cluster"),
   show_arrow=TRUE,
@@ -206,6 +214,7 @@ plot_field_direction2 <- function(
   shadow_color="#c3c3c3",
   shadow_alpha=0.7,
   arrow_normalize=FALSE,
+  return_data=FALSE,
   ...
   #alpha=c(0.5,1),
   ){
@@ -218,13 +227,13 @@ plot_field_direction2 <- function(
       arrow_color <- ifelse(is.null(arrow_color),"firebrick3",arrow_color)
       arrow_alpha <- ifelse(is.null(arrow_alpha),1,arrow_alpha)
       if(is.null(point_size)){
-        point_size <- 
+        point_size <-
           ifelse(nrow(arrow_df)<10000,2,
                 ifelse(nrow(arrow_df)<20000,1,0.2)
                 )
       }
     }else{
-      arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)  
+      arrow_alpha <- ifelse(is.null(arrow_alpha),0.7,arrow_alpha)
 
       if(class(seurat_obj@images[[1]]) %in% c("FOV")){
         #** point_size only works in "blank", so not need to add if statement. Below is same.
@@ -241,7 +250,7 @@ plot_field_direction2 <- function(
         lo_res_coord <- get_coordinates_in_plot(seurat_obj)
         arrow_df %<>% dplyr::rows_update(lo_res_coord,by='barcode')
         rownames(arrow_df) <- arrow_df$barcode
-        arrow_df <- arrow_df[temp,]  
+        arrow_df <- arrow_df[temp,]
 
         arrow_color <- ifelse(is.null(arrow_color),"black",arrow_color)
         if(image=="cluster"){
@@ -260,7 +269,7 @@ plot_field_direction2 <- function(
     #arrow_sf <- ifelse(is.null(arrow_sf),1,arrow_sf)
     #line_sf <- ifelse(is.null(line_sf),5,line_sf)
     arrow_draw <- arrow_df
-  }  
+  }
 
   if(show_arrow){
     arrow_sf <- autocalc_arrow_sf(arrow_draw)*arrow_sf
@@ -271,14 +280,14 @@ plot_field_direction2 <- function(
   }
 
   if(arrow_normalize){
-    arrow_draw %<>% 
+    arrow_draw %<>%
       mutate(length=sqrt(Ex^2+Ey^2),
       Ex=Ex/length,
       Ey=Ey/length
       )
   }
-  #arrow_draw %<>% 
-    #calc_field_strength() %>% 
+  #arrow_draw %<>%
+    #calc_field_strength() %>%
     #optimize.arrow(normalize = arrow_normalize)
   arrow_df %<>% calc_field_strength()
 
@@ -286,23 +295,38 @@ plot_field_direction2 <- function(
   #bg layer
   switch(image,
     blank={
-      p_arrow <- 
-        ggplot(data = arrow_df,aes(x=x,y=y)) +
-          geom_point(
-            data=arrow_df,
-            aes(x=x,y=y,fill=.data[[point]]),
-            size=point_size, shape = 23, stroke = 0.1
-          )+ 
-          scale_fill_gradient(low="lightgrey", high=point_color) +
-        #scale_colour_hue(l = 45) + 
-          theme_classic()
+      if(hexified){
+        p_arrow <-
+          ggplot(data = arrow_df,aes(x=x,y=y)) +
+            stat_summary_hex(
+              data=arrow_df,
+              fun=mean,
+              aes(x=x,y=y,z=.data[[point]]),
+              bins = hex_bins,
+              binwidth = hex_binwidth
+            )+
+            scale_fill_gradient(low="lightgrey", high=point_color) +
+          #scale_colour_hue(l = 45) +
+            theme_classic()
+      }else{
+        p_arrow <-
+          ggplot(data = arrow_df,aes(x=x,y=y)) +
+            geom_point(
+              data=arrow_df,
+              aes(x=x,y=y,fill=.data[[point]]),
+              size=point_size, shape = 23, stroke = 0.1
+            )+
+            scale_fill_gradient(low="lightgrey", high=point_color) +
+          #scale_colour_hue(l = 45) +
+            theme_classic()
+      }
     },
     HE={
-      p_arrow <- 
+      p_arrow <-
         SpatialFeaturePlot(seurat_obj, features = NULL, alpha = c(0)) + NoLegend()
     },
     cluster={
-      p_arrow <- 
+      p_arrow <-
         SeuratDimPlot(seurat_obj,...) + NoLegend()
     }
   )
@@ -313,7 +337,7 @@ plot_field_direction2 <- function(
       if(shadow_alpha>arrow_alpha){
         shadow_alpha <- arrow_alpha*shadow_alpha
       }
-      p_arrow <- 
+      p_arrow <-
         p_arrow +
           geom_quiver(
             data=arrow_draw,
@@ -322,7 +346,7 @@ plot_field_direction2 <- function(
             linewidth = arrow_linewidth, color = shadow_color,alpha=shadow_alpha
           )
     }
-    p_arrow <- 
+    p_arrow <-
       p_arrow +
         geom_quiver(
           data=arrow_draw,
@@ -332,14 +356,23 @@ plot_field_direction2 <- function(
   }
 
   #theme adjust
-  p_arrow <- 
+  p_arrow <-
     p_arrow +
       theme(axis.text.x = element_text(face = "bold", color = "black",
                                       size = 12, angle = 0, hjust = 1),
             axis.text.y = element_text(face = "bold", color = "black",
                                             size = 12, angle = 0))+
       coord_equal()
-  return(p_arrow)
+  if(return_data){
+    return(
+      list(p=p_arrow,
+        spot=arrow_df,
+        quiver=arrow_draw)
+      )
+  }
+  else{
+    return(p_arrow)
+  }
 }
 
 #' Cluster levels interaction scores dot plot
@@ -357,7 +390,7 @@ plot_field_direction2 <- function(
 #' @import dplyr
 #' @import stringr
 #' @return return a ggplot2 object plot
-#' @export 
+#' @export
 plot_db_score_dot_impl <- function(
   db_C2C_score_list,
   kept_db,
@@ -368,12 +401,12 @@ plot_db_score_dot_impl <- function(
   target_use=NULL,
   scale=TRUE
 ){
-  aggregate_df <- 
+  aggregate_df <-
     aggregate_C2C_score(
       db_C2C_score_list=db_C2C_score_list,
       kept_db=kept_db
     ) %>%
-    prep_C2C_plot_df( 
+    prep_C2C_plot_df(
         LR_pair=LR_pair,
         LR_family=LR_family,
         source_use=source_use,
@@ -381,25 +414,25 @@ plot_db_score_dot_impl <- function(
         scale=scale
     )
 
-  draw_df <- 
-    aggregate_df %>% 
+  draw_df <-
+    aggregate_df %>%
     dplyr::filter(p_value<p_val) %>%
       dplyr::mutate(
         LR_pair=stringr::str_replace(.data[["id"]],pattern = "\\.",replacement = "->"),
         S2T=paste0(.data[["Source"]],"->",.data[["Target"]])
         )
   if(scale && nrow(draw_df)!=1){
-    draw_df <- draw_df %>% 
+    draw_df <- draw_df %>%
       dplyr::mutate(scale_score = scale(.data[["raw_score"]]))
     score_title <- "scaled score"
   }else{
     if(nrow(draw_df)==1){message("Only one row in filtered data. Will not scale.")}
-    draw_df <- draw_df %>% 
+    draw_df <- draw_df %>%
       dplyr::mutate(scale_score = .data[["raw_score"]])
     score_title <- "score"
   }
 
-  p_dot <- 
+  p_dot <-
   draw_df %>%
     ggplot(aes(x=S2T,y=LR_pair)) +
       geom_point(aes(x=S2T,y=LR_pair,color=p_value,size=scale_score))+
@@ -418,7 +451,7 @@ plot_db_score_dot_impl <- function(
 #'
 #' @return return color palette
 #' @import ggsci
-#' @export 
+#' @export
 MD2_color_picker <- function(n){
   color_order <- c("red", "pink", "purple", "deep-purple", "indigo", "blue", "light-blue",
     "cyan", "teal", "green", "light-green", "lime", "yellow", "amber", "orange",
@@ -463,7 +496,7 @@ MD2_color_picker <- function(n){
 #' @importFrom graphics strwidth
 #' @importFrom circlize circos.clear circos.par chordDiagram circos.text circos.track get.cell.meta.data highlight.sector
 #' @import stringr
-#' @export 
+#' @export
 chord_cluster_core_function <- function(
   pic_df,grid_col,chord_order,chord_group,main_title
 ){
@@ -476,7 +509,7 @@ chord_cluster_core_function <- function(
       direction.type = c("diffHeight", "arrows"),
       group = chord_group,
       order=chord_order,
-      annotationTrack = "grid", 
+      annotationTrack = "grid",
       preAllocateTracks = list(track.height = max(graphics::strwidth(chord_order))),
       link.arr.type = "big.arrow",
       scale = FALSE
@@ -511,15 +544,15 @@ chord_cluster_core_function <- function(
 #' @param LR_family LR family selected to display.
 #' @param source_use Ligand source clusters selected to display.
 #' @param target_use Receptor target clusters selected to display.
-#' @param title character, plot title. 
+#' @param title character, plot title.
 #' Default is NULL and can be generated automatically when single LR pair or family given.
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE.
 #'
 #' @return plot using based on circlize package
-#' 
+#'
 #' @import stringr
 #' @import dplyr
-#' @export 
+#' @export
 plot_LR_cluster_chord_impl <- function(
   db_C2C_score_list,
   kept_db,
@@ -533,7 +566,7 @@ plot_LR_cluster_chord_impl <- function(
   scale=FALSE
 ){
   #** assign color to all clusters
-  C2C_score_df <- 
+  C2C_score_df <-
     aggregate_C2C_score(db_C2C_score_list,kept_db)
 
   #** get the color of each cluster
@@ -552,9 +585,9 @@ plot_LR_cluster_chord_impl <- function(
   chord_order <- names(grid_col)
 
   #** filter the data to draw plot
-  pic_df <- 
+  pic_df <-
     C2C_score_df %>%
-      prep_C2C_plot_df( 
+      prep_C2C_plot_df(
           LR_pair=LR_pair,
           LR_family=LR_family,
           source_use=source_use,
@@ -563,7 +596,7 @@ plot_LR_cluster_chord_impl <- function(
       ) %>%
       dplyr::filter(p_value<0.05) %>%
       #dplyr::filter(Source!=Target) %>%
-      dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target)) 
+      dplyr::mutate(Source = paste0("S@",Source),Target = paste0("R@",Target))
 
   temp <- which(chord_order %in% c(pic_df$Source,pic_df$Target))
   chord_order <- chord_order[temp]
@@ -587,10 +620,10 @@ plot_LR_cluster_chord_impl <- function(
 
 
 
-#' Core function of chord plot for genes 
+#' Core function of chord plot for genes
 #'
-#' Core function of chord plot for genes 
-#' 
+#' Core function of chord plot for genes
+#'
 #' @param pic_df dataframe contain interactiion with source , target, and score.
 #' @param grid_col named vector, color for arc, the values are colors and the names are cluster, usually same with legend_col
 #' @param legend_col named vector, color for legend, the values are colors and the names are cluster, usually same with grid_col.
@@ -601,7 +634,7 @@ plot_LR_cluster_chord_impl <- function(
 #' @importFrom circlize circos.clear circos.par chordDiagram circos.text circos.track get.cell.meta.data highlight.sector
 #' @import stringr
 #' @importFrom graphics title strwidth
-#' @export 
+#' @export
 chord_gene_core_function <- function(
   pic_df,grid_col,legend_col,chord_order,chord_group,main_title
 ){
@@ -614,7 +647,7 @@ chord_gene_core_function <- function(
       direction.type = c("diffHeight", "arrows"),
       group = chord_group,
       order=chord_order,
-      annotationTrack = "grid", 
+      annotationTrack = "grid",
       preAllocateTracks = list(track.height = max(graphics::strwidth(chord_order))),
       link.arr.type = "big.arrow",
       scale = FALSE
@@ -655,14 +688,14 @@ chord_gene_core_function <- function(
 #' @param LR_family LR family selected to display.
 #' @param source_use Ligand source clusters selected to display.
 #' @param target_use Receptor target clusters selected to display.
-#' @param title character, plot title. 
+#' @param title character, plot title.
 #' Default is NULL and can be generated automatically when single LR pair or family given.
 #' @param scale logical, whether to scale the arc of each chord in plot, default is FALSE.
 #'
 #' @return plot using based on circlize package
 #' @import dplyr
 #' @import stringr
-#' @export 
+#' @export
 plot_LR_gene_chord_impl <- function(
   db_C2C_score_list,
   kept_db,
@@ -675,14 +708,14 @@ plot_LR_gene_chord_impl <- function(
   title=NULL,
   scale=FALSE
 ){
-  C2C_score_df <- 
+  C2C_score_df <-
     aggregate_C2C_score(db_C2C_score_list,kept_db)
   #** 这里需要添加一个转换，把cluster名字里面的.转换成下划线_,不然会干扰到后面LR判断
   message("The '.' in the 'cluster' will be transformed to '_' in case of conflicting with LR")
   #** filter the data to draw plot
-  pic_df <- 
+  pic_df <-
     C2C_score_df %>%
-      prep_C2C_plot_df( 
+      prep_C2C_plot_df(
           LR_pair=LR_pair,
           LR_family=LR_family,
           source_use=source_use,
@@ -726,8 +759,8 @@ plot_LR_gene_chord_impl <- function(
 
   # LR_clu %<>% dplyr::left_join(color_df,by="clu")
   # grid_col <- LR_clu$color
-  chord_order <- 
-    #names(grid_col) <- 
+  chord_order <-
+    #names(grid_col) <-
       c(pic_df$lig,pic_df$rec) %>% unique()
 
 
@@ -767,12 +800,12 @@ plot_LR_gene_chord_impl <- function(
 #' @param LR_family LR family selected to display.
 #' @param source_use Ligand source clusters selected to display.
 #' @param target_use Receptor target clusters selected to display.
-#' @param title character, plot title. 
+#' @param title character, plot title.
 #' Default is NULL and can be generated automatically when single LR pair or family given.
 #' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
 #' refelecting the number of interactions or the sum of strength in C2C scores, respectively.
 #' @param normalize logical, whether to normalize the score in heatmap, default is FALSE.
-#' @param ht_col heatmap tiles color. Support sequential palettes in \code{\link{RColorBrewer}} or single color. 
+#' @param ht_col heatmap tiles color. Support sequential palettes in \code{\link{RColorBrewer}} or single color.
 #' Default is "Reds" in the palettes.
 #'
 #' @return heatmap using based on ComplexHeatmap package.
@@ -781,7 +814,7 @@ plot_LR_gene_chord_impl <- function(
 #' @import RColorBrewer
 #' @import grid
 #' @import stringr
-#' @export 
+#' @export
 plot_LR_cluster_heatmap_impl <- function(
   db_C2C_score_list,
   kept_db,
@@ -797,7 +830,7 @@ plot_LR_cluster_heatmap_impl <- function(
   ht_col=NULL
 ){
 
-  C2C_score_df <- 
+  C2C_score_df <-
       aggregate_C2C_score(db_C2C_score_list,kept_db)
   if(is.null(cluster_color)){
     clu_col <- assign_clu_col_lite(C2C_score_df)
@@ -807,7 +840,7 @@ plot_LR_cluster_heatmap_impl <- function(
 
   method_use <- match.arg(method_use)
 
-  ht_mat <- 
+  ht_mat <-
     prep_plot_matrix(
       C2C_score_df,
       LR_pair=LR_pair,
@@ -824,14 +857,14 @@ plot_LR_cluster_heatmap_impl <- function(
   #** set heatmap color
   ht_col <- ifelse(is.null(ht_col),"Reds",ht_col)
 
-  avail_color <- 
+  avail_color <-
     c("Blues","BuGn","BuPu","GnBu","Greens","Greys","Oranges",
       "OrRd","PuBu","PuBuGn","PuRd","Purples","RdPu","Reds",
       "YlGn","YlGnBu","YlOrBr","YlOrRd")
   if(ht_col %in% avail_color){
     ht_col_use = grDevices::colorRampPalette((RColorBrewer::brewer.pal(n = 9, name = ht_col)))(100)
   }else if(is.color(ht_col)){
-    ht_col_use = grDevices::colorRampPalette(c("white", ht_col))(100) 
+    ht_col_use = grDevices::colorRampPalette(c("white", ht_col))(100)
   }else{
     warning("Do not detect valid color, use default color 'Reds' instead.")
     ht_col_use = grDevices::colorRampPalette((RColorBrewer::brewer.pal(n = 9, name = "Reds")))(100)
@@ -846,24 +879,24 @@ plot_LR_cluster_heatmap_impl <- function(
   col_col <- clu_col[rownames(df_col)]
   row_col <- clu_col[rownames(df_row)]
 
-  col_annotation <- 
+  col_annotation <-
     HeatmapAnnotation(df = df_col, col = list(group = col_col),
       which = "column",
       show_legend = FALSE, show_annotation_name = FALSE,
       simple_anno_size = grid::unit(0.2, "cm"))
-  row_annotation <- 
-    HeatmapAnnotation(df = df_row, col = list(group = row_col), 
+  row_annotation <-
+    HeatmapAnnotation(df = df_row, col = list(group = row_col),
       which = "row",
       show_legend = FALSE, show_annotation_name = FALSE,
       simple_anno_size = grid::unit(0.2, "cm"))
   ha1 <- rowAnnotation(
-    Strength = anno_barplot(rowSums(abs(ht_mat),na.rm=TRUE), 
+    Strength = anno_barplot(rowSums(abs(ht_mat),na.rm=TRUE),
     border = FALSE,
     gp = gpar(fill = row_col,col=row_col)),
     show_annotation_name = FALSE)
 
   ha2 <- HeatmapAnnotation(
-      Strength = anno_barplot(colSums(abs(ht_mat),na.rm=TRUE), 
+      Strength = anno_barplot(colSums(abs(ht_mat),na.rm=TRUE),
       border = FALSE,
       gp = gpar(fill = col_col, col=col_col)),
       show_annotation_name = FALSE)
@@ -892,7 +925,7 @@ plot_LR_cluster_heatmap_impl <- function(
     suffix_title <- stringr::str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
 
-  main_title <- 
+  main_title <-
     ifelse(is.null(title),
       paste0(ifelse(method_use=="count","Number","Strength"),
             " of ",
@@ -900,7 +933,7 @@ plot_LR_cluster_heatmap_impl <- function(
       title
     )
 
-  ht2 <- draw(ht, 
+  ht2 <- draw(ht,
     column_title = main_title,
     column_title_gp = gpar(fontsize = 16))
   #return(ht2)
@@ -936,12 +969,12 @@ plot_LR_cluster_heatmap_impl <- function(
 #' @param arrow.width The width of arrows
 #' @param arrow.size the size of arrow
 #' @param text.x,text.y the x- and y-coordinates to add the text
-#' 
+#'
 #' @importFrom igraph ends E V layout_ in_circle
 #' @importFrom scales rescale
 #' @details adopted from cellchat netVisual_circle function. More detail please refer to CellChat netVisual_circle
-#' @return return net plot based on igraph 
-#' @export 
+#' @return return net plot based on igraph
+#' @export
 plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
   weight.scale = FALSE, vertex.weight = 20, vertex.weight.max = NULL, vertex.size.max = NULL, vertex.label.cex=1,vertex.label.color= "black",
   edge.weight.max = NULL, edge.width.max=8, alpha.edge = 0.6, label.edge = FALSE,edge.label.color='black',edge.label.cex=0.8,
@@ -1026,24 +1059,24 @@ plot_net_core_function <- function(igraph_g,color.use,main_title=NULL,
 #' @param title character, plot title.
 #' @param method_use Statistical method to display in heatmap. Deault is "count". Only support "count" and "strength",
 #' refelecting the number of interactions or the sum of strength in C2C scores, respectively.
-#' @param mat_scale logical, whether to scale score matrix, default is FALSE. 
+#' @param mat_scale logical, whether to scale score matrix, default is FALSE.
 #' Differ from weight.scale, see details.
-#' @param weight.scale logical, whether to scale edge weight and refelecting in plot, default is FALSE. 
+#' @param weight.scale logical, whether to scale edge weight and refelecting in plot, default is FALSE.
 #' Differ from mat_scale, see details.
-#' @param ... args passing to \code{\link{plot_net_core_function}} which adopted from CellChat netVisual_circle function. 
+#' @param ... args passing to \code{\link{plot_net_core_function}} which adopted from CellChat netVisual_circle function.
 #' See details.
-#' 
+#'
 #' @details This funcion is wrapper and adopted from CellChat function netVisual_circle.
-#' mat_scale and weight.scale are different argments, 
+#' mat_scale and weight.scale are different argments,
 #' The mat_scale is used to scale score matrix, and it also refelects in plot but may not be proper visualization.
-#' The weight.scale is used to scale edge weight consdering the edge maximum length in plot. 
+#' The weight.scale is used to scale edge weight consdering the edge maximum length in plot.
 #' Commonly, set mat_scale = TRUE and weight.scale = FALSE is enough to get proper visualization.
 #' However, if the lines in the plot are still too large or too small, we recommond to set both mat_scale and weight.scale = TRUE.
 #' @return network plot based on igraph package.
 #' @importFrom igraph graph_from_adjacency_matrix
 #' @importFrom stats sd
 #' @import stringr
-#' @export 
+#' @export
 plot_LR_cluster_net_impl <- function(
   db_C2C_score_list,
   kept_db,
@@ -1058,7 +1091,7 @@ plot_LR_cluster_net_impl <- function(
   weight.scale=FALSE,
   ...
 ){
-  C2C_score_df <- 
+  C2C_score_df <-
       aggregate_C2C_score(db_C2C_score_list,kept_db)
   if(is.null(cluster_color)){
     clu_col <- assign_clu_col_lite(C2C_score_df)
@@ -1068,7 +1101,7 @@ plot_LR_cluster_net_impl <- function(
 
   method_use <- match.arg(method_use)
 
-  ht_mat <- 
+  ht_mat <-
     prep_plot_matrix(
       C2C_score_df,
       LR_pair=LR_pair,
@@ -1094,7 +1127,7 @@ plot_LR_cluster_net_impl <- function(
     suffix_title <- stringr::str_replace(LR_pair,pattern = "\\.",replacement = "->")
   }
 
-  main_title <- 
+  main_title <-
     ifelse(is.null(title),
       paste0(ifelse(method_use=="count","Number","Strength"),
             " of ",
