@@ -8,6 +8,7 @@ create_spWAVE_object(
   seurat_obj,
   database,
   assay = "SCT",
+  coord = NULL,
   cluster = NULL,
   min_expr = 0.1,
   min_n_cell = NULL,
@@ -21,6 +22,8 @@ create_spWAVE_object(
 \item{database}{The ligand-receptor database you loaded.}
 
 \item{assay}{assay slot in Seurat object. default "RNA".}
+
+\item{coord}{data.frame, the spatial coordinates of cells.}
 
 \item{cluster}{cluster info. Default is NULL and will using active.ident in Seurat object.
 Accepted data format is data.frame or character. See details for more explain.}

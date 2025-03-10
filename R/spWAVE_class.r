@@ -103,6 +103,7 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object){
 #' Create spWAVE object from Seurat
 #'
 #' @param database The ligand-receptor database you loaded.
+#' @param coord data.frame, the spatial coordinates of cells.
 #' @inheritParams filter_LR_expr
 #' @inheritParams generate_complex_data
 #' @inheritParams cluster_info_identifier
@@ -122,6 +123,7 @@ create_spWAVE_object <- function(
     seurat_obj,
     database,
     assay="SCT",
+    coord=NULL,
     cluster=NULL,
     min_expr=0.1,
     min_n_cell=NULL,
@@ -140,8 +142,16 @@ create_spWAVE_object <- function(
 
   new_object@expr_complex <- complex_data$expr_LR_df
   new_object@kept_db <- complex_data$kept_db
-  new_object@coord <- get_coordinates(seurat_obj)
-
+  if(is.null(coord)){
+    new_object@coord <- get_coordinates(seurat_obj)
+  }else{
+    order_check <- check_row_order(colnames(seurat_obj),rownames(coord))
+    if(order_check){
+      new_object@coord <- coord
+    }else{
+      stop("The rownames of coord should be same with Seurat object")
+    }
+  }
   new_object@cluster_info <- cluster_info_identifier(seurat_obj,cluster)
   return(new_object)
 }
