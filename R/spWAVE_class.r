@@ -254,12 +254,12 @@ setGeneric("generate_kmeans_coord", function(coord,
 #' @export
 setMethod(f = "generate_kmeans_coord", signature = "spWAVE",
   definition = function(coord,
-  centers,
+  centers=nrow(coord@coord)/10,
   iter.max=10,
   nstart=1,
   random_seed=42) {
   meta_list <-
-    generate_kmeans_coord_impl(coord=coord@coord,centers = nrow(coord@coord)/10,
+    generate_kmeans_coord_impl(coord=coord@coord,centers = centers,
       iter.max = iter.max,nstart = nstart,random_seed = random_seed)
 
   coord@meta_coord <- meta_list$meta
