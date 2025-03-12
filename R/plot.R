@@ -308,7 +308,7 @@ plot_field_direction2 <- function(
             scale_fill_gradient(low="lightgrey", high=point_color) +
           #scale_colour_hue(l = 45) +
             theme_classic()
-      }else{
+      }else if(is.numeric(arrow_df[[point]])){
         p_arrow <-
           ggplot(data = arrow_df,aes(x=x,y=y)) +
             geom_point(
@@ -319,6 +319,24 @@ plot_field_direction2 <- function(
             scale_fill_gradient(low="lightgrey", high=point_color) +
           #scale_colour_hue(l = 45) +
             theme_classic()
+      }else{
+        p_arrow <-
+          ggplot(data = arrow_df,aes(x=x,y=y)) +
+            geom_point(
+              data=arrow_df,
+              aes(x=x,y=y,colour=.data[[point]]),
+              size=point_size,
+            )+
+            theme_classic()
+
+        if(
+          length(point_color)>=length(unique(arrow_df[[point]]))
+          ){
+          p_arrow <-
+            p_arrow + scale_colour_manual(values=point_color)
+        }else{
+          warning("Insufficient number given in point_color, use default palette instead")
+        }
       }
     },
     HE={
