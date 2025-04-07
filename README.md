@@ -12,31 +12,63 @@ v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/li
 <!-- badges: end -->
 
 **Sp**atial **W**hole **A**rea **V**ector **E**stimation (spWAVE) is
-design to estimate the ligand receptor spatial interference based on
-vector field superposition principle.
+design to estimate the ligands-receptors spatial interference based on
+conservative vector field model with superposition principle.
 
 ## Installation
 
-### Dependency
+### Dependencices
 
-Require [Seurat](https://satijalab.org/seurat/) \>= 5.0, because the
-data structure changed after 5.0, This package use the new ‘layers’
-structure to access data, which is not compatible with Seurat \< 5.0.
-And we recomannd Seurat \>=5.1.0, due to a better compatible with new ST
-techniques, escpecially for the HD single-cell ST.
+We recomannd [Seurat](https://satijalab.org/seurat/) \>= 5.0. This
+package use the new Seurat ‘layers’ structure to access data, which is
+not compatible with Seurat \< 5.0. For lower version Seurat and other ST
+objects, we provided the function to constructe spWAVE object by
+mannully giving the coordinate info, expression matrix, and other
+information.
+
+This package contains codes for Rcpp. Please ensure that the
+corresponding compilation environment is installed, such as Rtools for
+Windows and Xcode for macOS.
+
+For downstream analysis, install
+[tradeSeq](https://github.com/statOmics/tradeSeq) to analyze the field
+quantities related differentially expressed genes.
 
 ### Install
 
-Right now, it is a non-open source package, even not published on
-github, so please download the .zip file and install it from local.
+Install from GitHub:
+
+``` r
+devtools::install_github("liuhuoz/spWAVE")
+```
+
+Or download the GitHub source zip file, and install it from local:
 
 ``` r
 devtools::install_local("spWAVE.zip")
 ```
 
-## Tutorial
+## Quick Start
 
-Please check the tutorial in this package folder.
+Starting and constructing a spWAVE object from a Seurat object, you can
+follow the quick start example:
+
+``` r
+library(spWAVE)
+seurat_obj <- readRDS("seurat_obj.rds")
+human_db <- load_database(db_source = "CellChat",db_species = "human")
+#Or load a database form CellPhoneDB of mouse
+#mouse_db <- load_database(db_source = "CellPhoneDB",db_species = "mouse")
+
+spWAVE_obj <- create_spWAVE_object(seurat_obj,human_db)
+spWAVE_obj %<>% perform_LR_field_calc()
+spWAVE_obj %<>% perform_S2S_score_calc()
+spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+```
+
+## Full Tutorial for Analysis and Visualization
+
+Please check the full tutorial in tutorial folder.
 
 Field Estimation: “spWAVE/tutorial/Field_Est.html”
 
@@ -45,5 +77,5 @@ Visualization: “spWAVE/tutorial/Visualization.html”
 Downstream Analysis: “spWAVE/tutorial/Downstream.html” (not write now,
 will update)
 
-All links is missing because it is not publish on Github, will update in
-the future.
+All links is missing because it is not publish on Github, will be
+updated in the future.

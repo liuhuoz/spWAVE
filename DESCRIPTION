@@ -34,7 +34,7 @@ Imports:
     Rcpp (>= 1.0.12),
     RColorBrewer,
     scales,
-    Seurat (>= 5.1.0),
+    Seurat,
     stats,
     tibble,
     tidyr,
