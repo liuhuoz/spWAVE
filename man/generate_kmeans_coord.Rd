@@ -16,7 +16,7 @@ generate_kmeans_coord(
 
 \S4method{generate_kmeans_coord}{spWAVE}(
   coord,
-  centers = nrow(coord)/10,
+  centers = nrow(coord@coord)/10,
   iter.max = 10,
   nstart = 1,
   random_seed = 42
