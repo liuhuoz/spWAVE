@@ -15,6 +15,11 @@ knitr::opts_chunk$set(
 
 
 # spWAVE <img src="man/figures/logo.png" align="right" height="138" alt="" />
+<div align="left">
+<a href="/README.md">English</a> &nbsp;|&nbsp;
+<a href="/doc/README_CH.md">中文</a>
+</div>
+
 <!-- badges: start -->
 [![R](https://img.shields.io/badge/R-276DC3.svg?logo=r&logoColor=white)]()
 [![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)]()
