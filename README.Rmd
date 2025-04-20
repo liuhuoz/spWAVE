@@ -16,8 +16,8 @@ knitr::opts_chunk$set(
 
 # spWAVE <img src="man/figures/logo.png" align="right" height="138" alt="" />
 <div align="left">
-<a href="/README.md">English</a> &nbsp;|&nbsp;
-<a href="/doc/README_CH.md">中文</a>
+<a href="README.md">English</a> &nbsp;|&nbsp;
+<a href="doc/README_CH.md">中文</a>
 </div>
 
 <!-- badges: start -->

@@ -5,8 +5,7 @@
 
 <div align="left">
 
-<a href="/README.md">English</a>  \| 
-<a href="/doc/README_CH.md">中文</a>
+<a href="README.md">English</a>  \|  <a href="doc/README_CH.md">中文</a>
 
 </div>
 

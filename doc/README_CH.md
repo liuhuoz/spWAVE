@@ -5,8 +5,7 @@
 
 <div align="left">
 
-<a href="/README.md">English</a>  \| 
-<a href="/doc/README_CH.md">中文</a>
+<a href="../README.md">English</a>  \|  <a href="README_CH.md">中文</a>
 
 </div>
 
@@ -20,11 +19,11 @@ v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/li
 
 spWAVE(**sp**atial **W**hole **A**rea **V**ector **E**stimation)
 是基于保守力场模型与叠加原理所开发的一个空间转录组分析工具，
-用于估计配体-受体在空间中的相互作用。
+用于估计配体-受体在空间中的相互作用场。
 
 <div align="center">
 
-<img src="man/figures/sample1.png" width="80%"></img>
+<img src="../man/figures/sample1.png" width="80%"></img>
 
 </div>
 
