@@ -22,6 +22,12 @@ spWAVE(**sp**atial **W**hole **A**rea **V**ector **E**stimation)
 是基于保守力场模型与叠加原理所开发的一个空间转录组分析工具，
 用于估计配体-受体在空间中的相互作用。
 
+<div align="center">
+
+<img src="man/figures/sample1.png" width="80%"></img>
+
+</div>
+
 ## 安装
 
 ### 依赖
@@ -55,7 +61,8 @@ devtools::install_local("spWAVE.zip")
 
 ## 快速上手
 
-通过 Seurat V5 对象快速构建 spWAVE 对象并进行分析，可依照如下代码：
+对于细胞数小于10000的数据集， 可以通过 Seurat V5 对象快速构建 spWAVE
+对象并进行分析， 依照如下代码：
 
 ``` r
 library(spWAVE)
@@ -66,6 +73,19 @@ human_db <- load_database(db_source = "CellChat",db_species = "human")
 
 spWAVE_obj <- create_spWAVE_object(seurat_obj,human_db)
 spWAVE_obj %<>% perform_LR_field_calc()
+spWAVE_obj %<>% perform_S2S_score_calc()
+spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+```
+
+对于细胞数大于10000的数据集，我们推荐使用“挖孔”法进行计算，减少计算资源的消耗。
+
+``` r
+spWAVE_obj <- create_spWAVE_object(seurat_obj,human_db)
+
+spWAVE_obj %<>% generate_kmeans_coord()
+spWAVE_obj %<>% generate_meta_expr()
+
+spWAVE_obj %<>% perform_LR_field_hole_calc()
 spWAVE_obj %<>% perform_S2S_score_calc()
 spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 ```

@@ -920,8 +920,10 @@ plot_LR_cluster_heatmap_impl <- function(
       show_annotation_name = FALSE)
 
   legend <- list(
-      title = paste0(ifelse(normalize,"Scale ",""),
-      ifelse(method_use=="count","count","strength"))
+      title = 
+        paste0(ifelse(normalize,"Scale ",""),
+          ifelse(method_use=="count","count","strength")
+          )
         #legend_height = unit(20, "mm")
         )
 

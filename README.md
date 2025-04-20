@@ -3,6 +3,13 @@
 
 # spWAVE <img src="man/figures/logo.png" align="right" height="138" alt="" />
 
+<div align="left">
+
+<a href="/README.md">English</a>  \| 
+<a href="/doc/README_CH.md">中文</a>
+
+</div>
+
 <!-- badges: start -->
 
 [![R](https://img.shields.io/badge/R-276DC3.svg?logo=r&logoColor=white)]()
@@ -14,6 +21,12 @@ v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/li
 **Sp**atial **W**hole **A**rea **V**ector **E**stimation (spWAVE) is
 design to estimate the ligands-receptors spatial interference based on
 conservative vector field model with superposition principle.
+
+<div align="center">
+
+<img src="man/figures/sample1.png" width="80%"></img>
+
+</div>
 
 ## Installation
 
@@ -50,8 +63,8 @@ devtools::install_local("spWAVE.zip")
 
 ## Quick Start
 
-Starting and constructing a spWAVE object from a Seurat object, you can
-follow the quick start example:
+For small datasets(cells \< 10000), constructing a spWAVE object from a
+Seurat and computing the vector field can follow the quick start code:
 
 ``` r
 library(spWAVE)
@@ -62,6 +75,21 @@ human_db <- load_database(db_source = "CellChat",db_species = "human")
 
 spWAVE_obj <- create_spWAVE_object(seurat_obj,human_db)
 spWAVE_obj %<>% perform_LR_field_calc()
+spWAVE_obj %<>% perform_S2S_score_calc()
+spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+```
+
+For large datasets(cells \> 10000), we recommend utilizing the
+alternative ‘holed manner’ method, which reduces computational resource
+consumption.
+
+``` r
+spWAVE_obj <- create_spWAVE_object(seurat_obj,human_db)
+
+spWAVE_obj %<>% generate_kmeans_coord()
+spWAVE_obj %<>% generate_meta_expr()
+
+spWAVE_obj %<>% perform_LR_field_hole_calc()
 spWAVE_obj %<>% perform_S2S_score_calc()
 spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 ```
