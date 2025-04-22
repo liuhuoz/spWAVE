@@ -91,14 +91,12 @@ spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 
 ## 分析与可视化的完整教程
 
-请查看tutorial文件夹下的相应的完整教程
+请查看tutorial文件夹，以获取相应的完整教程
 
-Please check the full tutorial in tutorial folder.
+低分辨率空转数据集的分析与可视化: [Analysis LR field of 10x Visium Mouse
+Brain dataset using spWAVE](../tutorial/Field_Est2.html)
 
-低分辨率空转数据集的分析: [Analysis LR field of 10x Visium Mouse Brain
-dataset using spWAVE](../tutorial/Field_Est2.html)
-
-高分辨率空转数据集分析与进阶技巧: [Analysis LR field of large dataset
-using spWAVE](../tutorial/Field_Est3.html)
+高分辨率空转数据集分析、可视化与进阶技巧: [Analysis LR field of large
+dataset using spWAVE](../tutorial/Field_Est3.html)
 
 下游分析: “spWAVE/tutorial/Downstream.html” (待完成)
