@@ -598,7 +598,7 @@ prep_S2S_LR_mat <- function(
   #** 0: not exist, 1: exist
   #print("prep sign")
   q_net_sign <- q_net
-  q_net_sign@x %<>% sign()
+  q_net_sign@x <- sign(q_net_sign@x)
   LR_kept <- compute_LR_kept_dgC(q_net_sign)
 
   q_mat <- q_mat * LR_kept #** 这里到也可以用@x来计算，不过得先对q_mat先进行处理过滤ij数值
@@ -633,7 +633,7 @@ prep_S2S_dist_sparse <- function(LR_mat,coord){
   row_point <- coord[row_idx+1,]
   col_point <- coord[col_idx+1,]
   dist_sub <- (row_point-col_point)
-  dist <- dist_sub^2 %>% rowSums() %>% sqrt()
+  dist <- sqrt(dist_sub^2 %>% rowSums())
 
   dist_mat <- dist_sub_x <- dist_sub_y <- LR_mat
   dist_mat@x <- dist
