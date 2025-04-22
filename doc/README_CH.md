@@ -93,11 +93,12 @@ spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 
 请查看tutorial文件夹下的相应的完整教程
 
-相互作用场估计: “spWAVE/tutorial/Field_Est.html”
+Please check the full tutorial in tutorial folder.
 
-可视化: “spWAVE/tutorial/Visualization.html”
+低分辨率空转数据集的分析: [Analysis LR field of 10x Visium Mouse Brain
+dataset using spWAVE](../tutorial/Field_Est2.html)
 
-下游分析: “spWAVE/tutorial/Downstream.html” (not write now, will update)
+高分辨率空转数据集分析与进阶技巧: [Analysis LR field of large dataset
+using spWAVE](../tutorial/Field_Est3.html)
 
-All links is missing because it is not publish on Github, will be
-updated in the future.
+下游分析: “spWAVE/tutorial/Downstream.html” (待完成)
