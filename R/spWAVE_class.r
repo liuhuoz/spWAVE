@@ -655,6 +655,12 @@ setMethod("perform_field_extract", "spWAVE", function(
     extract_LR_field_result(db_res,
       LR=LR,
       kept_db = database_result@kept_db)
+  if(is.null(ROI_barcode)){
+    result_df <- cbind(database_result@coord,result_df)
+  }else{
+    result_df <- cbind(database_result@coord[ROI_barcode,],result_df)
+  }
+  rownames(result_df) <- result_df$barcode
   result_df %<>% calc_field_strength()
 
   return(result_df)

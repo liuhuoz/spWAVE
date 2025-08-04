@@ -794,7 +794,8 @@ extract_LR_field_result <- function(database_result,LR,kept_db){
 
   LR_expr_list <-  db_res$single_mol_field_list[c(L_info,R_info)]
   #** 数据库计算的单分子向量场结果df内，基因表达量都在第4列，所以这里直接提取第4列就行
-  LR_expr_df <- do.call(cbind,lapply(LR_expr_list,function(x) x[,4,F]))
+  #** 修改为dgCMatrix后，删除了坐标和barcode，此时基因表达在第1列
+  LR_expr_df <- do.call(cbind,lapply(LR_expr_list,function(x) x[,1,drop=FALSE]))
 
   df <- cbind.data.frame(LR_field,LR_expr_df)
   df %<>% 
