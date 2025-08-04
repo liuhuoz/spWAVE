@@ -448,8 +448,8 @@ concatenate_LR_field_info <- function(db_field_result,ligand,receptor){
 
   merge_df <- cbind(
       LR_pair_field_list[[LR_pair]],
-      single_mol_field_list[[ligand]][,ligand,FALSE],
-      single_mol_field_list[[receptor]][,receptor,FALSE]
+      single_mol_field_list[[ligand]][,ligand,drop=FALSE],
+      single_mol_field_list[[receptor]][,receptor,drop=FALSE]
       )
   return(merge_df)
 }

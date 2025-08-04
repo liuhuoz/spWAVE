@@ -660,18 +660,21 @@ prep_S2S_dist_sparse <- function(LR_mat,coord){
 #'
 #' @param kept_db data.frame, LR database, must be same with the database used in db_field_result
 #' @param db_field_result list, result of perform_LR_field_calc
+#' @param coord data.frame, coordinates of spots, default is null and extract form db_field_result
 #'
 #' @return return list, the result of prep_S2S_dist_mat and prep_S2S_LR_mat
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
-prep_database_S2S_list <- function(kept_db,db_field_result){
+prep_database_S2S_list <- function(kept_db,db_field_result,coord=NULL){
   #single_mol_field_list <- db_field_result$single_mol_field_list
   #LR_pair_field_list <- db_field_result$LR_pair_field_list
 
   #** 在循环外进行计算距离矩阵和相互xy，后面共用
 
   #dist_list <- prep_S2S_dist_mat(kept_db,db_field_result)
-  coord <- db_field_result[[1]][[1]][,c("x","y")]
+  if(is.null(coord)){
+    coord <- db_field_result[[1]][[1]][,c("x","y")]
+  }
   #** for循环内每次需要提取一次LR_info,提取后再套取S2S_score进行计算
   #** 其中LR_info需要的L与R基因名也可以给到S2S_score
   LR_S2S_mat_list <- list()
@@ -883,14 +886,14 @@ calc_field_force_SpMat <- function(
     LR_mat %<>% methods::as("CsparseMatrix")
   }
 
-  field_df$q_net <- field_df[,ligand] - field_df[,receptor]
-  field_df$Fx=field_df$q_net*field_df$Ex
-  field_df$Fy=field_df$q_net*field_df$Ey
+  q_net <- field_df[,ligand] - field_df[,receptor]
+  Fx=q_net*field_df[,"Ex"]
+  Fy=q_net*field_df[,"Ey"]
   
   field_Fx <- field_Fy <- field_Fnorm <- LR_mat
 
-  field_Fx@x <- rep(field_df$Fx,times=diff(LR_mat@p)) 
-  field_Fy@x <- rep(field_df$Fy,times=diff(LR_mat@p)) 
+  field_Fx@x <- rep(Fx,times=diff(LR_mat@p)) 
+  field_Fy@x <- rep(Fy,times=diff(LR_mat@p)) 
   field_Fnorm@x <- sqrt(field_Fx@x^2+field_Fy@x^2) 
 
   field_force <- 

@@ -522,10 +522,14 @@ setMethod("perform_S2S_score_calc", "spWAVE", function(
   #check_slot_empty(kept_db,"S2S_force")
   check_slot_empty(kept_db,"S2S_score")
   db_field_result <- result_list_adaptor(kept_db,ROI_barcode)
+  if(!is.null(ROI_barcode)){
+    coord <- kept_db@coord[ROI_barcode,]
+  }
 
   print("Step1. preparing data")
   prep_list <-
-    prep_database_S2S_list(kept_db@kept_db,db_field_result)
+    prep_database_S2S_list(kept_db@kept_db,db_field_result,
+      coord=coord)
   print("Step2. calc S2S force")
   S2S_force <-
     calc_database_S2S_force(kept_db@kept_db,prep_list)
