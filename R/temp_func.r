@@ -96,3 +96,9 @@ calc_set_scaler_component <- function(
 
   return(merge_df)
 }
+
+calc_set_scaler_component <- function(
+  
+){
+
+}

@@ -158,13 +158,13 @@ calc_LR_pair_vec <- function(
   R_field_vec <- sum_field_vector(R_vec_list)
   LR_field_vec <- L_field_vec - R_field_vec
 
-  merge_spatial_df <- 
-    cbind.data.frame(
-      gene_vec_list[[1]][,c("x","y","barcode")],
-      LR_field_vec
-    )
+  merge_spatial_df <- LR_field_vec
+    # cbind.data.frame(
+    #   gene_vec_list[[1]][,c("x","y","barcode")],
+    #   LR_field_vec
+    # )
   
-  rownames(merge_spatial_df) <- merge_spatial_df$barcode
+  rownames(merge_spatial_df) <- rownames(merge_spatial_df)
   return(merge_spatial_df)
 }
 
@@ -295,8 +295,8 @@ calc_database_LR_field <- function(kept_db,single_mol_field,verbose=TRUE){
   for(i in seq_len(nrow(kept_db))){
     LR_pair_field_list[[i]] <- 
       calc_LR_pair_vec(single_mol_field,kept_db$Ligand[i],kept_db$Receptor[i])
-    LR_pair_field_list[[i]]$LR_pair <- 
-      paste(kept_db$Ligand[i],kept_db$Receptor[i],sep=".")
+    # LR_pair_field_list[[i]]$LR_pair <- 
+    #   paste(kept_db$Ligand[i],kept_db$Receptor[i],sep=".")
     if(verbose){utils::setTxtProgressBar(pb, i)}
   }
   if(verbose){close(pb)}
@@ -316,7 +316,7 @@ calc_database_LR_field <- function(kept_db,single_mol_field,verbose=TRUE){
   for(i in seq_len(length(family_lig_list))){
     LR_family_field_list[[i]] <- 
       calc_LR_pair_vec(single_mol_field,family_lig_list[[i]],family_rec_list[[i]])
-    LR_family_field_list[[i]]$Family <- names(family_lig_list)[i]
+    #LR_family_field_list[[i]]$Family <- names(family_lig_list)[i]
     utils::setTxtProgressBar(pb, i)
   }
   close(pb)
@@ -520,8 +520,9 @@ calc_database_holed_field <- function(
     temp <- temp[ROI_barcode,]
     temp %<>% cbind.data.frame(spot_expr_ROI[,char_index[[i]],FALSE])
 
-    temp <- temp[,c("x","y","barcode",char_index[[i]],"Ex","Ey","U")]
-    gene_vec_list[[i]] <- temp
+    #temp <- temp[,c("x","y","barcode",char_index[[i]],"Ex","Ey","U")]
+    temp <- temp[,c(char_index[[i]],"Ex","Ey","U")]
+    gene_vec_list[[i]] <- temp %>% as.matrix() %>% methods::as("dgCMatrix")
   }
   names(gene_vec_list) <- char_index
 
