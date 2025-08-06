@@ -102,3 +102,46 @@ calc_set_scaler_component <- function(
 ){
 
 }
+
+
+merge_spwave_core <- function(spwave1,spwave2){
+  merged_obj <- methods::new(Class="spWAVE")
+  merged_obj@expr_raw <- rbind(spwave1@expr_raw,spwave2@expr_raw)
+  merged_obj@expr_complex <- cbind(spwave1@expr_complex,spwave2@expr_complex)
+  merged_obj@kept_db <- rbind(spwave1@kept_db,spwave2@kept_db)
+
+  merged_obj@coord <- spwave1@coord
+  merged_obj@cluster_info <- spwave1@cluster_info
+
+  merged_obj@meta_coord <- spwave1@meta_coord
+  merged_obj@meta_coord_clu <- spwave1@meta_coord_clu
+  merged_obj@meta_complex <- cbind(spwave1@meta_complex,spwave2@meta_complex)
+
+  merged_obj@single_mole_field <-
+    c(spwave1@single_mole_field,spwave2@single_mole_field)
+  merged_obj@LR_pair_field <-
+    c(spwave1@LR_pair_field,spwave2@LR_pair_field)
+  merged_obj@LR_family_field <-
+    c(spwave1@LR_family_field,spwave2@LR_family_field)
+
+  return(merged_obj)
+}
+
+update_spWAVE_object <- function(obj){
+  message("Update single mole field")
+  obj@single_mole_field %<>% lapply(function(x){
+    x <- x[,4:7] %>% as.matrix() %>% as("dgCMatrix")
+    return(x)
+  })
+  message("Update LR pair field")
+  obj@LR_pair_field %<>% lapply(function(x){
+    x <- x[,4:6] %>% as.matrix() %>% as("dgCMatrix")
+    return(x)
+  })
+  message("Update LR Family field")
+  obj@LR_family_field %<>% lapply(function(x){
+    x <- x[,4:6] %>% as.matrix() %>% as("dgCMatrix")
+    return(x)
+  })
+  return(obj)
+}
