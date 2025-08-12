@@ -145,3 +145,35 @@ update_spWAVE_object <- function(obj){
   })
   return(obj)
 }
+
+theme_map_grid <- function(){
+  theme_minimal() %+replace%
+    theme(
+      plot.background = element_rect(fill = "#FAFAFA", color = NA),
+      legend.background = element_rect(fill = "#FAFAFA", color = NA),
+      panel.grid.major = element_line(color = "gray80", linewidth = 0.3),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      axis.line = element_blank(),
+      axis.title = element_blank(),
+      complete = TRUE
+    )
+}
+
+coord_map_grid <- function(
+  x_step = 100, y_step = 100, 
+  x_expand = c(0, 50), y_expand = c(0, 0)){
+    list(
+      coord_fixed(),
+      scale_x_continuous(
+        breaks = function(limits) seq(floor(limits[1]), ceiling(limits[2]), by = x_step),
+        expand = x_expand
+      ),
+      scale_y_continuous(
+        breaks = function(limits) seq(floor(limits[1]), ceiling(limits[2]), by = y_step),
+        expand = y_expand
+      )
+    )
+}
