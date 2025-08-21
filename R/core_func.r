@@ -535,7 +535,7 @@ calc_database_holed_field <- function(
 
   for(i in seq_along(char_index)) {
     field_mat <- do.call(rbind, lapply(point_vec_list, function(df) {
-      df[i, c("Ex", "Ey", "U")]  # 取第一行因为所有行坐标相同
+      df[i, c("Ex", "Ey", "U")] 
     }))
     
     gene_vec_array[, "expression", i] <- spot_expr_ROI[ROI_barcode, char_index[i]]

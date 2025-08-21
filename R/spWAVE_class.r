@@ -205,11 +205,11 @@ result_list_adaptor <- function(object,ROI_barcode=NULL){
   }else{
     db_res_list <- list(
       single_mol_field_list =
-        lapply(object@single_mole_field,function(x) x[ROI_barcode,]),
+        object@single_mole_field[ROI_barcode,,],
       LR_pair_field_list =
-        lapply(object@LR_pair_field,function(x) x[ROI_barcode,]),
+        object@LR_pair_field[ROI_barcode,,],
       LR_family_field_list =
-        lapply(object@LR_family_field,function(x) x[ROI_barcode,])
+        object@LR_family_field[ROI_barcode,,]
     )
   }
   return(db_res_list)

@@ -766,18 +766,21 @@ prep_plot_matrix <- function(
 #' @param kept_db The database used in results list.
 #' 
 #' @import dplyr
+#' @import abind
 #'
 #' @return return a dataframe contain cluster, coordinates, 
 #' expression of each ligand and receptor and field estimate result including direction and strength.
 #' @export 
 extract_LR_field_result <- function(database_result,LR,kept_db){
   db_res <- database_result
-  LR_pool <- c(db_res$LR_family_field_list,db_res$LR_pair_field_list)
-  
-  if(!(LR %in% names(LR_pool))){
+  LR_pool <- abind::abind(
+    db_res$LR_pair_field_list, 
+    db_res$LR_family_field_list, along = 3)
+
+  if(!(LR %in% dimnames(LR_pool)[[3]])){
     stop("LR not found!")
   }else{
-    LR_field <- LR_pool[[LR]]
+    LR_field <- LR_pool[,,LR]
   }
 
   #** 分开获取LR的名字，方便后面进行加减
@@ -792,10 +795,10 @@ extract_LR_field_result <- function(database_result,LR,kept_db){
       dplyr::pull(Receptor) %>%
       unique()
 
-  LR_expr_list <-  db_res$single_mol_field_list[c(L_info,R_info)]
   #** 数据库计算的单分子向量场结果df内，基因表达量都在第4列，所以这里直接提取第4列就行
-  #** 修改为dgCMatrix后，删除了坐标和barcode，此时基因表达在第1列
-  LR_expr_df <- do.call(cbind,lapply(LR_expr_list,function(x) x[,1,drop=FALSE]))
+  #** 使用array后再次修改,直接进行切片操作，丢弃维度2即可。
+  LR_expr_df <- 
+    db_res$single_mol_field_list[,"expression",c(L_info,R_info),drop=TRUE]
 
   df <- cbind.data.frame(LR_field,LR_expr_df)
   df %<>% 

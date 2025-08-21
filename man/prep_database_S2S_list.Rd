@@ -4,12 +4,14 @@
 \alias{prep_database_S2S_list}
 \title{Prepare spot2spot interaction and distance matrix}
 \usage{
-prep_database_S2S_list(kept_db, db_field_result)
+prep_database_S2S_list(kept_db, db_field_result, coord = NULL)
 }
 \arguments{
 \item{kept_db}{data.frame, LR database, must be same with the database used in db_field_result}
 
 \item{db_field_result}{list, result of perform_LR_field_calc}
+
+\item{coord}{data.frame, coordinates of spots, default is null and extract form db_field_result}
 }
 \value{
 return list, the result of prep_S2S_dist_mat and prep_S2S_LR_mat

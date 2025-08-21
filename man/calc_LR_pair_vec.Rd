@@ -4,10 +4,10 @@
 \alias{calc_LR_pair_vec}
 \title{calculate LR pair vector}
 \usage{
-calc_LR_pair_vec(gene_vec_list, L_genes, R_genes)
+calc_LR_pair_vec(gene_vec_array, L_genes, R_genes)
 }
 \arguments{
-\item{gene_vec_list}{list of single molecular field vector}
+\item{gene_vec_array}{array of single molecular field vector}
 
 \item{L_genes}{Ligand genes.}
 

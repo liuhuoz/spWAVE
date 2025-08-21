@@ -7,7 +7,7 @@
 sum_field_vector(vector_df_list)
 }
 \arguments{
-\item{vector_df_list}{list of data.frame,
+\item{vector_df_list}{list or array of data.frame,
 each data.frame contains a single molecular vector calculated result from \code{single_molecular_vector}.}
 }
 \value{
