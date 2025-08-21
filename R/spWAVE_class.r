@@ -522,7 +522,9 @@ setMethod("perform_S2S_score_calc", "spWAVE", function(
   #check_slot_empty(kept_db,"S2S_force")
   check_slot_empty(kept_db,"S2S_score")
   db_field_result <- result_list_adaptor(kept_db,ROI_barcode)
-  if(!is.null(ROI_barcode)){
+  if(is.null(ROI_barcode)){
+    coord <- kept_db@coord
+  }else{
     coord <- kept_db@coord[ROI_barcode,]
   }
 
