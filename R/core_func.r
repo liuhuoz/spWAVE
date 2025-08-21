@@ -509,24 +509,24 @@ calc_database_holed_field <- function(
     return(point_vec)
   },verbose=verbose
   )
-  gene_vec_list <- list()
   spot_expr_ROI <- spot_expr[ROI_barcode,]
   char_index <- point_vec_list[[1]]$gene
-  for(i in seq_along(char_index)){
-    temp <- 
-      do.call(rbind.data.frame,lapply(point_vec_list,function(x) x[i,]))
-    #* Align the row order for concatenation
-    rownames(temp) <- temp$barcode
-    temp <- temp[ROI_barcode,]
-    temp %<>% cbind.data.frame(spot_expr_ROI[,char_index[[i]],FALSE])
+  gene_vec_array <- array(
+      dim = c(length(ROI_barcode), 4, length(char_index)),
+      dimnames = list(ROI_barcode, c("expression", "Ex", "Ey", "U"), char_index)
+    )
 
-    #temp <- temp[,c("x","y","barcode",char_index[[i]],"Ex","Ey","U")]
-    temp <- temp[,c(char_index[[i]],"Ex","Ey","U")]
-    gene_vec_list[[i]] <- temp %>% as.matrix() %>% methods::as("dgCMatrix")
+  field_mat <- do.call(rbind, lapply(point_vec_list, function(df) {
+    df[1, c("Ex", "Ey", "U")]  # 取第一行因为所有行坐标相同
+  }))
+  rownames(field_mat) <- sapply(point_vec_list, function(df) df$barcode[1])
+
+  for(i in seq_along(char_index)) {
+    gene_vec_array[, "expression", i] <- spot_expr_ROI[ROI_barcode, char_index[i]]
+    gene_vec_array[,  c("Ex", "Ey", "U"), i] <- as.matrix(field_mat)
   }
-  names(gene_vec_list) <- char_index
 
-  return(gene_vec_list)
+  return(gene_vec_array)
 }
 
 #******************************

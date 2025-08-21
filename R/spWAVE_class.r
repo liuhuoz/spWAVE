@@ -7,7 +7,7 @@
 #' @importFrom methods setClassUnion
 #' @importClassesFrom Matrix dgCMatrix
 setClassUnion(name = 'Mat_like', members = c("matrix", "dgCMatrix","data.frame"))
-
+setClassUnion(name = 'Mat_list', members = c("array","list"))
 
 #' slots of class spWAVE
 #'
@@ -47,9 +47,9 @@ spWAVE <-
       meta_coord_clu = "data.frame",
       meta_complex = "Mat_like",
       #** field result
-      single_mole_field = "list",
-      LR_pair_field = "list",
-      LR_family_field = "list",
+      single_mole_field = "Mat_list",
+      LR_pair_field = "Mat_list",
+      LR_family_field = "Mat_list",
       #** score result
       #S2S_force = "list", #** too large to store
       S2S_score = "list",
