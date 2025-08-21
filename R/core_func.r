@@ -115,20 +115,20 @@ single_field_vector <- function(
 #'
 #' Sum-up field vector of selected single molecular vector of genes.
 #'
-#' @param vector_df_list list of data.frame, 
+#' @param vector_df_list list or array of data.frame, 
 #' each data.frame contains a single molecular vector calculated result from `single_molecular_vector`.
 #'
 #' @return return data.frame contain sum-up vector field
 #' @export
 sum_field_vector <- function(vector_df_list){
-  if(is.data.frame(vector_df_list)){
+  if(is.data.frame(vector_df_list) || is.matrix(vector_df_list)){
       sigma_E_vec = vector_df_list[,c("Ex","Ey","U")]
     }else{
-      sigma_E_vec = vector_df_list[[1]][,c("Ex","Ey","U")]
+      sigma_E_vec = vector_df_list[,c("Ex","Ey","U"),1]
   }
-  if(length(vector_df_list)>1){
-    for(i in 2:length(vector_df_list)){
-      sigma_E_vec=sigma_E_vec+vector_df_list[[i]][,c("Ex","Ey","U")]
+  if(length(dim(vector_df_list))>2){
+    for(i in 2:dim(vector_df_list)[3]){
+      sigma_E_vec=sigma_E_vec+vector_df_list[,c("Ex","Ey","U"),i]
     }
   }
   return(sigma_E_vec)
@@ -139,32 +139,32 @@ sum_field_vector <- function(vector_df_list){
 #'
 #' calculate LR pair vector form single molecular field vector list
 #'
-#' @param gene_vec_list list of single molecular field vector
+#' @param gene_vec_array array of single molecular field vector
 #' @param L_genes Ligand genes.
 #' @param R_genes Receptor genes.
 #'
 #' @return return data.frame contain sum-up vector field containing coordinates, expression, vector field
 #' @export
 calc_LR_pair_vec <- function(
-  gene_vec_list,
+  gene_vec_array,
   L_genes,R_genes
 ){
-  #retrive used list
-  L_vec_list <- gene_vec_list[L_genes]
-  R_vec_list <- gene_vec_list[R_genes]
+  #retrive used array
+  L_vec_array <- gene_vec_array[ , , L_genes]
+  R_vec_array <- gene_vec_array[ , , R_genes]
 
   #分割LR计算后，再计算LR对
-  L_field_vec <- sum_field_vector(L_vec_list)
-  R_field_vec <- sum_field_vector(R_vec_list)
+  L_field_vec <- sum_field_vector(L_vec_array)
+  R_field_vec <- sum_field_vector(R_vec_array)
   LR_field_vec <- L_field_vec - R_field_vec
 
-  merge_spatial_df <- LR_field_vec
+  merge_spatial_df <- LR_field_vec %>% as.matrix()
     # cbind.data.frame(
     #   gene_vec_list[[1]][,c("x","y","barcode")],
     #   LR_field_vec
     # )
   
-  rownames(merge_spatial_df) <- rownames(merge_spatial_df)
+  #rownames(merge_spatial_df) <- rownames(merge_spatial_df)
   return(merge_spatial_df)
 }
 
@@ -288,19 +288,27 @@ calc_database_single_field <- function(kept_db,expr,coord,skip_subunit=TRUE,verb
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @export
 calc_database_LR_field <- function(kept_db,single_mol_field,verbose=TRUE){
-  LR_pair_field_list <- list()
+  LR_pair_field_array <- array(
+    dim = c(dim(single_mol_field)[1], 3, nrow(kept_db)),
+    dimnames = list(
+      dimnames(single_mol_field)[[1]], 
+      c("Ex", "Ey", "U"), 
+      kept_db$id
+    )
+  )
   if(verbose){
     pb <- utils::txtProgressBar(min = 0, max = nrow(kept_db), style = 3)
   }
   for(i in seq_len(nrow(kept_db))){
-    LR_pair_field_list[[i]] <- 
-      calc_LR_pair_vec(single_mol_field,kept_db$Ligand[i],kept_db$Receptor[i])
+    LR_pair_field_array[,,i] <- 
+      calc_LR_pair_vec(
+        single_mol_field,
+        kept_db$Ligand[i],kept_db$Receptor[i])
     # LR_pair_field_list[[i]]$LR_pair <- 
     #   paste(kept_db$Ligand[i],kept_db$Receptor[i],sep=".")
     if(verbose){utils::setTxtProgressBar(pb, i)}
   }
   if(verbose){close(pb)}
-  names(LR_pair_field_list) <- kept_db$id
 
   family_lig_list <- split(kept_db$Ligand, kept_db$Family)
   family_rec_list <- split(kept_db$Receptor, kept_db$Family)
@@ -311,20 +319,29 @@ calc_database_LR_field <- function(kept_db,single_mol_field,verbose=TRUE){
   family_lig_list %<>% lapply(unique)
   family_rec_list %<>% lapply(unique)
 
-  LR_family_field_list <- list()
+  LR_family_field_array <- array(
+    dim = c(dim(single_mol_field)[1], 3, length(family_lig_list)),
+    dimnames = list(
+      dimnames(single_mol_field)[[1]], 
+      c("Ex", "Ey", "U"), 
+      names(family_lig_list)
+    )
+  )
   pb <- utils::txtProgressBar(min = 0, max = length(family_lig_list), style = 3)
   for(i in seq_len(length(family_lig_list))){
-    LR_family_field_list[[i]] <- 
-      calc_LR_pair_vec(single_mol_field,family_lig_list[[i]],family_rec_list[[i]])
+    LR_family_field_array[,,i] <- 
+      calc_LR_pair_vec(single_mol_field,
+        family_lig_list[[i]],family_rec_list[[i]]) %>% 
+        as.matrix()
     #LR_family_field_list[[i]]$Family <- names(family_lig_list)[i]
     utils::setTxtProgressBar(pb, i)
   }
   close(pb)
-  names(LR_family_field_list) <- names(family_lig_list)
+
   
   LR_field_list <- 
-    list(LR_pair_field_list=LR_pair_field_list,
-        LR_family_field_list=LR_family_field_list)
+    list(LR_pair_field_list=LR_pair_field_array,
+        LR_family_field_list=LR_family_field_array)
   return(LR_field_list)
 }
 
@@ -516,12 +533,11 @@ calc_database_holed_field <- function(
       dimnames = list(ROI_barcode, c("expression", "Ex", "Ey", "U"), char_index)
     )
 
-  field_mat <- do.call(rbind, lapply(point_vec_list, function(df) {
-    df[1, c("Ex", "Ey", "U")]  # 取第一行因为所有行坐标相同
-  }))
-  rownames(field_mat) <- sapply(point_vec_list, function(df) df$barcode[1])
-
   for(i in seq_along(char_index)) {
+    field_mat <- do.call(rbind, lapply(point_vec_list, function(df) {
+      df[i, c("Ex", "Ey", "U")]  # 取第一行因为所有行坐标相同
+    }))
+    
     gene_vec_array[, "expression", i] <- spot_expr_ROI[ROI_barcode, char_index[i]]
     gene_vec_array[,  c("Ex", "Ey", "U"), i] <- as.matrix(field_mat)
   }
