@@ -129,20 +129,21 @@ merge_spwave_core <- function(spwave1,spwave2){
 
 update_spWAVE_object <- function(obj){
   message("Update single mole field")
-  obj@single_mole_field %<>% lapply(function(x){
-    x <- x[,4:7] %>% as.matrix() %>% as("dgCMatrix")
+  obj@single_mole_field %>% lapply(function(x){
+    x <- x[,4:7] %>% as.matrix()
+    colnames(x)[1] <- "expression"
     return(x)
-  })
+  }) %>% abind::abind(along = 3)
   message("Update LR pair field")
   obj@LR_pair_field %<>% lapply(function(x){
-    x <- x[,4:6] %>% as.matrix() %>% as("dgCMatrix")
+    x <- x[,4:6] %>% as.matrix()
     return(x)
-  })
+  }) %>% abind::abind(along = 3)
   message("Update LR Family field")
   obj@LR_family_field %<>% lapply(function(x){
-    x <- x[,4:6] %>% as.matrix() %>% as("dgCMatrix")
+    x <- x[,4:6] %>% as.matrix()
     return(x)
-  })
+  }) %>% abind::abind(along = 3)
   return(obj)
 }
 
