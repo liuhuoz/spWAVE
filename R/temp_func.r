@@ -129,7 +129,7 @@ merge_spwave_core <- function(spwave1,spwave2){
 
 update_spWAVE_object <- function(obj){
   message("Update single mole field")
-  obj@single_mole_field %>% lapply(function(x){
+  obj@single_mole_field %<>% lapply(function(x){
     x <- x[,4:7] %>% as.matrix()
     colnames(x)[1] <- "expression"
     return(x)
