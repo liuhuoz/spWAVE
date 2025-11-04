@@ -14,7 +14,7 @@ calc_component_along_field <- function(source_field, direct_field,method=c("comp
 }
 
 extract_LR_family_member <- function(kept_db,family){
-  kept_db %>% 
+  kept_db %>%
     dplyr::filter(Family==family) %>%
     dplyr::pull(id)
 }
@@ -28,7 +28,7 @@ calc_family_scaler_component <- function(db_field_result,kept_db,LR_family){
 
   family_member <- extract_LR_family_member(kept_db,LR_family)
   family_scaler_comp <- list()
-  family_scaler_comp <- 
+  family_scaler_comp <-
     lapply(family_member,function(LR_pair){
       calc_component_along_field(
         LR_pair_field_list[[LR_pair]],
@@ -44,13 +44,13 @@ calc_LR_set_field <- function(
   single_mole_field_list,
   L_genes,R_genes
 ){
-  LR_field <- 
+  LR_field <-
     calc_LR_pair_vec(single_mole_field_list,L_genes,R_genes)
   LR_expr_list <-  single_mole_field_list[c(L_genes,R_genes)]
   LR_expr_df <- do.call(cbind,lapply(LR_expr_list,function(x) x[,4,F]))
 
   merge_df <- cbind.data.frame(LR_field,LR_expr_df)
-  merge_df %<>% 
+  merge_df %<>%
     mutate(Rel_LR_Exp=
       rowSums(across(all_of(L_genes)))-
       rowSums(across(all_of(R_genes)))
@@ -73,7 +73,7 @@ calc_set_scaler_component <- function(
   }
 
   set_scaler_comp <- list()
-  set_scaler_comp <- 
+  set_scaler_comp <-
     lapply(set_member,function(LR_pair){
       calc_component_along_field(
         LR_field_list[[LR_pair]],
@@ -82,8 +82,8 @@ calc_set_scaler_component <- function(
   temp_df <- Reduce("cbind",set_scaler_comp)
   colnames(temp_df) <- paste0(set_member,"_comp")
   merge_df <- cbind.data.frame(LR_set_field,temp_df)
-  
-  set_scaler_comp <- 
+
+  set_scaler_comp <-
     lapply(set_member,function(LR_pair){
       calc_component_along_field(
         LR_field_list[[LR_pair]],
@@ -98,7 +98,7 @@ calc_set_scaler_component <- function(
 }
 
 calc_set_scaler_component <- function(
-  
+
 ){
 
 }
@@ -164,7 +164,7 @@ theme_map_grid <- function(){
 }
 
 coord_map_grid <- function(
-  x_step = 100, y_step = 100, 
+  x_step = 100, y_step = 100,
   x_expand = c(0, 50), y_expand = c(0, 0)){
     list(
       coord_fixed(),
@@ -178,3 +178,48 @@ coord_map_grid <- function(
       )
     )
 }
+
+coord_map_grid_sf <- function(
+  x_step = 100, y_step = 100,
+  x_expand = c(0, 50), y_expand = c(0, 0)) {
+
+  # 返回一个函数，该函数接受绘图数据并添加网格元素
+  function(data) {
+    # 获取坐标轴范围（如果未提供数据，则使用默认范围）
+    x_range <- range(data$x, na.rm = TRUE)
+    y_range <- range(data$y, na.rm = TRUE)
+
+    # 扩展坐标轴范围
+    x_range_expanded <- c(x_range[1] - x_expand[1], x_range[2] + x_expand[2])
+    y_range_expanded <- c(y_range[1] - y_expand[1], y_range[2] + y_expand[2])
+
+    # 生成网格线位置
+    x_breaks <- seq(floor(x_range_expanded[1]), ceiling(x_range_expanded[2]), by = x_step)
+    y_breaks <- seq(floor(y_range_expanded[1]), ceiling(y_range_expanded[2]), by = y_step)
+
+    # 创建网格线
+    grid_lines <- list(
+      # 垂直线（x网格）
+      geom_segment(
+        data = data.frame(x = x_breaks, xend = x_breaks,
+                         y = min(y_range_expanded), yend = max(y_range_expanded)),
+        aes(x = x, xend = xend, y = y, yend = yend),
+        color = "gray80", linewidth = 0.2, inherit.aes = FALSE
+      ),
+      # 水平线（y网格）
+      geom_segment(
+        data = data.frame(y = y_breaks, yend = y_breaks,
+                         x = min(x_range_expanded), xend = max(x_range_expanded)),
+        aes(x = x, xend = xend, y = y, yend = yend),
+        color = "gray80", linewidth = 0.2, inherit.aes = FALSE
+      )
+    )
+
+    return(grid_lines)
+  }
+}
+
+# 使用示例：
+# ggplot(data) +
+#   geom_point(aes(x, y)) +
+#   coord_map_grid_sf()(data)
