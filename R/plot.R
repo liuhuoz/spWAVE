@@ -1161,3 +1161,103 @@ plot_LR_cluster_net_impl <- function(
     weight.scale = weight.scale,
     ...)
 }
+
+
+
+#' A simple ggplot2 theme
+#'
+#' @return ggplot2 theme for map with grid
+#' @export
+theme_map_grid <- function(){
+  theme_minimal() %+replace%
+    theme(
+      plot.background = element_rect(fill = "#FAFAFA", color = NA),
+      legend.background = element_rect(fill = "#FAFAFA", color = NA),
+      panel.grid.major = element_line(color = "gray80", linewidth = 0.3),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      axis.line = element_blank(),
+      axis.title = element_blank(),
+      complete = TRUE
+    )
+}
+
+#' drawing grid lines on map
+#'
+#' 
+#' @param x_step step size for x axis grid lines
+#' @param y_step step size for y axis grid lines
+#' @param x_expand expand range for x axis grid lines
+#' @param y_expand expand range for y axis grid lines
+#' 
+#' @return ggplot2 layers for map with grid
+#' @export
+
+coord_map_grid <- function(
+  x_step = 100, y_step = 100,
+  x_expand = c(0, 50), y_expand = c(0, 0)){
+    list(
+      coord_fixed(),
+      scale_x_continuous(
+        breaks = function(limits) seq(floor(limits[1]), ceiling(limits[2]), by = x_step),
+        expand = x_expand
+      ),
+      scale_y_continuous(
+        breaks = function(limits) seq(floor(limits[1]), ceiling(limits[2]), by = y_step),
+        expand = y_expand
+      )
+    )
+}
+
+
+#' drawing grid lines on map with sf objects
+#'
+#' @param x_step step size for x axis grid lines
+#' @param y_step step size for y axis grid lines
+#' @param x_expand expand range for x axis grid lines
+#' @param y_expand expand range for y axis grid lines
+#' 
+#' @seealso \code{\link{coord_map_grid}}
+#' 
+#' @return ggplot2 layers for map with grid
+#' @export
+#' @examples
+#'
+#' \dontrun{
+#' ggplot(data) +
+#'   geom_point(aes(x, y)) +
+#'   coord_map_grid_sf()(data)
+#' }
+coord_map_grid_sf <- function(
+  x_step = 100, y_step = 100,
+  x_expand = c(0, 50), y_expand = c(0, 0)) {
+  function(data) {
+    x_range <- range(data$x, na.rm = TRUE)
+    y_range <- range(data$y, na.rm = TRUE)
+
+    x_range_expanded <- c(x_range[1] - x_expand[1], x_range[2] + x_expand[2])
+    y_range_expanded <- c(y_range[1] - y_expand[1], y_range[2] + y_expand[2])
+
+    x_breaks <- seq(floor(x_range_expanded[1]), ceiling(x_range_expanded[2]), by = x_step)
+    y_breaks <- seq(floor(y_range_expanded[1]), ceiling(y_range_expanded[2]), by = y_step)
+
+    grid_lines <- list(
+      geom_segment(
+        data = data.frame(x = x_breaks, xend = x_breaks,
+                          y = min(y_range_expanded), yend = max(y_range_expanded)),
+        aes(x = x, xend = xend, y = y, yend = yend),
+        color = "gray80", linewidth = 0.2, inherit.aes = FALSE
+      ),
+      geom_segment(
+        data = data.frame(y = y_breaks, yend = y_breaks,
+                          x = min(x_range_expanded), xend = max(x_range_expanded)),
+        aes(x = x, xend = xend, y = y, yend = yend),
+        color = "gray80", linewidth = 0.2, inherit.aes = FALSE
+      )
+    )
+
+    return(grid_lines)
+  }
+}
