@@ -104,28 +104,6 @@ calc_set_scaler_component <- function(
 }
 
 
-merge_spwave_core <- function(spwave1,spwave2){
-  merged_obj <- methods::new(Class="spWAVE")
-  merged_obj@expr_raw <- rbind(spwave1@expr_raw,spwave2@expr_raw)
-  merged_obj@expr_complex <- cbind(spwave1@expr_complex,spwave2@expr_complex)
-  merged_obj@kept_db <- rbind(spwave1@kept_db,spwave2@kept_db)
-
-  merged_obj@coord <- spwave1@coord
-  merged_obj@cluster_info <- spwave1@cluster_info
-
-  merged_obj@meta_coord <- spwave1@meta_coord
-  merged_obj@meta_coord_clu <- spwave1@meta_coord_clu
-  merged_obj@meta_complex <- cbind(spwave1@meta_complex,spwave2@meta_complex)
-
-  merged_obj@single_mole_field <-
-    c(spwave1@single_mole_field,spwave2@single_mole_field)
-  merged_obj@LR_pair_field <-
-    c(spwave1@LR_pair_field,spwave2@LR_pair_field)
-  merged_obj@LR_family_field <-
-    c(spwave1@LR_family_field,spwave2@LR_family_field)
-
-  return(merged_obj)
-}
 
 update_spWAVE_object <- function(obj){
   message("Update single mole field")
@@ -146,80 +124,3 @@ update_spWAVE_object <- function(obj){
   }) %>% abind::abind(along = 3)
   return(obj)
 }
-
-theme_map_grid <- function(){
-  theme_minimal() %+replace%
-    theme(
-      plot.background = element_rect(fill = "#FAFAFA", color = NA),
-      legend.background = element_rect(fill = "#FAFAFA", color = NA),
-      panel.grid.major = element_line(color = "gray80", linewidth = 0.3),
-      panel.grid.minor = element_blank(),
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text = element_blank(),
-      axis.ticks = element_blank(),
-      axis.line = element_blank(),
-      axis.title = element_blank(),
-      complete = TRUE
-    )
-}
-
-coord_map_grid <- function(
-  x_step = 100, y_step = 100,
-  x_expand = c(0, 50), y_expand = c(0, 0)){
-    list(
-      coord_fixed(),
-      scale_x_continuous(
-        breaks = function(limits) seq(floor(limits[1]), ceiling(limits[2]), by = x_step),
-        expand = x_expand
-      ),
-      scale_y_continuous(
-        breaks = function(limits) seq(floor(limits[1]), ceiling(limits[2]), by = y_step),
-        expand = y_expand
-      )
-    )
-}
-
-coord_map_grid_sf <- function(
-  x_step = 100, y_step = 100,
-  x_expand = c(0, 50), y_expand = c(0, 0)) {
-
-  # 返回一个函数，该函数接受绘图数据并添加网格元素
-  function(data) {
-    # 获取坐标轴范围（如果未提供数据，则使用默认范围）
-    x_range <- range(data$x, na.rm = TRUE)
-    y_range <- range(data$y, na.rm = TRUE)
-
-    # 扩展坐标轴范围
-    x_range_expanded <- c(x_range[1] - x_expand[1], x_range[2] + x_expand[2])
-    y_range_expanded <- c(y_range[1] - y_expand[1], y_range[2] + y_expand[2])
-
-    # 生成网格线位置
-    x_breaks <- seq(floor(x_range_expanded[1]), ceiling(x_range_expanded[2]), by = x_step)
-    y_breaks <- seq(floor(y_range_expanded[1]), ceiling(y_range_expanded[2]), by = y_step)
-
-    # 创建网格线
-    grid_lines <- list(
-      # 垂直线（x网格）
-      geom_segment(
-        data = data.frame(x = x_breaks, xend = x_breaks,
-                         y = min(y_range_expanded), yend = max(y_range_expanded)),
-        aes(x = x, xend = xend, y = y, yend = yend),
-        color = "gray80", linewidth = 0.2, inherit.aes = FALSE
-      ),
-      # 水平线（y网格）
-      geom_segment(
-        data = data.frame(y = y_breaks, yend = y_breaks,
-                         x = min(x_range_expanded), xend = max(x_range_expanded)),
-        aes(x = x, xend = xend, y = y, yend = yend),
-        color = "gray80", linewidth = 0.2, inherit.aes = FALSE
-      )
-    )
-
-    return(grid_lines)
-  }
-}
-
-# 使用示例：
-# ggplot(data) +
-#   geom_point(aes(x, y)) +
-#   coord_map_grid_sf()(data)

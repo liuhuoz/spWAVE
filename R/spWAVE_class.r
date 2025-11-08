@@ -215,6 +215,41 @@ result_list_adaptor <- function(object,ROI_barcode=NULL){
   return(db_res_list)
 }
 
+#' Merge two spWAVE object
+#'
+#' Merge two spWAVE object which have same cell info but different LR.
+#'
+#' @param spwave1 The first and main spWAVE object to merge, 
+#' cell related info in this object will be used in merged object.
+#' @param spwave2 The second spWAVE object to merge.
+#'
+#' @return a merged spWAVE object
+#'
+#' @export
+merge_spwave_core <- function(spwave1,spwave2){
+  merged_obj <- methods::new(Class="spWAVE")
+  merged_obj@expr_raw <- rbind(spwave1@expr_raw,spwave2@expr_raw)
+  merged_obj@expr_complex <- cbind(spwave1@expr_complex,spwave2@expr_complex)
+  merged_obj@kept_db <- rbind(spwave1@kept_db,spwave2@kept_db)
+
+  merged_obj@coord <- spwave1@coord
+  merged_obj@cluster_info <- spwave1@cluster_info
+
+  merged_obj@meta_coord <- spwave1@meta_coord
+  merged_obj@meta_coord_clu <- spwave1@meta_coord_clu
+  merged_obj@meta_complex <- cbind(spwave1@meta_complex,spwave2@meta_complex)
+
+  merged_obj@single_mole_field <-
+    c(spwave1@single_mole_field,spwave2@single_mole_field)
+  merged_obj@LR_pair_field <-
+    c(spwave1@LR_pair_field,spwave2@LR_pair_field)
+  merged_obj@LR_family_field <-
+    c(spwave1@LR_family_field,spwave2@LR_family_field)
+
+  return(merged_obj)
+}
+
+
 #**********************************
 #** adapt methods for spWAVE obj **
 #**********************************
