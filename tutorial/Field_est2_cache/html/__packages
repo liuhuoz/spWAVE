@@ -1,0 +1,17 @@
+magrittr
+dplyr
+tidyr
+stringr
+sp
+SeuratObject
+Seurat
+Matrix
+usethis
+tidyverse
+ggplot2
+tibble
+readr
+purrr
+forcats
+lubridate
+spWAVE

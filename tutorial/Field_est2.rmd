@@ -1,0 +1,397 @@
+---
+title: "Analysis LR field of 10x Visium Mouse Brain dataset using spWAVE"
+output: 
+  rmarkdown::html_document:
+    theme: journal
+    toc: yes
+author: Kai Li
+date: 2025-04-07
+mainfont: arial
+vignette: >
+  %\VignetteIndexEntry{Analysis LR field of 10x Visium Mouse Brain dataset using spWAVE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+In this vignette, we will start with a mouse brain 10x Visium dataset, 
+and show the steps of field estimation and result visualization. 
+This vignette is mainly designing for analysis low resolution or small cell number (cells < 10000) ST dataset, 
+like 10x Visuim, Slide-Seq and Stereo-seq. 
+Those ST techniques are usually high transcripts coverage with small cell number, 
+resulting in a relative smaller distance matrix but providing more transcription information.
+Thus we directly process the distance matrix and pass it to the field estimation function.
+For a dataset with large number of cells, the dense distance matrix will take too much memory and resource. 
+We use another distance-based simplification method to process the large dataset.
+For more details, please check another tutorial [Analysis LR field of large dataset using spWAVE](Field_Est3.html)
+.  
+Let's start by loading the required libraries and data.
+## Setup and Pre-processing ST expression and LR database data
+### Load the required libraries
+```{r setup, message = FALSE,eval=FALSE}
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+
+library(Seurat)
+library(Matrix)
+library(spWAVE)
+```
+
+### Load the mouse brain 10x Visium dataset
+First, we load a pre-processed 10x Visium dataset of mouse brain. 
+The rawdata of this dataset can be downloaded
+from [10x Visium](https://www.10xgenomics.com/cn/datasets/mouse-brain-serial-section-1-sagittal-posterior-1-standard-1-0-0)
+Or load the data from 'SeuratData' package, by running the following code:
+```{r ,eval=FALSE}
+library(SeuratData)
+InstallData("stxBrain")
+brain <- LoadData("stxBrain", type = "posterior1")
+
+```
+Here the brain data has been already processed with the standard workflow of Seurat. 
+The default assay was set as 'SCT', and the clustering method is "leiden", 
+which is a little different from 'SeuratData' dataset.
+
+```{r,fig.height=5,fig.width=7,fig.align="center"}
+brain <- readRDS("D:\\calc_temp\\field_test\\mouse_brain_anno_clu.rds")
+SpatialDimPlot(brain)
+```
+<details>
+  <summary>**assign custom color**</summary>
+    Here, we can use a custom color palette for each cluster.
+    Alternatively, spWAVE provides a built-in color palette if not manually given.
+
+```{r cluster visual}
+manual_colors <- c(
+  "CB"       = "#9CACF3",        
+  "CB_FT"    = "#406DA0",        
+  "CTX_1"    = "#E67A6A",        
+  "CTX_2"    = "#C44E3E",        
+  "CTX_3"    = "#FF9E8C",        
+  "HB_2"     = "#E8B87C",
+  "HB_3"     = "#D49E60",
+  "HB_1"     = "#FFD9A3",
+  "HPF_CA1"  = "#081D5B",  
+  "HPF_DG"   = "#663399",
+  "HY"       = "#892958",        
+  "margin_1" = "#778899",        
+  "margin_2" = "#ACACAC",        
+  "MB"       = "#AAF9BA",        
+  "SN"       = "#6BCB94",        
+  "TH"       = "#F3DDE5"          
+)
+
+SpatialDimPlot(brain,cols=manual_colors)
+```
+</details>
+\ 
+
+
+Now, we create the spWAVE S4 class object by two methods.
+### Create spWAVE object from one line command
+We can easily create the object through the "create_spWAVE_object" function for a Seurat V5 dataset, as the following code:
+```{r create obj}
+mouse_db <-
+    load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
+#** here, we will use a smaller subset to show the example
+mouse_db %<>% dplyr::filter(Family %in% c("TGFb","FGF"))
+brain_spWAVE <- create_spWAVE_object(brain,mouse_db,assay = "SCT")
+
+```
+**Note**: The default expression assay is 'SCT'. 
+You can change it by setting the 'assay' argument, even using raw counts data.
+Despite this method is robust for counts,
+we do recommend to use a normalized data like "SCT" or others which reduced the technical variance. 
+
+### Mannually create spWAVE object
+We also provided a alternative mehtod for manually creating spWAVE object,
+which you can use lower Seurat version or other data structure of ST dataset.
+
+However, we still need the Seurat object as input to extract expression matrix.
+You can just transform or create a Seurat object only with the expression data,
+and mannually giving the coordinates and cluster information to spWAVE.
+
+First, we filter the ligand-receptor database, same as the above.
+```{r,eval=FALSE}
+mouse_db <-
+    load_database(db_source = "CellChat",db_species = "mouse",filter_type = "Secreted")
+#** here, we will use a smaller subset to show the example
+mouse_db %<>% dplyr::filter(Family %in% c("TGFb","FGF"))
+```
+
+And just for showcase, we directly extract the spatial coordinates from the Seurat object.
+For a custom coordinates input, please make sure the spatial units are in the micrometer, 
+otherwise the scales of field quanties would be weird.
+```{r manual create}
+
+brain_coord <- get_coordinates(brain)
+#** preview the spatial coordinates
+head(brain_coord)
+
+brain_spWAVE <- 
+  create_spWAVE_object(
+      seurat_obj=brain,
+      assay="SCT",
+      database=mouse_db,
+      coord=brain_coord,
+      cluster=NULL
+      )
+```
+Here, the expression matrix is still extracted from Seurat object, regradless the version.
+And the coordinates of the cells can be manually given by users.
+For custom coordinates input, the input should be a data.frame with three columns.
+The colnames must be "x","y" and "barcode" as the result shown, literally. 
+And the rownames must be definitely same with the colnames of expression matrix stored in Seurat object,
+both the order and names of cells.
+
+Further, the cluster info will be automatically extracted from the 'active.ident' of the Seurat object if not given.
+You can provide a character which is the colname of Seurat metadata to define the cluster info. 
+Otherwise, a data.frame with two columns, "cluster" and "barcode" can be provided.
+
+## Perform the vector field estimation and interaction scoring
+Now, we can estimate the vector field in simple commands, as Quick Start shows.
+```{r run spWAVE, cache = TRUE, message = FALSE, eval=FALSE}
+#** one line command
+brain_spWAVE %<>% perform_LR_field_calc()
+brain_spWAVE %<>% perform_S2S_score_calc()
+brain_spWAVE %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+
+```
+
+Since the "perform_S2S_score_calc" is resource and time consuming, we can save the intermediate results before next step.
+For the a dataset with large number of cells, storing the S2S score will take too much memory and disk space.
+Therofore, after finishing the running the C2C score, we can diet it and save it without the S2S score.
+```{r,eval=FALSE}
+brain_spWAVE@S2S_score <- list()
+gc()
+saveRDS(brain_spWAVE,"path/you/like.rds")
+
+```
+
+## Perform with 'future' multi-threading
+In this section, we will use the 'future' package to run the perfromance in parallel.
+However, please remind that the "perform_S2S_score_calc" is resource and time consuming, 
+cafefully determining the number of threads and the memory size of each thread.
+```{r multi-thread,eval=FALSE}
+library(future)
+library(future.apply)
+library(pbapply)
+
+plan("multisession",workers=4)
+options(future.globals.maxSize = 6*1024^3)
+#e.g. we want to use 4 threads, and per session memory is 6GB
+
+brain_spWAVE %<>% perform_LR_field_calc()
+brain_spWAVE %<>% perform_S2S_score_calc()
+brain_spWAVE %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+
+```
+
+
+
+## Visualization
+In this section, we will use the spWAVE output to visualize the results. 
+
+### The vector field projection
+Now we can plot certain LR interaction field, let's start with "Fgf1-Fgfr1".
+First, we need to extract the LR field info from database result. 
+And we will display two mode of field projection: point mode and grid mode.
+
+```{r proj1,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+load("D:\\calc_temp\\field_test\\mouse_brain.Rdata")
+library(patchwork)
+brain_Fgf1 <-  perform_field_extract(brain_spWAVE,"Fgf1.Fgfr1")
+brain_Fgf1 %>% head
+
+p1 <- plot_field_direction2(brain_Fgf1,point_size = 2,mode="point",arrow_sf=1.5)+
+  labs(title = "Display in point mode")
+p2 <- plot_field_direction2(brain_Fgf1,point_size = 2,mode="grid")+
+  labs(title = "Display in grid mode")
+p1|p2 
+```  
+
+Both "point" and "grid" mode show vector field with similar pattern. 
+However, the "point" mode seems cluttered with too many arrows, 
+we recommend using the "grid" mode and it is the default option.
+
+We can specify particular data which is the column names of the data.frame to change the data displayed in the point.
+With ggplot2 setting, we can give a two-color scale gradiant to display two-directional value.
+
+```{r proj2,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+p3 <- plot_field_direction2(brain_Fgf1,point = "Rel_LR_Exp",
+        point_size = 2,arrow_color = "firebrick4")+
+          scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
+p4 <- plot_field_direction2(brain_Fgf1,point = "KU",
+        point_size = 2,arrow_color = "firebrick4")+
+          scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
+p3|p4
+```
+In this figure, the "Rel_LR_Exp" represent the relative Ligand-Recptor expression, 
+which the postive is the ligand and negative is the receptor, repestively.
+The "KU" is the value of the field potential matching with the "Rel_LR_Exp",
+displaying the pattern of the LR spatial distribution.
+
+Here, we show the ability to display the other quantities of the field projection function.
+The quantity should be a column in the field result data.frame.
+You can manually add columns after extraction the field info and 
+giving the col.name to the 'point' argument.
+
+Further, the argument 'point' is also accepting a discrete variable like factors or characters,
+e.g. cluster or group info, which stored in the data.frame. 
+We will show it in another tutorial which handling the large number cells dataset, 
+like the single cell resolution 10x Xenium ST dataset.
+
+Next, we can plot the field over the HE image or cluster info, 
+by changing the image parameter and giving seurat object, which contains the background info. 
+The cluster infos are extracted from the 'active.ident' of the seurat object.
+```{r proj3,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+p5 <- plot_field_direction2(brain_Fgf1,
+        seurat_obj = brain,
+        image="HE",mode='grid'
+        ) + NoLegend()
+
+p6 <- plot_field_direction2(brain_Fgf1,
+        seurat_obj = brain,
+        image="cluster",mode='grid')
+p5|p6
+```
+Here, because of the Seurat plotting behavior, 
+the coordinates in plot will change to lo-res image based, 
+to match the Seurat plotting functions. 
+
+We first overview all interaction using heatmap and network plot.  
+
+### Heatmap
+The heatmap is suitable to show the sender and receiver cluster relationship.
+```{r heatmap,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+#filter out the margin cluster 
+clu_use <- brain@active.ident %>% levels()
+clu_use <- clu_use[-c(12,13)]
+
+plot_LR_cluster_heatmap(
+  brain_spWAVE,
+  #cluster_color=manual_colors,
+  method_use="strength",
+  source_use=clu_use,
+  target_use=clu_use
+)
+
+plot_LR_cluster_heatmap(
+  brain_spWAVE,
+  #cluster_color=manual_colors,
+  method_use="count",
+  source_use=clu_use,
+  target_use=clu_use,
+  ht_col="Blues"
+)
+```
+As the code shown, we can select and filter the clusters by argments "source_use" and "target_use".
+And the parameter "method_use" is used to choose the type of data. 
+The "count" means the number of interactions, 
+while the "strength" means the sum of interaction strength between the clusters.
+
+### Network Diagram
+Similarly, we can plot the network using the same parameters, but this time we focus on the FGF family.
+```{r network,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+plot_LR_cluster_net(
+  brain_spWAVE,
+  #cluster_color=manual_colors,
+  LR_family="FGF",
+  method_use="strength",
+  cluster_use=clu_use,
+  mat_scale=TRUE,
+  #weight.scale=TRUE
+)
+
+plot_LR_cluster_net(
+  brain_spWAVE,
+  #cluster_color=manual_colors,
+  LR_family="FGF",
+  method_use="count",
+  cluster_use=clu_use,
+  mat_scale=TRUE,
+  #weight.scale=TRUE
+)
+
+```
+Same like other plot, we can determine the cluster and interacion we interested to show. 
+But here is a little different, we use 'cluster_use' which intergrating the 'source_use' and 'target_use', 
+because there are nodes and directional lines in the network and not simply presented as the 'sender' or 'recevier'.
+
+Here, we summary the argments that helping manipulate data crossing visualization functions as below:
+
+
+| Function Type | Arguments | note |
+| - | - | - |
+|LR filter|"LR", "LR_pair", "LR_family"||
+|Cluster filter|"cluster_use", "target_use", "source_use"||
+|Statstic|"method_use"| only "count" or "strength" |
+
+
+
+And for more details, please refer to the corresponding plot function.
+
+Maybe you have already noticed the title. It can be auto-generated under certain conditions, 
+depending on the 'method_use', 'LR_family' and 'LR_pair'.
+Also, we can change the title manually by giving characters to 'title' parameter.
+
+
+### Chord Diagram
+Chord diagram is also a good way to show the relationship between the sender and receiver.
+Especially, it display the clear relative strength between the clusters.
+Here, for clearly displaying, we only using the HB and CB clusters to 
+show two different chord diagrams, one for clusters and one for genes.
+```{r chord plot,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+CB_HB_clu <- c("CB", "CB_FT", "HB_1", "HB_2", "HB_3")
+
+FGF_color <- c(
+  "Fgf1"="#3F51B4",
+  "Fgf7"="#02A9F3",
+  "Fgfr1"="#4CAE50",
+  "Fgfr2"="#CCDC39",
+  "Fgfr3"="#FFC006",
+  "Fgf9"="#F34335",
+  "Fgf2"="#E91E63",
+  "Fgf10"="#9B26B0",
+  "Fgf5"="#009687",
+  "Fgf22"="#8BC34A",
+  "Fgf18"="#FFEB3A"
+)
+
+plot_LR_gene_chord(brain_spWAVE,
+  LR_family="FGF",
+  source_use=CB_HB_clu,
+  target_use=CB_HB_clu,
+  LR_color=FGF_color
+  )
+
+plot_LR_cluster_chord(brain_spWAVE,
+  cluster_color=manual_colors,
+  LR_family="FGF",
+  source_use=CB_HB_clu,
+  target_use=CB_HB_clu
+  )
+
+
+```
+
+### Dot Plot
+Further, we can also use dot plot to quickly show multiple the interactions between the clusters.
+Same like above, we only use HB and CB clusters.
+```{r FGF visual dot,,fig.show="hold",out.width="100%",fig.height=5}
+plot_db_score_dot(brain_spWAVE,
+  p_val=0.05,
+  source_use=CB_HB_clu,
+  target_use=CB_HB_clu,
+  LR_family='FGF'
+)
+```

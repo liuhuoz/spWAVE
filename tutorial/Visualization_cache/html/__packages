@@ -1,0 +1,15 @@
+usethis
+magrittr
+dplyr
+stringr
+spWAVE
+tidyr
+sp
+SeuratObject
+Seurat
+Matrix
+ggplot2
+circlize
+ComplexHeatmap
+igraph
+patchwork

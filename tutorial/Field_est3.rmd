@@ -1,0 +1,291 @@
+---
+title: "Analysis LR field of large dataset using spWAVE"
+output: 
+  rmarkdown::html_document:
+    theme: journal
+    toc: yes
+author: Kai Li
+date: 2025-04-07
+mainfont: arial
+vignette: >
+  %\VignetteIndexEntry{Analysis LR field of large dataset using spWAVE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+In this vignette, we will focus on large dataset processing and field estimation.
+Such large datasets are often single cell resolutions and have large number of cells but 
+limited transcript coverage, like 10x Xenium and MERFISH/MERSCOPE.
+To reduce the compute complexity and resource consumption, 
+we will introduce an alternative "holed manner" method.
+In short, for those out of range(e.g. >500 micrometer) cells, we aggregate them into multiple meta-cells 
+and keep all in-range single cells to calculate the interaction field.
+
+Besides, we will show some methods to create spWAVE object from different sources and
+select ROI to estimate the field.
+
+
+
+Let's start by loading the required libraries.
+```{r setup, message = FALSE,eval=FALSE}
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+
+library(Seurat)
+library(Matrix)
+library(spWAVE)
+```
+
+## 10x Xenium Breast Cancer dataset
+First, we start with a 10x Xenium dataset of human breast cancer. 
+The rawdata and metadata are downloaded from [10x Genomics](https://www.10xgenomics.com/products/xenium-in-situ/preview-dataset-human-breast), 
+and more information can be found in [this article](https://www.nature.com/articles/s41467-023-43458-x)
+The pre-process steps are followed the Seurat workflow and not shown here.
+Basically, we just need the normalized expression matrix and spatial coordinates.
+Therefore, only the SCTransform is needed.
+```{r,eval=FALSE}
+xen_brca_ft <- readRDS("./xen_hBRCA_tls_ft_anno.rds")
+
+cropped.coords <- Crop(xen_brca_ft[["fov"]], x = c(0,4000), y = c(0, 4000))
+xen_brca_ft[["crop"]] <- cropped.coords
+ImageDimPlot(xen_brca_ft, fov = "crop",group.by = "Cluster")
+ROI_barcode <- xen_brca_ft[["crop"]]@boundaries$centroids@cells
+
+human_db <- load_database(db_source = "CellChat",db_species = "human")
+hBRCA_set <- create_spWAVE_object(xen_brca_ft,human_db)
+
+#generate meta cells expression and center coordinates
+hBRCA_set %<>% generate_kmeans_coord(centers = ncol(xen_brca_ft)/25,iter.max=15,nstart=3)
+hBRCA_set %<>% generate_meta_expr()
+
+hBRCA_set %<>% perform_LR_field_hole_calc(
+  ROI_barcode=ROI_barcode
+)
+hBRCA_set %<>% perform_S2S_score_calc(ROI_barcode=ROI_barcode)
+hBRCA_set %<>%
+  perform_C2C_score_calc(ROI_barcode=ROI_barcode,shuffle_iter=200,verbose=T)
+
+```
+Here, we showed the first approach to reduced the computing area by giving the barcode of cells in ROI.
+This approach still includes **all cells** but only computes the field in the ROI, 
+which means the cells out of the ROI are aggregated into meta-cells.
+The benefit of this methods is that it keeps the information from cells out of ROI.
+However, it should be noted that even when cells outside the ROI are aggregated into meta-cells, 
+they remain involved in computations. 
+For a very large dataset, this may result in huge distance and interaction matrices, 
+and significantly increase computational resource consumption.
+
+Again, we recommend diet the result to avoid taking too much memory and disk space.
+The S2S_score will be huge with a large number of cells, 
+since it's a pairwise interaction score for each cell.
+```{r,eval=FALSE}
+hBRCA_set@S2S_score <- list()
+gc()
+saveRDS(hBRCA_set,"path/you/like.rds")
+```
+
+Here is some tips for displaying the field for high resolution single cells ST dataset.
+We recommend using the 'hexified' argument to plot hex-heatmap for values like field potential and expression.
+If Seurat Object is given, we can use the 'image' argument to plot Seurat cluster,
+and the background will be black.
+Further, if not limiting the range of the coordinates, the arrow will only be displayed in the ROI.
+So we add xlim and ylim to determine the range.
+```{r hBRCA fig,fig.retina = 3,fig.asp=0.5,fig.width=14,fig.align = "center"}
+library(patchwork)
+xen_brca_ft <- readRDS("D:\\calc_temp\\field_test\\xen_hBRCA_tls_ft_anno.rds")
+hBRCA_set <- readRDS("D:\\calc_temp\\field_test\\xen_hBRCA_tls_ft_spWAVE_c2c_only.rds")
+
+field_cxcr4 <-
+  perform_field_extract(hBRCA_set,LR="CXCL12.CXCR4")
+
+p1 <- 
+plot_field_direction2(field_cxcr4,point="KU",hexified = TRUE,
+  arrow_linewidth=0.5,
+  arrow_color="black",
+  hex_binwidth=c(25,25)
+  ) +
+  scale_fill_gradient2(low="#3B50C5", mid="#DCDCDC",high="#AD0C27")+
+  xlim(0,4000)+ylim(0,4000)
+
+p2 <- 
+plot_field_direction2(field_cxcr4,seurat_obj = xen_brca_ft,image = "cluster",
+  grid_density = 0.5,
+  arrow_linewidth=0.5,
+  arrow_color = "cyan",
+  shadow_color = "yellow",
+  #arrow_alpha = 0.7,
+  ) +
+  xlim(0,4000)+ylim(0,4000)
+
+p1|p2
+```
+
+```{r,clear env,include=FALSE}
+rm(list=ls())
+gc()
+
+```
+
+
+## smFISH/MERFISH/MERRSCOPE dataset
+Next, we introduce a series datasets of human high grade serous carcinoma(HGSC). 
+The processed Seurat object can obtained from [Zenodo](https://zenodo.org/records/12613839), 
+and more information can be found in article [Yeh et al., 2024](https://www.nature.com/articles/s41590-024-01943-5)
+Here, we used the smiFISH ST data of HGSC2 in 'Test2' group.
+The coordinates of this dataset is special.
+It stored in the metadata but not 
+We have to manually extract it and create spWAVE object.
+```{r preview HGSC2}
+HGSC2 <- readRDS("D:\\calc_temp\\field_test\\ST_Test2_HGSC2_so.rds")
+HGSC2@meta.data %>% head
+HGSC2@meta.data[,c("x","y")] %>% summary()
+```
+
+
+As the coordinates range shown, this dataset covers a large spatial area. 
+Thus we selected a ROI and filtered it.
+Due to the nature of smFISH and cell segmentation algorithms, 
+overlapping cells may occur in this dataset.
+We remove those cells with distance less than 20 units (equivalent to 2 µm) 
+Then, we normalize the expression of the remaining cells.
+Finally, spatial coordinates and cell annotation are extracted and converted to standardized units.
+
+In the next code chunk, we will show detail code for this process. Each steps will be commented.
+```{r ROI pre-process, eval=FALSE}
+
+#Select ROI and filter
+ROI_barcode <-
+HGSC2@meta.data %>%
+  filter(x>23000,x<45000,y>-4300,y<10500) %>%
+  rownames()
+
+ROI <- subset(HGSC2, cells=ROI_barcode)
+
+#ROI %>% VlnPlot(features = c("nFeature_RNA", "nCount_RNA"), ncol = 2, pt.size = 0)
+
+ROI <- subset(ROI, subset = nCount_RNA < 3000)
+ROI <- subset(ROI, subset = nFeature_RNA < 400)
+
+#filter out overlap cells
+df_ranged <- ROI@meta.data
+coords <- cbind(df_ranged$x, df_ranged$y)
+dmat <- as.matrix(dist(coords))
+diag(dmat) <- NA
+too_close <- which(apply(dmat, 1, min, na.rm=TRUE) < 20)
+df_filtered <- df_ranged[-too_close, ]
+ROI <- subset(ROI,cells=rownames(df_filtered))
+
+#Normalize expr mat
+ROI %<>% SCTransform()
+
+#rescale coords to micrometer
+ROI_coord  <-
+  ROI@meta.data[,c("x","y")] %>%
+  mutate(y=y-min(y)) %>%
+  mutate(x=x/10,y=y/10)
+ROI_coord$barcode <- rownames(ROI_coord)
+
+#merge cell subtypes annotation
+ROI@meta.data %<>%
+  mutate(subtype=gsub("_LC","",cell.subtypes))
+
+```
+
+After pre-processing, we are ready to create spWAVE object and calculate the LR field.
+Here, we create by manually setting the parameters of coord and cluster.
+```{r HGSC2 spWAVE, eval=FALSE}
+human_db <- load_database(db_source = "CellChat",db_species = "human")
+
+ROI_spWAVE <- create_spWAVE_object(
+  seurat_obj = ROI,
+  database = human_db,
+  coord = ROI_coord,
+  cluster="subtype"
+  )
+
+ROI_spWAVE %<>% generate_kmeans_coord(centers=ncol(ROI)/20,iter.max=15,nstart=3)
+ROI_spWAVE %<>% generate_meta_expr()
+
+library(future)
+future::plan("multicore",workers=16)
+options(future.globals.maxSize = 100*1024^3)
+ROI_spWAVE %<>% perform_LR_field_hole_calc()
+ROI_spWAVE %<>% perform_S2S_score_calc()
+ROI_spWAVE %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+
+```
+
+Now, we can visualize the field result.
+Here we show the projection of "CXCL12-CXCR4" and "CXCL16-CXCR6" and compare them.
+```{r field proj, fig.retina = 3,fig.asp=0.6,fig.width=14,fig.align = "center"}
+library(patchwork)
+library(cowplot)
+
+ROI <- readRDS("D:\\calc_temp\\field_test\\HGSC2_ROI_SO.rds")
+ROI_spWAVE <- readRDS("D:\\calc_temp\\field_test\\HGSC2_ROI_spWAVE_c2c.rds")
+
+
+L12R4_field <- perform_field_extract(ROI_spWAVE,"CXCL12.CXCR4")
+L12R4_field %<>% mutate(subtype=ROI@meta.data$subtype)
+
+p1 <- 
+plot_field_direction2(L12R4_field,point="KU",
+  hexified=T,hex_binwidth=c(20,20),
+  arrow_color="black",
+  arrow_linewidth = 0.5,
+  #arrow_sf=0.001
+  )+
+  scale_fill_gradient2(low="#3B50C5", mid="#DCDCDC",high="#AD0C27")
+p2 <- 
+plot_field_direction2(L12R4_field,
+  arrow_color="black",
+  arrow_linewidth = 0.5,
+  point="subtype",point_size=0.5)
+
+L16R6_field <- perform_field_extract(ROI_spWAVE,"CXCL16.CXCR6")
+L16R6_field %<>% mutate(subtype=ROI@meta.data$subtype)
+
+p3 <- 
+plot_field_direction2(L16R6_field,point="KU",
+  hexified=T,hex_binwidth=c(20,20),
+  arrow_color="black",
+  arrow_linewidth = 0.5,
+  #arrow_sf=0.001
+  )+
+  scale_fill_gradient2(low="#3B50C5", mid="#DCDCDC",high="#AD0C27",midpoint=0.4)
+
+p4 <- 
+plot_field_direction2(L16R6_field,
+  arrow_color="black",
+  arrow_linewidth = 0.5,
+  point="subtype",point_size=0.5)
+
+p_all <- (p1|p2)/(p3|p4)
+
+final_plot <- ggdraw(p_all) +
+  draw_label("Field Potential", x = 0.23, y = 0.98, size = 12, fontface = "bold") +
+  draw_label("Subtype", x = 0.73, y = 0.98, size = 12, fontface = "bold") +
+  draw_label("CXCL12-CXCR4", x = 0.005, y = 0.77, angle = 90, size = 12, fontface = "bold") +
+  draw_label("CXCL16-CXCR6", x = 0.005, y = 0.27, angle = 90, size = 12, fontface = "bold")
+final_plot
+
+```
+
+Since we directly utilized the 'point' parameter in the 'plot_field_direction2' function to visualize cell types, 
+the resulting background differs from the first example, presenting a white background instead. 
+In contrast, the black background is generated by the plotting function from the Seurat package.
+
+Notably, the point parameter can also accept discrete variables such as character vectors and factors. 
+And the value should be a column in the field result data.frame, like the 'subtype' in our example.
+In such cases, different colors can be assigned by providing a named vector to the 'point_color' parameter.
+

@@ -1,0 +1,357 @@
+---
+title: "Visualization of spWAVE results"
+output: 
+  rmarkdown::html_document:
+    toc: TRUE
+    theme: united
+author: Kai Li
+date: 2024-11-06
+mainfont: Arial
+vignette: >
+  %\VignetteIndexEntry{Visualization of spWAVE results}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+
+In this vignette, we will use the spWAVE output to visualize the results.
+
+## Load the required libraries
+```{r setup, message = FALSE}
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+
+library(Seurat)
+library(Matrix)
+
+library(ggplot2)
+library(circlize)
+library(ComplexHeatmap)
+library(igraph)
+library(patchwork)
+
+library(spWAVE)
+```
+
+## The vector field projection
+First, let's load the saved output data of spWAVE and see the slice and cluster again.
+```{r,fig.retina = 3,fig.asp=0.55,fig.width=14,fig.align = "center"}
+load("D:\\calc_temp\\field_test\\spWAVE_vignettes_tiny_data.RData")
+p1 <- SpatialDimPlot(brain,alpha=0) +NoLegend()
+p2 <- SpatialDimPlot(brain)
+p1|p2
+```
+
+In spWAVE, we can plot certain LR interaction field, let's start with "Fgf1-Fgfr1" 
+without other image and seurat object.
+We need to extract the LR field info from database result. 
+And we will display two mode of field projection: point mode and grid mode.
+```{r,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+brain_Fgf1 <- 
+  extract_LR_field_result(
+    database_result=brain_db_res,
+    LR = "Fgf1.Fgfr1",
+    kept_db=complex_data$kept_db) %>%
+  calc_field_strength()
+brain_Fgf1 %>% head
+
+p3 <- plot_field_direction2(brain_Fgf1,point_size = 2,mode="point",arrow_sf=1.5)+
+  labs(title = "Display in point mode")
+p4 <- plot_field_direction2(brain_Fgf1,point_size = 2,mode="grid")+
+  labs(title = "Display in grid mode")
+p3+p4 
+```  
+Both "point" and "grid" mode show vector field with similar pattern. 
+However, the "point" mode seems cluttered with too many arrows, 
+we recommend using the "grid" mode and it is the defatlt option.
+
+We can specify particular data which is the column names of the data.frame to change the data displayed in the point.
+With ggplot2 setting, we can give a two-color scale gradiant to display two-directional value.
+
+```{r,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+p5 <- plot_field_direction2(brain_Fgf1,point = "Rel_LR_Exp",
+        point_size = 2,arrow_color = "firebrick4")+
+          scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
+p6 <- plot_field_direction2(brain_Fgf1,point = "KU",
+        point_size = 2,arrow_color = "firebrick4")+
+          scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
+p5|p6
+```
+In this figure, the "Rel_LR_Exp" represent the relative Ligand-Recptor expression, 
+which the postive is the ligand and negative is the receptor, repestively.
+The "KU" is calcuated as the potenital of the field, 
+and matchs with the "Rel_LR_Exp",
+displaying the pattern of the LR spatial distribution.
+
+Next, we can plot the field over the HE image or cluster info, 
+by changing the image parameter and giving seurat object, which contains the background info. 
+The cluster infos are extracted from the 'active.ident' of the seurat object.
+```{r,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+p7 <- plot_field_direction2(brain_Fgf1,
+        seurat_obj = brain,
+        image="HE",mode='grid'
+        ) + NoLegend()
+
+p8 <- plot_field_direction2(brain_Fgf1,
+        seurat_obj = brain,
+        image="cluster",mode='grid')
+p7|p8
+```
+
+Note here, because of the Seurat plotting behavior, 
+the coordinates in plot will change to lo-res image based, 
+to match the Seurat plotting functions. 
+
+
+## Cluster-level Interaction Score Evaluation
+After plotting the field over the cluster image, 
+we are curious about how the clusters-level interactions shapes 
+and do them refelect the field projection.
+
+### Dot Plot
+Because we use a tiny database only with two LR family, the "TGFb" and "FGF",
+the result has less interactions and we can show the whole interacion score using dot plot.
+
+```{r dotplot,fig.retina = 3,fig.asp=0.7,fig.width=14,fig.align = "center"}
+plot_db_score_dot(
+  db_C2C_score_list,complex_data$kept_db,
+  LR_pair = NULL,
+  LR_family = c("TGFb","FGF"),
+  source_use = NULL,
+  target_use = NULL,
+  scale = TRUE
+  )
+```
+
+For the first time drawing the cluster to cluster (C2C) score plot, 
+we list the all parameter controling the dot content. 
+The "LR_pair" and "LR_family" determine LR pair or family to be displayed.
+The "source_use" and "target_use" filter which cluster will be used in 
+sender (source) or receiver (target), repestively.
+The default option "NULL" means not filtering and keeping all results in the parameter.
+And those parameters are also used in the other plot function and keep the same manners.
+
+Since the whole tiny database give too much info, we can using the filter to narrow down 
+the LR pair and clusters we interested. From the field projection plot, we found the 
+"Fgf1-Fgfr1" interaction is enriched in the area of cluster 7,9,11, with the sender may be
+the cluster 1,2.
+
+```{r filtered dotplot,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+p9 <- plot_db_score_dot(
+  db_C2C_score_list,complex_data$kept_db,
+  LR_family = c("FGF"),
+  source_use = c("1","2","7","9","11"),
+  target_use = c("7","9","11"),
+  scale = TRUE
+  )
+p8+p9+plot_layout(width=c(5,4))
+```
+
+### Heatmap
+Also, we can use heatmap which is more proper to show the sender and receiver relationship.
+```{r heatmap,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+plot_LR_cluster_heatmap(
+  db_C2C_score_list,
+  complex_data$kept_db,
+  #LR_family = "TGFb",
+  #LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+  #source_use=c("1","10","11","2","9"),
+  #target_use = c("7","9","11","12"),
+  method_use="count",
+  normalize=FALSE,
+  ht_col="Reds"
+)
+plot_LR_cluster_heatmap(
+  db_C2C_score_list,
+  complex_data$kept_db,
+  #LR_family = "FGF",
+  #LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+  #source_use=c("1","10","11","2","9"),
+  #target_use = c("7","9","11","12"),
+  method_use="strength",
+  normalize=TRUE,
+  ht_col="Blues"
+)
+
+```
+As the comment shown, we can filter the cluster and interacion like above.
+And the parameter "method_use" is used to choose the type of data. 
+The "count" means the number of interactions, 
+while the "strength" means the sum of strength between the clusters.
+
+### Network Diagram
+Similarly, we can plot the network using the same parameters.
+```{r network,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+plot_LR_cluster_net(
+    db_C2C_score_list,complex_data$kept_db,
+      method_use = "count",
+      mat_scale = TRUE,
+    )
+plot_LR_cluster_net(
+    db_C2C_score_list,complex_data$kept_db,
+      method_use = "strength",
+      mat_scale = TRUE,
+    )
+
+```
+
+Same like other plot, we can determine the cluster and interacion we interested to show. 
+But here is a little different, we use 'cluster_use' instead of 'source_use' and 'target_use', 
+because there are only node in the network but not the 'sender' or 'recevier'.
+```{r network sub,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+plot_LR_cluster_net(
+    db_C2C_score_list,complex_data$kept_db,
+      LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      #LR_family=c("FGF","TGFb")
+      cluster_use=c("1","10","11","2","9","7"),
+      method_use = "strength",
+      title="Strength of Fgf1-Fgfr1 and Fgf1-Fgfr2",
+      mat_scale = TRUE,
+    )
+
+plot_LR_cluster_net(
+    db_C2C_score_list,complex_data$kept_db,
+      #LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      LR_family=c("TGFb"),
+      cluster_use=c("1","10","11","2","9","7"),
+      method_use = "strength",
+      mat_scale = TRUE,
+      weight.scale = TRUE
+    )
+```
+Maybe you have noticed the title already. It can be auto-generated in some certain conditions, 
+depending on the 'method_use', 'LR_family' and 'LR_pair'.
+But also, we can mannually set the title using 'title' parameterm like the left figure.
+
+Specifically, this function have two scale argments.
+The 'mat_scale' is used to scale raw score matrix, 
+and the 'weight.scale' is used to control the chrod thickness.
+For more details, please see the document of The function. 
+
+### Chord Diagram
+Chord diagram is also a good way to show the relationship between the sender and receiver.
+Escpecially, it display the clear relative strength between the clusters.
+Here, we show the two different chord diagrams, one for clusters and one for genes.
+```{r chord plot,fig.retina = 3,fig.show="hold",out.width=c("45%","55%"),fig.height=6}
+plot_LR_cluster_chord(
+    db_C2C_score_list,complex_data$kept_db,
+      LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      #LR_family=c("FGF","TGFb")
+      source_use=c("1","10","11","2","9"),
+      target_use = c("7","9","11","12")
+    )
+plot_LR_gene_chord(
+    db_C2C_score_list,complex_data$kept_db,
+      LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      #LR_family=c("FGF","TGFb")
+      source_use=c("1","10","11","2","9"),
+      target_use = c("7","9","11","12")
+    )
+
+```
+
+## The color of cluster identity 
+Finally, we talk about the cluster color crossing the pictures.
+As we expected, the colors should be consistent with the cluster identity.
+The good news is, all the cluster color can be assigned automatically.
+And if you give the same unfiltered raw C2C score list, it will be same. 
+Even though some of them are not shown in the plot which are filtered by function parameters.
+
+Here is an example.
+```{r cluster color,fig.retina = 3,fig.show="hold",out.width=c("45%","55%"),fig.height=6}
+plot_LR_cluster_heatmap(
+  db_C2C_score_list,
+  complex_data$kept_db,
+  #LR_family = "TGFb",
+  #LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+  #source_use=c("1","10","11","2","9"),
+  #target_use = c("7","9","11","12"),
+  method_use="strength",
+  normalize=TRUE,
+  ht_col="Reds"
+)
+plot_LR_gene_chord(
+    db_C2C_score_list,complex_data$kept_db,
+      LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      #LR_family=c("FGF","TGFb")
+      source_use=c("1","10","11","2","9"),
+      target_use = c("7","9","11","12")
+    )
+
+```
+
+The bad news is the colors will not be used in field projection over cluster info, 
+because it is controlled by the Seurat.
+But we still have the solutions to keep them same by giving a named vector.
+The named color vector can be generated from spWAVE color assign function,
+or mannually assignment like below
+```{r mannal color,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+#using spWAVE color assign function
+# c_col <- assign_clu_col_lite(db_C2C_score_list[[1]]$summary)
+# c_col
+#or mannually assign like
+c_col <- c(
+  "1"="#1f77b4", 
+  "2"="#ff7f0e", 
+  "3"="#2ca02c", 
+  "4"="#d62728",  
+  "5"="#9467bd",
+  "6"="#8c564b", 
+  "7"="#e377c2",
+  "8"="#7f7f7f",
+  "9"="#bcbd22",
+  "10"="#17becf",
+  "11"="#aec7e8",
+  "12"="#ffbb78"
+)
+# remember c_col must be a named vector
+
+plot_field_direction2(brain_Fgf1,
+            seurat_obj = brain,
+            image="cluster",mode='grid',cols=c_col,arrow_color="yellow")
+
+plot_LR_cluster_heatmap(
+  db_C2C_score_list,
+  complex_data$kept_db,
+  #LR_family = "TGFb",
+  #LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+  #source_use=c("1","10","11","2","9"),
+  #target_use = c("7","9","11","12"),
+  method_use="strength",
+  normalize=TRUE,
+  ht_col="Reds",
+  cluster_color = c_col
+)
+
+plot_LR_cluster_net(
+    db_C2C_score_list,complex_data$kept_db,
+      LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      #LR_family=c("FGF","TGFb")
+      cluster_use=c("1","10","11","2","9","7"),
+      method_use = "strength",
+      mat_scale = TRUE,
+      cluster_color = c_col
+    )
+
+plot_LR_gene_chord(
+    db_C2C_score_list,complex_data$kept_db,
+      LR_pair = c("Fgf1.Fgfr1","Fgf1.Fgfr2"),
+      #LR_family=c("FGF","TGFb")
+      source_use=c("1","10","11","2","9"),
+      target_use = c("7","9","11","12"),
+      cluster_color = c_col
+    )
+
+```
+
+We will stop here, if you have any question, please check the document of function first,
+and then let us know if we can help you.
