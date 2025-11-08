@@ -52,6 +52,8 @@ Install from GitHub:
 
 ``` r
 devtools::install_github("liuhuoz/spWAVE")
+#or install develop version
+devtools::install_github("liuhuoz/spWAVE",ref="dev")
 ```
 
 Or download the GitHub source zip file, and install it from local:

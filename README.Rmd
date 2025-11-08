@@ -53,6 +53,8 @@ to analyze the field quantities related differentially expressed genes.
 Install from GitHub:
 ```{r,eval=FALSE}
 devtools::install_github("liuhuoz/spWAVE")
+#or install develop version
+devtools::install_github("liuhuoz/spWAVE",ref="dev")
 ```
 
 Or download the GitHub source zip file, and install it from local:
