@@ -102,5 +102,33 @@ Field Estimation for low-res ST dataset:
 Field Estimation for Hi-res ST dataset and Advanced Trick: 
 [Analysis LR field of large dataset using spWAVE](tutorial/Field_Est3.html)
 
-Downstream Analysis: "spWAVE/tutorial/Downstream.html" (not write now, will update)
+Downstream Analysis: "spWAVE/tutorial/Downstream.html" (wait update)
 
+## About Me / Career Interests
+I'm a MD candidate in Oncology focusing on tumor micro-environment, tumor-immune interactions and tumorigenesis. 
+
+I'm interested in developing computational methods for spatial transcriptomics data analysis.
+The goal of my research is to understand how the CCC(cell-cell communication) influence the spatial organization and dynamics promoting tumor development.
+
+I'm currently seeking postdoctoral or research assistant positions to contribute 
+to innovative projects in academia or industry.
+
+**Research Interests:** 
+
+  - Computational Method Development for Spatial Transcriptomics
+
+  - AI for Spatial Transcriptomics
+
+  - Spatial Organization and Dynamics Driving Tumor Development
+
+**Technical Skills:** 
+
+  - Python, R, Linux, Slurm and Git experience
+
+  - statistical modeling
+
+  - multi-omic data analysis(scRNA-seq, spatial transcriptomics, genomics)
+
+If you are interested in my work or have any questions, please feel free to contact me.
+
+📫Email: [liuhuo2012@gmail.com](mailto:liuhuo2012@gmail.com)
