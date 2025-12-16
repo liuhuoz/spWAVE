@@ -13,6 +13,8 @@ LinkingTo: Rcpp,RcppEigen
 Suggests: 
     BiocParallel,
     knitr,
+    multiway,
+    parallel,
     renv,
     rmarkdown,
     tradeSeq

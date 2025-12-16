@@ -79,8 +79,21 @@ repeat_tensor_CPD <- function(
   parallel=TRUE,cl=NULL){
   set.seed(random_seed)
 
+  if (!requireNamespace("multiway", quietly = TRUE)) {
+    stop(
+      "Package \"multiway\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+
+
   if(parallel){
-    require(parallel)
+    if (!requireNamespace("parallel", quietly = TRUE)) {
+    stop(
+      "Package \"parallel\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
     if(!is.null(cl)){
       clusterEvalQ(cl,library(multiway))
     }else{
