@@ -11,6 +11,7 @@ repeat_tensor_CPD(
   random_seed = 42,
   const = c("uncons", "uncons", "orthog"),
   corcondia_cutoff = 10,
+  attempts = 7,
   parallel = TRUE,
   cl = NULL
 )
@@ -28,6 +29,9 @@ repeat_tensor_CPD(
 see multiway::parafac and CMLS::cmls for more details and available options.}
 
 \item{corcondia_cutoff}{Minimum corcondia value to accept a decomposition. Default is 10.}
+
+\item{attempts}{Maximum number of attempts to find a valid decomposition.
+Default is 7 and must not be lower than 3.}
 
 \item{parallel}{Logical indicating whether to use parallel processing. Default is TRUE.}
 

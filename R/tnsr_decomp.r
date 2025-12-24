@@ -57,6 +57,8 @@ prep_TD_data <- function(spwave,low_quantile=0.1){
 #' @param const character vextor, Constraints for each mode during CP decomposition. Default is c("uncons","uncons","orthog").
 #' see multiway::parafac and CMLS::cmls for more details and available options.
 #' @param corcondia_cutoff Minimum corcondia value to accept a decomposition. Default is 10.
+#' @param attempts Maximum number of attempts to find a valid decomposition. 
+#' Default is 7 and must not be lower than 3.
 #' @param parallel Logical indicating whether to use parallel processing. Default is TRUE.
 #' @param cl Cluster object for parallel processing. Default is NULL.
 #'
@@ -76,6 +78,7 @@ repeat_tensor_CPD <- function(
   random_seed=42,
   const=c("uncons","uncons","orthog"),
   corcondia_cutoff=10,
+  attempts=7,
   parallel=TRUE,cl=NULL){
   set.seed(random_seed)
 
@@ -103,29 +106,68 @@ repeat_tensor_CPD <- function(
 
   CP_decomp <- list()
   loop_idx <- seq_along(rank_range)
+  lowering_label <- FALSE
   for(i in loop_idx){
     R=rank_range[i]
 
-    cat("Processing rank", R, ":\n")
 
+    if(i!=1 && sum(sapply(CP_decomp[[i-1]], is.null)) >3) {
+      cat("Stop decompostion after rank", R,  "due to invaild result.\n")
+      break
+    }
+
+    if(lowering_label){
+      rank_cutoff <- current_cutoff + 1
+    }else{
+      rank_cutoff <- corcondia_cutoff
+    }
+    cat("Processing rank", R, ":\n")
+    current_cutoff <- rank_cutoff
     rep_results <- list()
+
     for(j in 1:num_rep) {
       cat("Repeat", j, "...\n")
-      while(length(rep_results) < j){
+
+      reject_counter <- 0
+      #for(atmpts in 1:attempts){
+      while(reject_counter < attempts){
         temp_result <- multiway::parafac(tensor,nfac=R,
             const=const,
             parallel=parallel,cl=cl)
         corcondia_temp <- multiway::corcondia(tensor, temp_result)
         print(corcondia_temp)
-        if(corcondia_temp > corcondia_cutoff){
+
+        if(corcondia_temp > current_cutoff){
           rep_results[[j]] <- temp_result
+          reject_counter <- 0
+          break
         }else{
-          cat("corcondia below", corcondia_cutoff, "try again...\n")
+          reject_counter <- reject_counter + 1
+          cat("corcondia below", current_cutoff, "try again...\n")
+          
+          if(reject_counter >= 3){
+            if(current_cutoff > 1){
+              if(corcondia_temp > 2){
+                current_cutoff <- max((current_cutoff + corcondia_temp)/2,1)
+              }else{
+                current_cutoff <- max(current_cutoff - 1,1)
+              }
+              
+              reject_counter <- 0
+              lowering_label <- TRUE
+              cat("Lowering corcondia threshold to", current_cutoff, "try again...\n")
+            }else{
+              rep_results[[j]] <- NULL
+              cat("No valid result, return NULL\n")
+              break
+            }
+
+          }
         }
       }
     }
     CP_decomp[[i]] <- rep_results
   }
-  names(CP_decomp) <- paste0("Rank_", rank_range)
+  names(CP_decomp) <- paste0("Rank_", rank_range[1:length(CP_decomp)])
   return(CP_decomp)
 }
