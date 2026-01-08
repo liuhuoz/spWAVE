@@ -171,3 +171,418 @@ repeat_tensor_CPD <- function(
   names(CP_decomp) <- paste0("Rank_", rank_range[1:length(CP_decomp)])
   return(CP_decomp)
 }
+
+
+
+#' Construct Correlation Matrix from Tensor Decomposition Results
+#'
+#' This function constructs a correlation matrix from tensor decomposition results
+#' by calculating pairwise correlations between components and applying significance
+#' and effect size thresholds.
+#'
+#' @param TD_result Tensor decomposition results from CP decomposition. Can be either
+#'   a nested list structure or a direct list of decomposition results.
+#' @param R_cutoff Numeric value specifying the minimum absolute correlation coefficient
+#'   to retain. Correlations with absolute value below this threshold will be set to 0.
+#'   Default is 0.5.
+#' @param p_cutoff Numeric value specifying the maximum p-value for significance.
+#'   Correlations with p-values above this threshold will be set to 0 after FDR correction.
+#'   Default is 0.05.
+#' @param link_cutoff Numeric value specifying the minimum number of effective correlations with other components. 
+#'   the components with less effective correlations lower than this value will be dropped.
+#'   Default is 10.
+#' @param return_raw Logical indicating whether to return additional information beyond
+#'   the filtered correlation matrix. If TRUE, returns a list containing the filtered
+#'   correlation matrix, raw correlation matrix, and adjusted p-values. If FALSE,
+#'   returns only the filtered correlation matrix. Default is FALSE.
+#'
+#' @importFrom Hmisc rcorr
+#'
+#' @return If \code{return_raw = FALSE}, returns a numeric matrix of filtered
+#'   correlations. If \code{return_raw = TRUE}, returns a list containing:
+#'   \item{cor_ft}{Filtered correlation matrix with non-significant correlations set to 0}
+#'   \item{cor_raw}{Raw correlation matrix before filtering}
+#'   \item{p_adj}{Matrix of FDR-adjusted p-values}
+#'
+#' @examples
+#' \dontrun{
+#' # Example with tensor decomposition results
+#' # Assuming TD_result contains CP decomposition results
+#' cor_matrix <- construct_cor_mat(TD_result, R_cutoff = 0.6, p_cutoff = 0.01)
+#'
+#' # Return full results including raw correlations and p-values
+#' full_results <- construct_cor_mat(TD_result, return_raw = TRUE)
+#' str(full_results)
+#' }
+#'
+#' @export
+construct_cor_mat <- function(
+  TD_result,
+  R_cutoff=0.5,
+  p_cutoff=0.05,
+  link_cutoff=10,
+  return_raw=FALSE){
+
+  if(is.null(TD_result[[1]]$C)){
+    CP_decomp <- unlist(TD_result,recursive = FALSE)
+  }else{
+    CP_decomp <- TD_result
+  }
+
+  for(r in seq_along(CP_decomp)){
+    H <- CP_decomp[[r]]$C
+    rownames(H) <- dimnames(tensor_ft)[[3]]
+    colnames(H) <- paste0("R",ncol(H),"rep",r,"_",1:ncol(H))
+    CP_decomp_2[[r]]$MP_temp <- as.data.frame(H)
+  }
+
+  MP_temp_list <- lapply(CP_decomp_2,function(x) x$MP_temp)
+  MP_cbind_temp <- do.call(cbind,MP_temp_list)
+
+  rc <- Hmisc::rcorr(as.matrix(MP_cbind_temp), type = "pearson")
+  p_adj  <- matrix(p.adjust(rc$P, "fdr"), nrow = nrow(rc$P))
+  sig <- which(!(p_adj < p_cutoff & abs(rc$r) > R_cutoff), arr.ind = TRUE)
+  r_ft <- rc$r
+  r_ft[sig] <- 0
+
+  r_ft_bin <- r_ft
+  r_ft_bin[r_ft_bin != 0] <- 1
+  temp <- which(rowSums(r_ft_bin) <= link_cutoff)
+  r_ft <- r_ft[-temp,-temp]
+
+  if(return_raw){
+    return(list(cor_ft=r_ft,cor_raw=rc$r,p_adj=p_adj))
+  }else(
+    return(r_ft)
+  )
+}
+
+
+
+
+
+#' Dynamic Module Assignment from Hierarchical Clustering
+#'
+#' Dynamic module assignment based on hierarchical clustering. This function assigns
+#' modules to leaves based on their distance from the root of the dendrogram and
+#' ensures large clusters (≥MIN_THRESHOLD) are not merged into larger clusters.
+#'
+#' @param hc hclust object representing the hierarchical clustering
+#' @param offset distance offset from the root to control cutting height. Default is NULL and will be set to max height.
+#' @param MIN_THRESHOLD the minimum size of clusters to prevent merging, 
+#'        smaller threshold will create smaller size of cluster, more unassign leaves, and more clusters. 
+#'        Default is 10.
+#' @param Z_THRESHOLD distance threshold, controls the strictness of cutting, 
+#'        smaller threshold will create larger size of cluster, less unassign leaves, and more clusters. 
+#'        Default is the median of hc$height.
+#'
+#' @return named integer vector mapping leaf node labels to cluster IDs (-1 indicates unassigned)
+#'
+#' @examples
+#' \dontrun{
+#' 
+#' hc <- hclust(dist_mat, method = "average")
+#' clusters <- assign_modules_core(hc)
+#'
+#' clusters <- assign_modules_core(hc,MIN_THRESHOLD = 20, Z_THRESHOLD = 5)
+#' }
+#' @export
+assign_modules_core <- function(hc,
+  offset = NULL,
+  MIN_THRESHOLD = 10,
+  Z_THRESHOLD = median(hc$height)) {
+  if (!inherits(hc, "hclust")) {
+    stop("hc must be an hclust object")
+  }
+
+  n_leaves <- length(hc$order)
+  n_nodes <- nrow(hc$merge)
+
+  if (is.null(offset)) {
+    offset <- max(hc$height)
+  }
+
+  # Get each node's member count
+  node_memberships <- compute_node_memberships(hc$merge)
+
+  labels <- rep(-1, n_nodes)
+  clust_counter <- 0  
+
+  for (i in seq_len(n_nodes)) {
+    left_child <- hc$merge[i, 1]
+    right_child <- hc$merge[i, 2]
+
+    # Get left subtree member count and current label
+    if (left_child < 0) {
+      left_size <- 1
+      left_label <- -1
+    } else {
+      left_size <- node_memberships[abs(left_child)]
+      left_label <- labels[abs(left_child)]
+    }
+
+    # Get right subtree member count and current label
+    if (right_child < 0) {
+      right_size <- 1
+      right_label <- -1
+    } else {
+      right_size <- node_memberships[abs(right_child)]
+      right_label <- labels[abs(right_child)]
+    }
+
+
+    if (left_size >= MIN_THRESHOLD && right_size >= MIN_THRESHOLD) {
+      # subtrees too large，do not merge
+      new_label <- -1
+    } else if (hc$height[i] > (offset - Z_THRESHOLD)) {
+      # distance too large, do not merge
+      new_label <- -1
+    } else if (left_size >= MIN_THRESHOLD) {
+      # merge into left subtree
+      new_label <- left_label
+    } else if (right_size >= MIN_THRESHOLD) {
+      # merge into right subtree
+      new_label <- right_label
+    } else if ((left_size + right_size) >= MIN_THRESHOLD) {
+      # merge and form new cluster
+      new_label <- clust_counter
+      clust_counter <- clust_counter + 1
+    } else {
+      new_label <- -1
+    }
+
+    labels[i] <- new_label
+  }
+
+  out_clusters <- rep(-2, n_leaves)
+
+  # spread labels from root to leaves
+  if (n_nodes > 0) {
+    root_label <- labels[n_nodes]
+    out_clusters <- prop_label(n_nodes, root_label, labels, out_clusters, hc$merge)
+  } else {
+    out_clusters[1] <- 0
+  }
+
+  # safety check
+  unassigned <- out_clusters == -2
+  if (any(unassigned)) {
+    warning(sprintf("%d leaves were not assigned to any cluster", sum(unassigned)))
+    out_clusters[unassigned] <- -1
+  }
+
+  unique_clusters <- sort(unique(out_clusters))
+  unique_clusters <- unique_clusters[unique_clusters != -1]
+
+  if (length(unique_clusters) > 0) {
+    clust_map <- setNames(seq_len(length(unique_clusters)), unique_clusters)
+    clust_map <- c(clust_map, "-1" = -1)
+    out_clusters <- clust_map[as.character(out_clusters)]
+  }
+
+  names(out_clusters) <- hc$labels
+
+  return(out_clusters)
+}
+
+#' Compute Node Memberships Number in Hierarchical Clustering
+#'
+#' @param merge_mat hclust object's merge matrix, e.g. hc$merge
+#' @return integer vector of node memberships count
+#'
+compute_node_memberships <- function(merge_mat) {
+  n_nodes <- nrow(merge_mat)
+  memberships <- integer(n_nodes)
+
+  for (i in seq_len(n_nodes)) {
+    left_child <- merge_mat[i, 1]
+    right_child <- merge_mat[i, 2]
+
+    left_size <- if (left_child < 0) {
+      1
+    } else {
+      memberships[abs(left_child)]
+    }
+
+    right_size <- if (right_child < 0) {
+      1
+    } else {
+      memberships[abs(right_child)]
+    }
+
+    memberships[i] <- left_size + right_size
+  }
+
+  return(memberships)
+}
+
+#' Spread Cluster Labels from Internal Nodes to Leaf Nodes
+#'
+#' @param node_id the node ID to start propagation (1-based index for internal nodes)
+#' @param label the label to inherit (-1 means use the node's own label)
+#' @param labels internal node labels vector
+#' @param out_clusters leaf node output vector (indexed by leaf node IDs)
+#' @param merge_mat hclust object's merge matrix
+#'
+#' @return updated out_clusters with new labels
+#'
+prop_label <- function(node_id, label, labels, out_clusters, merge_mat) {
+  current_label <- if (label == -1) labels[node_id] else label
+
+  left_child <- merge_mat[node_id, 1]
+  right_child <- merge_mat[node_id, 2]
+
+  if (left_child < 0) {
+    leaf_idx <- abs(left_child)
+    out_clusters[leaf_idx] <- current_label
+  } else {
+    out_clusters <- prop_label(abs(left_child), current_label,
+                                labels, out_clusters, merge_mat)
+  }
+
+  if (right_child < 0) {
+    leaf_idx <- abs(right_child)
+    out_clusters[leaf_idx] <- current_label
+  } else {
+    out_clusters <- prop_label(abs(right_child), current_label,
+                                labels, out_clusters, merge_mat)
+  }
+
+  return(out_clusters)
+}
+
+
+#' Cluster Modules from Correlation Matrix
+#' 
+#' This function performs hierarchical clustering on a correlation matrix and assigns modules
+#' based on specified thresholds.
+#' 
+#' @param cor_mat Correlation matrix to cluster
+#' @param linkage_method Linkage method for hierarchical clustering. Default is "average". Check stats::hclust for more options.
+#' @param offset Distance offset from the root to control cutting height. Default is NULL and will be set to max height.
+#' @param MIN_THRESHOLD Minimum size of clusters to prevent merging. Default is 10.
+#' @param Z_THRESHOLD Distance threshold to control the strictness of cutting. Default is NULL and will be set to median of hc$height.
+#' 
+#' 
+#' @seealso \code{\link[stats]{hclust}}
+#' @seealso \code{\link{assign_modules_core}}
+#' 
+#' @return A list containing:
+#' \item{hc}{hclust object representing the hierarchical clustering}
+#' \item{assign}{characters vector mapping leaf node labels to cluster IDs}
+#'  \item{module_df}{Two cols data.frame with module assignments for each leaf node}
+#' @export
+#' 
+clustering_modules <- function(
+  cor_mat,
+  linkage_method="average",
+  offset=NULL,
+  MIN_THRESHOLD=10,
+  Z_THRESHOLD=NULL
+
+){
+  dist_matrix <- as.dist(1 - cor_mat)
+  hc <- hclust(dist_matrix, method = linkage_method)
+
+  if(is.null(Z_THRESHOLD)){
+    Z_THRESHOLD <- median(hc$height)
+  }
+
+  module_assign <- assign_modules_core(
+    hc,
+    offset=offset,
+    MIN_THRESHOLD=MIN_THRESHOLD,
+    Z_THRESHOLD=Z_THRESHOLD
+  )
+
+  module_df <- as.data.frame(module_assign)
+  colnames(module_df)[1] <- "module"
+  module_df$module <- paste0("module_",module_df$module)
+  module_df$member <- rownames(module_df)
+
+  module <- split(module_df[,"member"],module_df$module)
+  names(module)[1] <- "other"
+  module_df[module[[1]],"module"] <- "other"
+
+  return(list(
+    hc=hc,
+    module=module,
+    module_df=module_df
+  ))
+}
+
+#' Plot Correlation Matrix with Module Annotations
+#' 
+#' @param cor_mat Correlation matrix to plot  
+#' @param module_list Output of clustering_modules function
+#' @param ht_col Color palette for heatmap. Default is NULL and will be set to colorRamp2(c(-1, 0, 1), c("navy", "white", "firebrick3")).
+#' @param module_col Color palette for module annotations. Default is NULL and will be set to MD2_color_picker(length(module_list$module)-1).
+#' @param ... Additional arguments to pass to ComplexHeatmap::Heatmap
+#' 
+#' @importFrom ComplexHeatmap Heatmap HeatmapAnnotation
+#' @importFrom circlize colorRamp2
+#' 
+#' 
+#' @export
+plot_cor_module_peatmap <- function(
+  cor_mat,
+  module_list,
+  ht_col=NULL,
+  module_col=NULL,
+  ...
+){
+  #prepare ht data
+  hc_order <- module_list$hc$labels
+  module_annotation <- module_list$module_df
+
+  draw_ht_data <- cor_mat[hc_order, hc_order]
+
+  #prepare colors
+  if(is.null(ht_col)){
+    col_fun <- colorRamp2(
+      breaks = c(-1, 0, 1),
+      colors = c("navy", "white", "firebrick3")
+    )
+  }#else #*TODO 后续需要添加 col_fun checker
+
+
+  if(is.null(module_col)){
+    module_col <- MD2_color_picker(length(module_list$module)-1)
+    names(module_col) <- names(module_list$module)[2:length(module_list$module)]
+    module_col["other"] <- "#D9D9D9"
+  }#else #*TODO 后续需要添加 module_col checker， 检查长度和names
+
+  #prepare module annotation
+  module_ha <- ComplexHeatmap::HeatmapAnnotation(
+    Module = factor(module_annotation$module,level=names(module_col)),
+    col = list(Module=module_col),
+    annotation_name_side = "left",
+    show_legend = TRUE,
+    annotation_legend_param = list(
+      Module = list(
+        title = "Modules",
+        ncol = 1,
+        labels = names(module_col)
+      )
+    )
+  )
+
+  ComplexHeatmap::Heatmap(
+    matrix = draw_ht_data,
+    col = col_fun,
+    cluster_rows = module_list$hc,
+    cluster_columns = module_list$hc,
+    show_row_names = FALSE,
+    show_column_names = FALSE,
+    column_names_gp = gpar(fontsize = 8),
+    top_annotation = module_ha,
+    name = "Pearson\nCorrelation",
+    use_raster=TRUE,
+    column_title = "Hierarchical Clustering with Module Annotation",
+    heatmap_legend_param = list(
+      at = c(-1, -0.5, 0, 0.5, 1)  # 自定义图例刻度
+    ),
+    ...
+  )
+
+}
