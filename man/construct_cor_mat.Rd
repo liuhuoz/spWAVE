@@ -9,7 +9,7 @@ construct_cor_mat(
   R_cutoff = 0.5,
   p_cutoff = 0.05,
   link_cutoff = 10,
-  return_raw = FALSE
+  return_raw = TRUE
 )
 }
 \arguments{
@@ -30,8 +30,8 @@ Default is 10.}
 
 \item{return_raw}{Logical indicating whether to return additional information beyond
 the filtered correlation matrix. If TRUE, returns a list containing the filtered
-correlation matrix, raw correlation matrix, and adjusted p-values. If FALSE,
-returns only the filtered correlation matrix. Default is FALSE.}
+correlation matrix, raw correlation matrix, and adjusted p-values.
+If FALSE, returns only the filtered correlation matrix. Default is TRUE.}
 }
 \value{
 If \code{return_raw = FALSE}, returns a numeric matrix of filtered

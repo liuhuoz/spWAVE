@@ -193,8 +193,8 @@ repeat_tensor_CPD <- function(
 #'   Default is 10.
 #' @param return_raw Logical indicating whether to return additional information beyond
 #'   the filtered correlation matrix. If TRUE, returns a list containing the filtered
-#'   correlation matrix, raw correlation matrix, and adjusted p-values. If FALSE,
-#'   returns only the filtered correlation matrix. Default is FALSE.
+#'   correlation matrix, raw correlation matrix, and adjusted p-values. 
+#'   If FALSE, returns only the filtered correlation matrix. Default is TRUE.
 #'
 #' @importFrom Hmisc rcorr
 #'
@@ -221,7 +221,7 @@ construct_cor_mat <- function(
   R_cutoff=0.5,
   p_cutoff=0.05,
   link_cutoff=10,
-  return_raw=FALSE){
+  return_raw=TRUE){
 
   if(is.null(TD_result[[1]]$C)){
     CP_decomp <- unlist(TD_result,recursive = FALSE)
@@ -282,12 +282,12 @@ construct_cor_mat <- function(
 #' \dontrun{
 #' 
 #' hc <- hclust(dist_mat, method = "average")
-#' clusters <- assign_modules_core(hc)
+#' clusters <- adynamic_module_cutree(hc)
 #'
-#' clusters <- assign_modules_core(hc,MIN_THRESHOLD = 20, Z_THRESHOLD = 5)
+#' clusters <- adynamic_module_cutree(hc,MIN_THRESHOLD = 20, Z_THRESHOLD = 5)
 #' }
 #' @export
-assign_modules_core <- function(hc,
+dynamic_module_cutree <- function(hc,
   offset = NULL,
   MIN_THRESHOLD = 10,
   Z_THRESHOLD = median(hc$height)) {
@@ -459,21 +459,19 @@ prop_label <- function(node_id, label, labels, out_clusters, merge_mat) {
 #' 
 #' @param cor_mat Correlation matrix to cluster
 #' @param linkage_method Linkage method for hierarchical clustering. Default is "average". Check stats::hclust for more options.
-#' @param offset Distance offset from the root to control cutting height. Default is NULL and will be set to max height.
-#' @param MIN_THRESHOLD Minimum size of clusters to prevent merging. Default is 10.
 #' @param Z_THRESHOLD Distance threshold to control the strictness of cutting. Default is NULL and will be set to median of hc$height.
-#' 
+#' @inheritParams dynamic_module_cutree
 #' 
 #' @seealso \code{\link[stats]{hclust}}
-#' @seealso \code{\link{assign_modules_core}}
+#' @seealso \code{\link{dynamic_module_cutree}}
 #' 
 #' @return A list containing:
 #' \item{hc}{hclust object representing the hierarchical clustering}
-#' \item{assign}{characters vector mapping leaf node labels to cluster IDs}
-#'  \item{module_df}{Two cols data.frame with module assignments for each leaf node}
+#' \item{module}{characters vector mapping leaf node labels to cluster IDs}
+#' \item{module_df}{Two cols data.frame with module assignments for each leaf node}
 #' @export
 #' 
-clustering_modules <- function(
+perform_dynamic_module_clustering <- function(
   cor_mat,
   linkage_method="average",
   offset=NULL,
@@ -488,7 +486,7 @@ clustering_modules <- function(
     Z_THRESHOLD <- median(hc$height)
   }
 
-  module_assign <- assign_modules_core(
+  module_assign <- dynamic_module_cutree(
     hc,
     offset=offset,
     MIN_THRESHOLD=MIN_THRESHOLD,
@@ -539,7 +537,7 @@ plot_cor_module_peatmap <- function(
 
   #prepare colors
   if(is.null(ht_col)){
-    col_fun <- colorRamp2(
+    col_fun <- circlize::colorRamp2(
       breaks = c(-1, 0, 1),
       colors = c("navy", "white", "firebrick3")
     )
@@ -585,4 +583,233 @@ plot_cor_module_peatmap <- function(
     ...
   )
 
+}
+
+
+#' Extract Top Ranked Members from Modules
+#' 
+#' This function extracts the top ranked members from each module based on their
+#' contributions in the tensor decomposition results.
+#' 
+#' @param TD_result Tensor decomposition results from CP decomposition. Can be either
+#'   a nested list structure or a direct list of decomposition results.
+#' @param module_list Output of clustering_modules function
+#' @param top_n Number of top-ranked members to extract from each module. Default is 50.
+#' 
+#' @return A list of top-ranked members for each module
+#' @export
+extract_module_topLR <- function(
+  TD_result,
+  module_list,
+  top_n=50
+){
+  if(is.null(TD_result[[1]]$C)){
+    CP_decomp <- unlist(TD_result,recursive = FALSE)
+  }else{
+    CP_decomp <- TD_result
+  }
+
+  for(r in seq_along(CP_decomp)){
+    H <- CP_decomp[[r]]$C
+    rownames(H) <- dimnames(tensor_ft)[[3]]
+    colnames(H) <- paste0("R",ncol(H),"rep",r,"_",1:ncol(H))
+    CP_decomp_2[[r]]$MP_temp <- as.data.frame(H)
+  }
+
+  #Normalize and ignore the negative values
+  CP_decomp %<>% lapply(function(x){
+    x$MP_norm <- apply(x$MP_temp,2,function(y){
+      value=y/sqrt(sum(y^2))
+      value[which(value<=0)] <- NA
+      return(value)
+    })
+    return(x)
+  })
+
+  top_list <- lapply(CP_decomp_2,function(x){
+    apply(x$MP_norm,2,function(y){
+      names(sort(y,decreasing = T)[1:top_n])
+    }) %>% as.data.frame()
+  })
+
+  top_flat_df <- do.call(cbind,top_list)
+
+  module_member <- list()
+  for(i in 2:length(module_list$module)){ #* the first is "other"
+    module_name <- names(module_list$module)[i]
+    member_vec <- module_list$module[[i]]
+    member_indices <- match(member_vec,colnames(top_flat_df))
+    sub_top_df <- top_flat_df[,member_indices]
+    sub_top_vec <- as.vector(as.matrix(sub_top_df))
+
+    # calc rank scores for genes in each component, then sum-up score
+    rank_scores <- list()
+    for(col in 1:ncol(sub_top_df)){
+      for(row in 1:nrow(sub_top_df)){
+        gene <- sub_top_df[row, col]
+        if(!is.na(gene)){
+          rank_scores[[gene]] <- rank_scores[[gene]] %||% 0
+          rank_scores[[gene]] <- rank_scores[[gene]] + (top_n+1 - row)  # higher rank gets more points
+        }
+      }
+    }
+
+    # Rank sum-up scores and get top n
+    rank_scores_vec <- unlist(rank_scores)
+    sorted_genes <- sort(rank_scores_vec, decreasing = TRUE)
+
+    final_members <- names(sorted_genes)[1:min(top_n, length(sorted_genes))]
+
+    module_member[[module_name]] <- final_members
+  }
+
+  return(module_member)
+}
+
+
+#' Scoring Cell Modules using ssGSEA
+#' 
+#' This function scores cell modules using single-sample Gene Set Enrichment Analysis (ssGSEA)
+#' 
+#' @param tensor tensor array used for CP decomposition, generated by prep_TD_data()
+#' @param module_LR_list A list of LR pairs for each module. Generated by extract_module_topLR()
+#' @param ... Additional arguments to pass to GSVA::gsva, e.g. BPPARAM, verbose, etc.
+#' 
+#' @importFrom GSVA gsva
+#' 
+#' @details ssgesa scoring is performed using the GSVA package. The kcdf is set to "Gaussian", 
+#'          since the expression matrix is log-normalized. Other parameters can be adjusted.
+#' 
+#' @return A matrix of ssGSEA scores for each module across samples
+#' @examples 
+#' \dontrun{
+#' 
+#' # Assuming tensor and module_LR_list are prepared
+#' ssGSEA_scores <- scoring_cell_module(tensor, module_LR_list)
+#' 
+#' # Using additional parameters such as parallel.sz, BPPARAM, and verbose for GSVA 
+#' library(BiocParallel)
+#' ssGSEA_scores <- scoring_cell_module(
+#'   tensor,
+#'   module_LR_list,
+#'   parallel.sz = 16,
+#'   BPPARAM = MulticoreParam(workers = 16,tasks=16, progressbar = T), # use SnowParam for Windows system.
+#'   verbose = TRUE
+#' )
+#' 
+#' }
+#' @export
+
+scoring_cell_module <- function(
+  tensor,
+  module_LR_list,
+  ...
+){
+  if (!requireNamespace("GSVA", quietly = TRUE)) {
+    stop(
+      "Package \"GSVA\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+  # prepare expression matrix
+  expr_mat <- apply(tensor,3,function(x){
+    sqrt(x[,"Ex"]^2+x[,"Ey"]^2)
+  })
+  rownames(expr_mat) <- dimnames(tensor)[[1]]
+  colnames(expr_mat) <- dimnames(tensor)[[3]]
+
+  # run ssGSEA
+  ssGSEA_result <- GSVA::gsva(
+    expr = expr_mat,
+    gset.idx.list = module_LR_list,
+    method = "ssgsea",
+    kcdf = "Gaussian",
+    ...
+  )
+
+  return(ssGSEA_result)
+}
+
+
+#' Assign Cell Modules based on ssGSEA Scores
+#' 
+#' This function assigns cell modules based on ssGSEA scores with specified cutoffs and
+#' switch the assignments for cells in small clusters or with low score differences.
+#' 
+#' @param ssGSEA_result A matrix of ssGSEA scores for each module across samples
+#' @param score_cutoff Minimum ssGSEA score to assign a module. Default is 0.1.
+#' @param score_diff_cutoff Minimum score difference between top two modules to keep assignment. Default is 0.03.
+#'        Set 0 to keep all assignments regardless of minimum cell numbers of clusters.
+#' @param min_cells Minimum number of cells required for a module to be retained. Default is 0.5% of total cells.
+#' 
+#' @return A data frame with cell barcodes and their assigned modules
+#' @export
+assign_cell_module <- function(
+  ssGSEA_result,
+  score_cutoff=0.1,
+  score_diff_cutoff=0.03,
+  min_cells=0.005*ncol(ssGSEA_result)
+){
+  assign_modules <- apply(ssGSEA_result,2,function(x){
+    if(max(x)>score_cutoff){
+      assign <- names(which(x == max(x)))
+    }else{
+      assign <- "other"
+    }
+    return(assign)
+  })
+
+  # If score_diff_cutoff is 0, return assignments directly
+  if(score_diff_cutoff == 0){
+    final_assign <- data.frame(
+      barcode=names(assign_modules),
+      assign=assign_modules,
+      row.names = names(assign_modules)
+    )
+    return(final_assign)
+  }
+
+  #If score_diff_cutoff > 0, switch assignments for small clusters with low score diff
+  assign_modules_2nd <- apply(ssGSEA_result,2,function(x){
+    if(max(x)>0.1){
+      assign <- names(x)[order(x,decreasing = T)[2]]
+    }else{
+      assign <- "other"
+    }
+    return(assign)
+  })
+
+  assign_diff <- apply(ssGSEA_result,2,function(x){
+      sorted_x <- x[order(x,decreasing = T)]
+      diff <- sorted_x[1] - sorted_x[2]
+    return(diff)
+  })
+
+  assign_df <-
+    cbind.data.frame(assign_modules,assign_modules_2nd,assign_diff)
+
+  temp <- table(assign_df[,1])
+  dropped_cand <- names(temp)[temp<min_cells]
+  dropped_cell <-
+    rownames(assign_df)[which(assign_df[,1] %in% dropped_cand)]
+
+  switched <- sapply(dropped_cell,function(id){
+    if(as.numeric(assign_df[id,3]) < score_diff_cutoff &&
+      !(assign_df[id,2] %in% dropped_cand) ){
+        return(assign_df[id,2])
+    }else{
+      return("other")
+    }
+  },simplify = T)
+
+  assign_df$assign <- assign_df$assign_modules
+  assign_df[dropped_cell,"assign"] <- switched
+
+  final_assign <- data.frame(
+    barcode=rownames(assign_df),
+    assign=assign_df$assign,
+    row.names = rownames(assign_df)
+  )
+
+  return(final_assign)
 }

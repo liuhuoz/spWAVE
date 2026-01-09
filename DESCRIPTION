@@ -12,6 +12,7 @@ RoxygenNote: 7.3.2
 LinkingTo: Rcpp,RcppEigen
 Suggests: 
     BiocParallel,
+    GSVA,
     knitr,
     multiway,
     parallel,
