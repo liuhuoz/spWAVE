@@ -62,8 +62,6 @@ prep_TD_data <- function(spwave,low_quantile=0.1){
 #' @param parallel Logical indicating whether to use parallel processing. Default is TRUE.
 #' @param cl Cluster object for parallel processing. Default is NULL.
 #'
-#' @importFrom multiway parafac
-#' @importFrom multiway corcondia
 #'
 #' @seealso \code{\link[multiway]{parafac}}
 #' @seealso \code{\link[CMLS]{cmls}}
@@ -98,7 +96,7 @@ repeat_tensor_CPD <- function(
     )
   }
     if(!is.null(cl)){
-      clusterEvalQ(cl,library(multiway))
+      parallel::clusterEvalQ(cl,library(multiway))
     }else{
       stop("Please provide a valid cluster object 'cl' for parallel processing.")
     }
@@ -196,8 +194,6 @@ repeat_tensor_CPD <- function(
 #'   correlation matrix, raw correlation matrix, and adjusted p-values. 
 #'   If FALSE, returns only the filtered correlation matrix. Default is TRUE.
 #'
-#' @importFrom Hmisc rcorr
-#'
 #' @return If \code{return_raw = FALSE}, returns a numeric matrix of filtered
 #'   correlations. If \code{return_raw = TRUE}, returns a list containing:
 #'   \item{cor_ft}{Filtered correlation matrix with non-significant correlations set to 0}
@@ -223,6 +219,13 @@ construct_cor_mat <- function(
   link_cutoff=10,
   return_raw=TRUE){
 
+  if (!requireNamespace("Hmisc", quietly = TRUE)) {
+    stop(
+      "Package \"Hmisc\" must be installed to use this function.",
+      call. = FALSE
+    )
+  }
+
   if(is.null(TD_result[[1]]$C)){
     CP_decomp <- unlist(TD_result,recursive = FALSE)
   }else{
@@ -231,7 +234,6 @@ construct_cor_mat <- function(
 
   for(r in seq_along(CP_decomp)){
     H <- CP_decomp[[r]]$C
-    rownames(H) <- dimnames(tensor_ft)[[3]]
     colnames(H) <- paste0("R",ncol(H),"rep",r,"_",1:ncol(H))
     CP_decomp_2[[r]]$MP_temp <- as.data.frame(H)
   }
@@ -375,7 +377,7 @@ dynamic_module_cutree <- function(hc,
   unique_clusters <- unique_clusters[unique_clusters != -1]
 
   if (length(unique_clusters) > 0) {
-    clust_map <- setNames(seq_len(length(unique_clusters)), unique_clusters)
+    clust_map <- stats::setNames(seq_len(length(unique_clusters)), unique_clusters)
     clust_map <- c(clust_map, "-1" = -1)
     out_clusters <- clust_map[as.character(out_clusters)]
   }
@@ -458,8 +460,10 @@ prop_label <- function(node_id, label, labels, out_clusters, merge_mat) {
 #' based on specified thresholds.
 #' 
 #' @param cor_mat Correlation matrix to cluster
-#' @param linkage_method Linkage method for hierarchical clustering. Default is "average". Check stats::hclust for more options.
-#' @param Z_THRESHOLD Distance threshold to control the strictness of cutting. Default is NULL and will be set to median of hc$height.
+#' @param linkage_method Linkage method for hierarchical clustering. Default is "average". 
+#'        Check stats::hclust for more options.
+#' @param Z_THRESHOLD Distance threshold to control the strictness of cutting. 
+#'        Default is NULL and will be set to median of hc$height.
 #' @inheritParams dynamic_module_cutree
 #' 
 #' @seealso \code{\link[stats]{hclust}}
@@ -479,8 +483,8 @@ perform_dynamic_module_clustering <- function(
   Z_THRESHOLD=NULL
 
 ){
-  dist_matrix <- as.dist(1 - cor_mat)
-  hc <- hclust(dist_matrix, method = linkage_method)
+  dist_matrix <- stats::as.dist(1 - cor_mat)
+  hc <- stats::hclust(dist_matrix, method = linkage_method)
 
   if(is.null(Z_THRESHOLD)){
     Z_THRESHOLD <- median(hc$height)
@@ -513,16 +517,17 @@ perform_dynamic_module_clustering <- function(
 #' 
 #' @param cor_mat Correlation matrix to plot  
 #' @param module_list Output of clustering_modules function
-#' @param ht_col Color palette for heatmap. Default is NULL and will be set to colorRamp2(c(-1, 0, 1), c("navy", "white", "firebrick3")).
-#' @param module_col Color palette for module annotations. Default is NULL and will be set to MD2_color_picker(length(module_list$module)-1).
+#' @param ht_col Color palette for heatmap. Default is NULL 
+#'        and will be set to colorRamp2(c(-1, 0, 1), c("navy", "white", "firebrick3")).
+#' @param module_col Color palette for module annotations. Default is NULL 
+#'        and will be set to MD2_color_picker(length(module_list$module)-1).
 #' @param ... Additional arguments to pass to ComplexHeatmap::Heatmap
 #' 
 #' @importFrom ComplexHeatmap Heatmap HeatmapAnnotation
 #' @importFrom circlize colorRamp2
 #' 
-#' 
 #' @export
-plot_cor_module_peatmap <- function(
+plot_cor_module_heatmap <- function(
   cor_mat,
   module_list,
   ht_col=NULL,
@@ -552,7 +557,7 @@ plot_cor_module_peatmap <- function(
 
   #prepare module annotation
   module_ha <- ComplexHeatmap::HeatmapAnnotation(
-    Module = factor(module_annotation$module,level=names(module_col)),
+    Module = factor(module_annotation$module,levels=names(module_col)),
     col = list(Module=module_col),
     annotation_name_side = "left",
     show_legend = TRUE,
@@ -593,6 +598,7 @@ plot_cor_module_peatmap <- function(
 #' 
 #' @param TD_result Tensor decomposition results from CP decomposition. Can be either
 #'   a nested list structure or a direct list of decomposition results.
+#' @param tensor filtered tensor array used for CP decomposition, generated by prep_TD_data()
 #' @param module_list Output of clustering_modules function
 #' @param top_n Number of top-ranked members to extract from each module. Default is 50.
 #' 
@@ -600,6 +606,7 @@ plot_cor_module_peatmap <- function(
 #' @export
 extract_module_topLR <- function(
   TD_result,
+  tensor,
   module_list,
   top_n=50
 ){
@@ -611,7 +618,7 @@ extract_module_topLR <- function(
 
   for(r in seq_along(CP_decomp)){
     H <- CP_decomp[[r]]$C
-    rownames(H) <- dimnames(tensor_ft)[[3]]
+    rownames(H) <- dimnames(tensor)[[3]]
     colnames(H) <- paste0("R",ncol(H),"rep",r,"_",1:ncol(H))
     CP_decomp_2[[r]]$MP_temp <- as.data.frame(H)
   }
@@ -671,11 +678,9 @@ extract_module_topLR <- function(
 #' 
 #' This function scores cell modules using single-sample Gene Set Enrichment Analysis (ssGSEA)
 #' 
-#' @param tensor tensor array used for CP decomposition, generated by prep_TD_data()
+#' @param tensor filtered tensor array used for CP decomposition, generated by prep_TD_data()
 #' @param module_LR_list A list of LR pairs for each module. Generated by extract_module_topLR()
 #' @param ... Additional arguments to pass to GSVA::gsva, e.g. BPPARAM, verbose, etc.
-#' 
-#' @importFrom GSVA gsva
 #' 
 #' @details ssgesa scoring is performed using the GSVA package. The kcdf is set to "Gaussian", 
 #'          since the expression matrix is log-normalized. Other parameters can be adjusted.
@@ -693,7 +698,8 @@ extract_module_topLR <- function(
 #'   tensor,
 #'   module_LR_list,
 #'   parallel.sz = 16,
-#'   BPPARAM = MulticoreParam(workers = 16,tasks=16, progressbar = T), # use SnowParam for Windows system.
+#'   BPPARAM = MulticoreParam(workers = 16,tasks=16, progressbar = T), 
+#'   # use SnowParam for Windows system.
 #'   verbose = TRUE
 #' )
 #' 

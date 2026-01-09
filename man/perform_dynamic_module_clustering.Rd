@@ -15,7 +15,8 @@ perform_dynamic_module_clustering(
 \arguments{
 \item{cor_mat}{Correlation matrix to cluster}
 
-\item{linkage_method}{Linkage method for hierarchical clustering. Default is "average". Check stats::hclust for more options.}
+\item{linkage_method}{Linkage method for hierarchical clustering. Default is "average".
+Check stats::hclust for more options.}
 
 \item{offset}{distance offset from the root to control cutting height. Default is NULL and will be set to max height.}
 
@@ -23,7 +24,8 @@ perform_dynamic_module_clustering(
 smaller threshold will create smaller size of cluster, more unassign leaves, and more clusters.
 Default is 10.}
 
-\item{Z_THRESHOLD}{Distance threshold to control the strictness of cutting. Default is NULL and will be set to median of hc$height.}
+\item{Z_THRESHOLD}{Distance threshold to control the strictness of cutting.
+Default is NULL and will be set to median of hc$height.}
 }
 \value{
 A list containing:
