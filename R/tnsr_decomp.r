@@ -235,10 +235,10 @@ construct_cor_mat <- function(
   for(r in seq_along(CP_decomp)){
     H <- CP_decomp[[r]]$C
     colnames(H) <- paste0("R",ncol(H),"rep",r,"_",1:ncol(H))
-    CP_decomp_2[[r]]$MP_temp <- as.data.frame(H)
+    CP_decomp[[r]]$MP_temp <- as.data.frame(H)
   }
 
-  MP_temp_list <- lapply(CP_decomp_2,function(x) x$MP_temp)
+  MP_temp_list <- lapply(CP_decomp,function(x) x$MP_temp)
   MP_cbind_temp <- do.call(cbind,MP_temp_list)
 
   rc <- Hmisc::rcorr(as.matrix(MP_cbind_temp), type = "pearson")
@@ -620,7 +620,7 @@ extract_module_topLR <- function(
     H <- CP_decomp[[r]]$C
     rownames(H) <- dimnames(tensor)[[3]]
     colnames(H) <- paste0("R",ncol(H),"rep",r,"_",1:ncol(H))
-    CP_decomp_2[[r]]$MP_temp <- as.data.frame(H)
+    CP_decomp[[r]]$MP_temp <- as.data.frame(H)
   }
 
   #Normalize and ignore the negative values
@@ -633,7 +633,7 @@ extract_module_topLR <- function(
     return(x)
   })
 
-  top_list <- lapply(CP_decomp_2,function(x){
+  top_list <- lapply(CP_decomp,function(x){
     apply(x$MP_norm,2,function(y){
       names(sort(y,decreasing = T)[1:top_n])
     }) %>% as.data.frame()
