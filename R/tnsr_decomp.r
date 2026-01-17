@@ -542,7 +542,7 @@ plot_cor_module_heatmap <- function(
 
   #prepare colors
   if(is.null(ht_col)){
-    col_fun <- circlize::colorRamp2(
+    ht_col <- circlize::colorRamp2(
       breaks = c(-1, 0, 1),
       colors = c("navy", "white", "firebrick3")
     )
@@ -572,7 +572,7 @@ plot_cor_module_heatmap <- function(
 
   ComplexHeatmap::Heatmap(
     matrix = draw_ht_data,
-    col = col_fun,
+    col = ht_col,
     cluster_rows = module_list$hc,
     cluster_columns = module_list$hc,
     show_row_names = FALSE,
