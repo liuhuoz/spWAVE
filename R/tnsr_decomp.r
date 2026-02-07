@@ -726,7 +726,7 @@ scoring_cell_module <- function(
 
   # run ssGSEA
   ssGSEA_result <- GSVA::gsva(
-    expr = expr_mat,
+    expr = t(expr_mat),
     gset.idx.list = module_LR_list,
     method = "ssgsea",
     kcdf = "Gaussian",
