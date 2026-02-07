@@ -719,7 +719,7 @@ scoring_cell_module <- function(
   }
   # prepare expression matrix
   expr_mat <- apply(tensor,3,function(x){
-    sqrt(x[,"Ex"]^2+x[,"Ey"]^2)
+    sqrt(x[,"logEx"]^2+x[,"logEy"]^2)
   })
   rownames(expr_mat) <- dimnames(tensor)[[1]]
   colnames(expr_mat) <- dimnames(tensor)[[3]]
