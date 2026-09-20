@@ -74,8 +74,8 @@ setMethod(f = "show", signature = "spWAVE", definition = function(object){
       length(unique(object@cluster_info$cluster)), "clusters. \n",
       nrow(object@kept_db), "LR pairs and",
       length(unique(object@kept_db$Family)), "LR families. \n")
-  cat("LR sets: ",head(names(object@single_mole_field)),"...\n")
-  cat("LR familes: ",head(names(object@LR_family_field)),"...\n")
+  cat("LR sets: ",head(dimnames(object@single_mole_field)[[3]]),"...\n")
+  cat("LR familes: ",head(dimnames(object@LR_family_field)[[3]]),"...\n")
   #dplyr::glimpse(object)
   invisible(x = NULL)
 })
