@@ -198,11 +198,21 @@ perform_single_LR_spWAVE <- function(
     colnames(gene_df_list[[i]])[4] <- names(gene_df_list)[i]
   }
   #calc single molecular vector
-  gene_vec_list <- 
-    lapply(gene_df_list, function(x) single_field_vector(x))
-  names(gene_vec_list) <- names(gene_df_list)
+  gene_names <- names(gene_df_list)
+  field_list <- lapply(gene_df_list, function(x) single_field_vector(x))
+  #** assemble into a 4-axis array, same shape as calc_database_single_field() returns
+  barcode_vec <- field_list[[1]]$barcode
+  gene_vec_array <- array(
+    dim = c(length(barcode_vec), 4, length(gene_names)),
+    dimnames = list(barcode_vec, c("expression","Ex","Ey","U"), gene_names)
+  )
+  for(i in seq_along(gene_names)){
+    gene_vec_array[, "expression", i] <- field_list[[i]][[gene_names[i]]]
+    gene_vec_array[, c("Ex","Ey","U"), i] <-
+      as.matrix(field_list[[i]][, c("Ex","Ey","U")])
+  }
   #calc LR pair vector
-  merge_spatial_df <- calc_LR_pair_vec(gene_vec_list,L_genes,R_genes)
+  merge_spatial_df <- calc_LR_pair_vec(gene_vec_array,L_genes,R_genes)
   return(merge_spatial_df)
 }
 
