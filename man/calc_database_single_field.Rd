@@ -24,8 +24,21 @@ calc_database_single_field(
 \item{verbose}{logical, whether to print progress, default is TRUE.}
 }
 \value{
-list of single molecule field
+a 4-axis array of single molecule field, \code{dim = c(n_cell, 4, n_gene)} with
+\code{dimnames = list(barcode, c("expression","Ex","Ey","U"), gene)} -- the same shape
+\code{calc_database_holed_field()} returns. The \code{expression} axis holds each cell's
+own expression of that gene.
 }
 \description{
 calculate single molecule fields of all genes in database
+}
+\details{
+\code{expr} must be a \code{data.frame} (as produced by
+\code{generate_complex_data()$expr_LR_df}), not a \code{matrix}: the internal
+\code{concatenate_coord_expr()} indexes it as \code{expr[, genes, FALSE]}, and for a
+matrix that third positional subscript is read as a third dimension. It must also be
+pre-filtered and free of all-zero genes -- an all-zero gene makes
+\code{single_field_vector()} fail. Neither condition is checked here; both hold on the
+normal pipeline (\code{filter_LR_expr()} drops all-zero genes, and
+\code{generate_complex_data()}'s \code{complex_min_cell} drops all-zero complexes).
 }

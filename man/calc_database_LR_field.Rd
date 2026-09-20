@@ -9,8 +9,10 @@ calc_database_LR_field(kept_db, single_mol_field, verbose = TRUE)
 \arguments{
 \item{kept_db}{data.frame, LR database, must be same with the database used in single_mol_field}
 
-\item{single_mol_field}{list of single molecular field,
-usually the result of calc_database_single_field}
+\item{single_mol_field}{a 4-axis array of single molecular field
+(\code{dim = c(n_cell, 4, n_gene)}), usually the result of
+\code{calc_database_single_field}. Its \code{expression} axis is not used here;
+the LR pair/family field is computed from \code{Ex}/\code{Ey}/\code{U} only.}
 
 \item{verbose}{logical, whether to print progress, default is TRUE.}
 }
