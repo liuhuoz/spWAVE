@@ -5,7 +5,7 @@ output:
     theme: journal
     toc: yes
 author: Kai Li
-date: 2025-04-07
+date: "2025-04-07 (updated 2026-09-24)"
 mainfont: arial
 vignette: >
   %\VignetteIndexEntry{Analysis LR field of large dataset using spWAVE}
@@ -35,7 +35,7 @@ select ROI to estimate the field.
 
 
 Let's start by loading the required libraries.
-```{r setup, message = FALSE,eval=FALSE}
+```{r setup, message = FALSE}
 library(magrittr)
 library(dplyr)
 library(tidyr)
@@ -43,6 +43,7 @@ library(stringr)
 
 library(Seurat)
 library(Matrix)
+library(ggplot2)
 library(spWAVE)
 ```
 
@@ -100,13 +101,21 @@ If Seurat Object is given, we can use the 'image' argument to plot Seurat cluste
 and the background will be black.
 Further, if not limiting the range of the coordinates, the arrow will only be displayed in the ROI.
 So we add xlim and ylim to determine the range.
-```{r hBRCA fig,fig.retina = 3,fig.asp=0.5,fig.width=14,fig.align = "center"}
+```{r hBRCA fig,fig.retina = 2,fig.asp=0.5,fig.width=14,fig.align = "center"}
+#** folder holding the tutorial datasets, adjust it to your local copy
+data_dir <- "../../data"
 library(patchwork)
-xen_brca_ft <- readRDS("D:\\calc_temp\\field_test\\xen_hBRCA_tls_ft_anno.rds")
-hBRCA_set <- readRDS("D:\\calc_temp\\field_test\\xen_hBRCA_tls_ft_spWAVE_c2c_only.rds")
+xen_brca_ft <- readRDS(file.path(data_dir, "xen_hBRCA_tls_ft_anno.rds"))
+hBRCA_set <- readRDS(file.path(data_dir, "v2", "xen_hBRCA_tls_ft_spWAVE_c2c_only_v2.rds"))
+
+#** this object was built on a ROI only (see the "holed manner" section above): its field
+#** slots cover the cells inside the crop, not every cell in the object. Extraction has to
+#** be given that same barcode set -- the field array carries it as its first dimname --
+#** otherwise the field rows and the coordinate rows do not line up.
+ROI_barcode <- dimnames(hBRCA_set@single_mole_field)[[1]]
 
 field_cxcr4 <-
-  perform_field_extract(hBRCA_set,LR="CXCL12.CXCR4")
+  perform_field_extract(hBRCA_set,LR="CXCL12.CXCR4",ROI_barcode=ROI_barcode)
 
 p1 <- 
 plot_field_direction2(field_cxcr4,point="KU",hexified = TRUE,
@@ -146,7 +155,9 @@ The coordinates of this dataset is special.
 It stored in the metadata but not 
 We have to manually extract it and create spWAVE object.
 ```{r preview HGSC2}
-HGSC2 <- readRDS("D:\\calc_temp\\field_test\\ST_Test2_HGSC2_so.rds")
+#** folder holding the tutorial datasets, adjust it to your local copy
+data_dir <- "../../data"
+HGSC2 <- readRDS(file.path(data_dir, "ST_Test2_HGSC2_so.rds"))
 HGSC2@meta.data %>% head
 HGSC2@meta.data[,c("x","y")] %>% summary()
 ```
@@ -227,12 +238,14 @@ ROI_spWAVE %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 
 Now, we can visualize the field result.
 Here we show the projection of "CXCL12-CXCR4" and "CXCL16-CXCR6" and compare them.
-```{r field proj, fig.retina = 3,fig.asp=0.6,fig.width=14,fig.align = "center"}
+```{r field proj, fig.retina = 2,fig.asp=0.6,fig.width=14,fig.align = "center"}
 library(patchwork)
 library(cowplot)
 
-ROI <- readRDS("D:\\calc_temp\\field_test\\HGSC2_ROI_SO.rds")
-ROI_spWAVE <- readRDS("D:\\calc_temp\\field_test\\HGSC2_ROI_spWAVE_c2c.rds")
+#** folder holding the tutorial datasets, adjust it to your local copy
+data_dir <- "../../data"
+ROI <- readRDS(file.path(data_dir, "HGSC2_ROI_SO.rds"))
+ROI_spWAVE <- readRDS(file.path(data_dir, "v2", "HGSC2_ROI_spWAVE_c2c_v2.rds"))
 
 
 L12R4_field <- perform_field_extract(ROI_spWAVE,"CXCL12.CXCR4")

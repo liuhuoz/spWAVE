@@ -198,11 +198,21 @@ perform_single_LR_spWAVE <- function(
     colnames(gene_df_list[[i]])[4] <- names(gene_df_list)[i]
   }
   #calc single molecular vector
-  gene_vec_list <- 
-    lapply(gene_df_list, function(x) single_field_vector(x))
-  names(gene_vec_list) <- names(gene_df_list)
+  gene_names <- names(gene_df_list)
+  field_list <- lapply(gene_df_list, function(x) single_field_vector(x))
+  #** assemble into a 4-axis array, same shape as calc_database_single_field() returns
+  barcode_vec <- field_list[[1]]$barcode
+  gene_vec_array <- array(
+    dim = c(length(barcode_vec), 4, length(gene_names)),
+    dimnames = list(barcode_vec, c("expression","Ex","Ey","U"), gene_names)
+  )
+  for(i in seq_along(gene_names)){
+    gene_vec_array[, "expression", i] <- field_list[[i]][[gene_names[i]]]
+    gene_vec_array[, c("Ex","Ey","U"), i] <-
+      as.matrix(field_list[[i]][, c("Ex","Ey","U")])
+  }
   #calc LR pair vector
-  merge_spatial_df <- calc_LR_pair_vec(gene_vec_list,L_genes,R_genes)
+  merge_spatial_df <- calc_LR_pair_vec(gene_vec_array,L_genes,R_genes)
   return(merge_spatial_df)
 }
 
@@ -248,22 +258,34 @@ calc_field_strength <- function(vector_df,K_constant = 1/(4*pi)){
 #' @param skip_subunit logical, default is TURE and will not calc fields of receptor subunit.
 #' @inheritParams auto_select_lapply
 #'
-#' @return list of single molecule field
+#' @details \code{expr} must be a \code{data.frame} (as produced by
+#' \code{generate_complex_data()$expr_LR_df}), not a \code{matrix}: the internal
+#' \code{concatenate_coord_expr()} indexes it as \code{expr[, genes, FALSE]}, and for a
+#' matrix that third positional subscript is read as a third dimension. It must also be
+#' pre-filtered and free of all-zero genes -- an all-zero gene makes
+#' \code{single_field_vector()} fail. Neither condition is checked here; both hold on the
+#' normal pipeline (\code{filter_LR_expr()} drops all-zero genes, and
+#' \code{generate_complex_data()}'s \code{complex_min_cell} drops all-zero complexes).
+#'
+#' @return a 4-axis array of single molecule field, \code{dim = c(n_cell, 4, n_gene)} with
+#' \code{dimnames = list(barcode, c("expression","Ex","Ey","U"), gene)} -- the same shape
+#' \code{calc_database_holed_field()} returns. The \code{expression} axis holds each cell's
+#' own expression of that gene.
 #' @export
 calc_database_single_field <- function(kept_db,expr,coord,skip_subunit=TRUE,verbose=TRUE){ 
-  single_mol_field <- list()
   if(skip_subunit){
     expr <- filter_subunit(kept_db=kept_db,expr=expr)
   }
+  gene_names <- colnames(expr)
   spatial_expr_list <- 
-    lapply(colnames(expr),function(gene_name){
+    lapply(gene_names,function(gene_name){
       concatenate_coord_expr(expr=expr,genes=gene_name,coord_info=coord)
       }
     )
   coord_mat <- coord[,c("x","y")] %>% as.matrix()
   dist_mat <- spa_vectorized_pdist(coord_mat,coord_mat)
   coord_sub_list <- pairwised_mat_subtract(coord_mat,coord_mat)
-  single_mol_field <- 
+  field_list <-
     auto_select_lapply(spatial_expr_list,function(spatial_expr){
       single_field_vector(spatial_expr = spatial_expr,
       dist_mat = dist_mat,
@@ -271,7 +293,17 @@ calc_database_single_field <- function(kept_db,expr,coord,skip_subunit=TRUE,verb
       )
     },verbose=verbose
     )
-  names(single_mol_field) <- colnames(expr)
+  #** assemble into a 4-axis array, same shape as calc_database_holed_field() returns
+  barcode_vec <- field_list[[1]]$barcode
+  single_mol_field <- array(
+    dim = c(length(barcode_vec), 4, length(gene_names)),
+    dimnames = list(barcode_vec, c("expression","Ex","Ey","U"), gene_names)
+  )
+  for(i in seq_along(gene_names)){
+    single_mol_field[, "expression", i] <- field_list[[i]][[gene_names[i]]]
+    single_mol_field[, c("Ex","Ey","U"), i] <-
+      as.matrix(field_list[[i]][, c("Ex","Ey","U")])
+  }
   return(single_mol_field)
 }
 
@@ -280,8 +312,10 @@ calc_database_single_field <- function(kept_db,expr,coord,skip_subunit=TRUE,verb
 #' calculate LR pair fields by sum-up single molecular field in list and database
 #'
 #' @param kept_db data.frame, LR database, must be same with the database used in single_mol_field
-#' @param single_mol_field list of single molecular field, 
-#' usually the result of calc_database_single_field 
+#' @param single_mol_field a 4-axis array of single molecular field
+#' (\code{dim = c(n_cell, 4, n_gene)}), usually the result of
+#' \code{calc_database_single_field}. Its \code{expression} axis is not used here;
+#' the LR pair/family field is computed from \code{Ex}/\code{Ey}/\code{U} only.
 #' @inheritParams auto_select_lapply
 #'
 #' @return return list of LR pair or family field estimation.

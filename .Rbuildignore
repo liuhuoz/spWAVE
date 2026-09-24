@@ -7,3 +7,6 @@
 ^tutorial\*
 ^README*
 ^tutorial$
+doc\*
+doc
+r_pack_dev.r

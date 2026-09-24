@@ -6,7 +6,8 @@ utils::globalVariables(
     "lig","rec","p_value",
     "Type2","U","q_net","raw_score","scale_score",
     "waldStat",
-    "barcode","position","spot_id","uni_id"
+    "barcode","position","spot_id","uni_id",
+    "xend", "yend"
     )
 )
 

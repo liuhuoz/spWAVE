@@ -481,7 +481,7 @@ MD2_color_picker <- function(n){
       p_color <- pal_material(color)(10)[6]
       return(p_color)
     })
-    c(MD_mix_pal,"9E9E9E")[1:n]
+    c(MD_mix_pal,"#9E9E9E")[1:n]
   }else if(n<=37){
     pal1 <-
       sapply(color_order,function(color){

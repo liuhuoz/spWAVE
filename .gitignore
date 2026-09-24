@@ -10,3 +10,10 @@ src/*.dSYM/
 src/*.gcno
 src/*.gcda
 src/*~
+
+# knitr cache: speeds up rebuilds, never committed
+*_cache/
+*_files/
+
+# macOS
+.DS_Store

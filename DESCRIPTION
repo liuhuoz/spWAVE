@@ -12,11 +12,16 @@ RoxygenNote: 7.3.2
 LinkingTo: Rcpp,RcppEigen
 Suggests: 
     BiocParallel,
+    GSVA,
+    Hmisc,
     knitr,
+    multiway,
+    parallel,
     renv,
     rmarkdown,
     tradeSeq
 Imports: 
+    abind,
     circlize,
     ComplexHeatmap,
     FNN,
