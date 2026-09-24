@@ -95,13 +95,13 @@ spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 
 低分辨率空转数据集的分析与可视化: [Analysis LR field of 10x Visium Mouse
 Brain dataset using
-spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Field_est2.html)
+spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Field_est2.html)
 
 高分辨率空转数据集分析、可视化与进阶技巧: [Analysis LR field of large
 dataset using
-spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Field_est3.html)
+spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Field_est3.html)
 
 下游分析与可视化: [Visualization of spWAVE
-results](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Visualization.html)
+results](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Visualization.html)
 
 下游分析: “spWAVE/tutorial/Downstream.html” (待完成)

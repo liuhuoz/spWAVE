@@ -101,14 +101,14 @@ Please check the full tutorial in tutorial folder.
 
 Field Estimation for low-res ST dataset: [Analysis LR field of 10x
 Visium Mouse Brain dataset using
-spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Field_est2.html)
+spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Field_est2.html)
 
 Field Estimation for Hi-res ST dataset and Advanced Trick: [Analysis LR
 field of large dataset using
-spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Field_est3.html)
+spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Field_est3.html)
 
 Downstream analysis and visualization: [Visualization of spWAVE
-results](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Visualization.html)
+results](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Visualization.html)
 
 Downstream Analysis: “spWAVE/tutorial/Downstream.html” (wait update)
 
