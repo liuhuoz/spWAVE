@@ -101,9 +101,11 @@ and the background will be black.
 Further, if not limiting the range of the coordinates, the arrow will only be displayed in the ROI.
 So we add xlim and ylim to determine the range.
 ```{r hBRCA fig,fig.retina = 3,fig.asp=0.5,fig.width=14,fig.align = "center"}
+#** folder holding the tutorial datasets, adjust it to your local copy
+data_dir <- "../../data"
 library(patchwork)
-xen_brca_ft <- readRDS("D:\\calc_temp\\field_test\\xen_hBRCA_tls_ft_anno.rds")
-hBRCA_set <- readRDS("D:\\calc_temp\\field_test\\xen_hBRCA_tls_ft_spWAVE_c2c_only.rds")
+xen_brca_ft <- readRDS(file.path(data_dir, "xen_hBRCA_tls_ft_anno.rds"))
+hBRCA_set <- readRDS(file.path(data_dir, "xen_hBRCA_tls_ft_spWAVE_c2c_only.rds"))
 
 field_cxcr4 <-
   perform_field_extract(hBRCA_set,LR="CXCL12.CXCR4")
@@ -146,7 +148,7 @@ The coordinates of this dataset is special.
 It stored in the metadata but not 
 We have to manually extract it and create spWAVE object.
 ```{r preview HGSC2}
-HGSC2 <- readRDS("D:\\calc_temp\\field_test\\ST_Test2_HGSC2_so.rds")
+HGSC2 <- readRDS(file.path(data_dir, "ST_Test2_HGSC2_so.rds"))
 HGSC2@meta.data %>% head
 HGSC2@meta.data[,c("x","y")] %>% summary()
 ```
@@ -231,8 +233,8 @@ Here we show the projection of "CXCL12-CXCR4" and "CXCL16-CXCR6" and compare the
 library(patchwork)
 library(cowplot)
 
-ROI <- readRDS("D:\\calc_temp\\field_test\\HGSC2_ROI_SO.rds")
-ROI_spWAVE <- readRDS("D:\\calc_temp\\field_test\\HGSC2_ROI_spWAVE_c2c.rds")
+ROI <- readRDS(file.path(data_dir, "HGSC2_ROI_SO.rds"))
+ROI_spWAVE <- readRDS(file.path(data_dir, "HGSC2_ROI_spWAVE_c2c.rds"))
 
 
 L12R4_field <- perform_field_extract(ROI_spWAVE,"CXCL12.CXCR4")

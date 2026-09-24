@@ -35,7 +35,7 @@ For more details, please check another tutorial [Analysis LR field of large data
 Let's start by loading the required libraries and data.
 ## Setup and Pre-processing ST expression and LR database data
 ### Load the required libraries
-```{r setup, message = FALSE,eval=FALSE}
+```{r setup, message = FALSE}
 library(magrittr)
 library(dplyr)
 library(tidyr)
@@ -43,6 +43,7 @@ library(stringr)
 
 library(Seurat)
 library(Matrix)
+library(ggplot2)
 library(spWAVE)
 ```
 
@@ -62,7 +63,9 @@ The default assay was set as 'SCT', and the clustering method is "leiden",
 which is a little different from 'SeuratData' dataset.
 
 ```{r,fig.height=5,fig.width=7,fig.align="center"}
-brain <- readRDS("D:\\calc_temp\\field_test\\mouse_brain_anno_clu.rds")
+#** folder holding the tutorial dataset, adjust it to your local copy
+data_dir <- "../../data"
+brain <- readRDS(file.path(data_dir, "mouse_brain_anno_clu.rds"))
 SpatialDimPlot(brain)
 ```
 <details>
@@ -159,11 +162,19 @@ Otherwise, a data.frame with two columns, "cluster" and "barcode" can be provide
 
 ## Perform the vector field estimation and interaction scoring
 Now, we can estimate the vector field in simple commands, as Quick Start shows.
-```{r run spWAVE, cache = TRUE, message = FALSE, eval=FALSE}
+The field estimation and the spot-to-spot scoring take seconds on this dataset,
+while the cluster-to-cluster permutation test ('shuffle_iter') is the slow step
+(about ten minutes for this dataset). The permutation is seeded by the
+'random_seed' argument of 'perform_C2C_score_calc' (default 42), so the
+p-values are reproducible. This chunk is cached: its result is reused on the
+next build, and deleting the cache directory forces a recompute.
+```{r run spWAVE, cache = TRUE, message = FALSE}
 #** one line command
-brain_spWAVE %<>% perform_LR_field_calc()
-brain_spWAVE %<>% perform_S2S_score_calc()
-brain_spWAVE %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
+#** (plain `<-` rather than `%<>%` here: knitr only recognises `<-`/`=` when
+#** deciding which objects belong in the cache, so `%<>%` caches nothing)
+brain_spWAVE <- brain_spWAVE %>% perform_LR_field_calc()
+brain_spWAVE <- brain_spWAVE %>% perform_S2S_score_calc()
+brain_spWAVE <- brain_spWAVE %>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 
 ```
 
@@ -207,7 +218,6 @@ First, we need to extract the LR field info from database result.
 And we will display two mode of field projection: point mode and grid mode.
 
 ```{r proj1,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
-load("D:\\calc_temp\\field_test\\mouse_brain.Rdata")
 library(patchwork)
 brain_Fgf1 <-  perform_field_extract(brain_spWAVE,"Fgf1.Fgfr1")
 brain_Fgf1 %>% head

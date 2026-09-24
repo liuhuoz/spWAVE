@@ -99,10 +99,10 @@ spWAVE_obj %<>% perform_C2C_score_calc(shuffle_iter=200,verbose=T)
 Please check the full tutorial in tutorial folder.
 
 Field Estimation for low-res ST dataset: 
-[Analysis LR field of 10x Visium Mouse Brain dataset using spWAVE](tutorial/Field_Est2.html)
+[Analysis LR field of 10x Visium Mouse Brain dataset using spWAVE](tutorial/Field_est2.html)
 
 Field Estimation for Hi-res ST dataset and Advanced Trick: 
-[Analysis LR field of large dataset using spWAVE](tutorial/Field_Est3.html)
+[Analysis LR field of large dataset using spWAVE](tutorial/Field_est3.html)
 
 Downstream Analysis: "spWAVE/tutorial/Downstream.html" (wait update)
 

@@ -45,7 +45,9 @@ library(spWAVE)
 ## The vector field projection
 First, let's load the saved output data of spWAVE and see the slice and cluster again.
 ```{r,fig.retina = 3,fig.asp=0.55,fig.width=14,fig.align = "center"}
-load("D:\\calc_temp\\field_test\\spWAVE_vignettes_tiny_data.RData")
+#** folder holding the tutorial datasets, adjust it to your local copy
+data_dir <- "../../data"
+load(file.path(data_dir, "spWAVE_vignettes_tiny_data.RData"))
 p1 <- SpatialDimPlot(brain,alpha=0) +NoLegend()
 p2 <- SpatialDimPlot(brain)
 p1|p2
