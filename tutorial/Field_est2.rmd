@@ -5,7 +5,7 @@ output:
     theme: journal
     toc: yes
 author: Kai Li
-date: 2025-04-07
+date: "2025-04-07 (updated 2026-09-24)"
 mainfont: arial
 vignette: >
   %\VignetteIndexEntry{Analysis LR field of 10x Visium Mouse Brain dataset using spWAVE}
@@ -30,7 +30,7 @@ resulting in a relative smaller distance matrix but providing more transcription
 Thus we directly process the distance matrix and pass it to the field estimation function.
 For a dataset with large number of cells, the dense distance matrix will take too much memory and resource. 
 We use another distance-based simplification method to process the large dataset.
-For more details, please check another tutorial [Analysis LR field of large dataset using spWAVE](Field_Est3.html)
+For more details, please check another tutorial [Analysis LR field of large dataset using spWAVE](Field_est3.html)
 .  
 Let's start by loading the required libraries and data.
 ## Setup and Pre-processing ST expression and LR database data
@@ -217,7 +217,7 @@ Now we can plot certain LR interaction field, let's start with "Fgf1-Fgfr1".
 First, we need to extract the LR field info from database result. 
 And we will display two mode of field projection: point mode and grid mode.
 
-```{r proj1,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+```{r proj1,fig.retina = 2,fig.asp=0.45,fig.width=14,fig.align = "center"}
 library(patchwork)
 brain_Fgf1 <-  perform_field_extract(brain_spWAVE,"Fgf1.Fgfr1")
 brain_Fgf1 %>% head
@@ -236,7 +236,7 @@ we recommend using the "grid" mode and it is the default option.
 We can specify particular data which is the column names of the data.frame to change the data displayed in the point.
 With ggplot2 setting, we can give a two-color scale gradiant to display two-directional value.
 
-```{r proj2,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+```{r proj2,fig.retina = 2,fig.asp=0.45,fig.width=14,fig.align = "center"}
 p3 <- plot_field_direction2(brain_Fgf1,point = "Rel_LR_Exp",
         point_size = 2,arrow_color = "firebrick4")+
           scale_fill_gradient2(low="dodgerblue3", mid="lightgray",high="salmon3")
@@ -263,7 +263,7 @@ like the single cell resolution 10x Xenium ST dataset.
 Next, we can plot the field over the HE image or cluster info, 
 by changing the image parameter and giving seurat object, which contains the background info. 
 The cluster infos are extracted from the 'active.ident' of the seurat object.
-```{r proj3,fig.retina = 3,fig.asp=0.45,fig.width=14,fig.align = "center"}
+```{r proj3,fig.retina = 2,fig.asp=0.45,fig.width=14,fig.align = "center"}
 p5 <- plot_field_direction2(brain_Fgf1,
         seurat_obj = brain,
         image="HE",mode='grid'
@@ -282,7 +282,7 @@ We first overview all interaction using heatmap and network plot.
 
 ### Heatmap
 The heatmap is suitable to show the sender and receiver cluster relationship.
-```{r heatmap,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+```{r heatmap,fig.retina = 2,fig.show="hold",out.width="50%",fig.height=6}
 #filter out the margin cluster 
 clu_use <- brain@active.ident %>% levels()
 clu_use <- clu_use[-c(12,13)]
@@ -311,7 +311,7 @@ while the "strength" means the sum of interaction strength between the clusters.
 
 ### Network Diagram
 Similarly, we can plot the network using the same parameters, but this time we focus on the FGF family.
-```{r network,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+```{r network,fig.retina = 2,fig.show="hold",out.width="50%",fig.height=6}
 plot_LR_cluster_net(
   brain_spWAVE,
   #cluster_color=manual_colors,
@@ -360,7 +360,7 @@ Chord diagram is also a good way to show the relationship between the sender and
 Especially, it display the clear relative strength between the clusters.
 Here, for clearly displaying, we only using the HB and CB clusters to 
 show two different chord diagrams, one for clusters and one for genes.
-```{r chord plot,fig.retina = 3,fig.show="hold",out.width="50%",fig.height=6}
+```{r chord plot,fig.retina = 2,fig.show="hold",out.width="50%",fig.height=6}
 CB_HB_clu <- c("CB", "CB_FT", "HB_1", "HB_2", "HB_3")
 
 FGF_color <- c(
