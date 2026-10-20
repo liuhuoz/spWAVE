@@ -239,12 +239,13 @@ merge_spwave_core <- function(spwave1,spwave2){
   merged_obj@meta_coord_clu <- spwave1@meta_coord_clu
   merged_obj@meta_complex <- cbind(spwave1@meta_complex,spwave2@meta_complex)
 
+  #** the field slots are (n_cell, k, n_LR) arrays, so they stack along the LR axis
   merged_obj@single_mole_field <-
-    c(spwave1@single_mole_field,spwave2@single_mole_field)
+    abind::abind(spwave1@single_mole_field,spwave2@single_mole_field,along=3)
   merged_obj@LR_pair_field <-
-    c(spwave1@LR_pair_field,spwave2@LR_pair_field)
+    abind::abind(spwave1@LR_pair_field,spwave2@LR_pair_field,along=3)
   merged_obj@LR_family_field <-
-    c(spwave1@LR_family_field,spwave2@LR_family_field)
+    abind::abind(spwave1@LR_family_field,spwave2@LR_family_field,along=3)
 
   return(merged_obj)
 }
