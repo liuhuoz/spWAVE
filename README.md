@@ -112,11 +112,11 @@ results](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/m
 
 Trajectory analysis: [Downstream analysis I: genes differentially
 expressed along a ligand-receptor field
-trajectory](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Trajectory_analysis.html)
+trajectory](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Trajectory_analysis.html)
 
 Module discovery: [Downstream analysis II: communication modules from
 the interaction
-fields](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Module_discovery.html)
+fields](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Module_discovery.html)
 
 ## About Me / Career Interests
 
