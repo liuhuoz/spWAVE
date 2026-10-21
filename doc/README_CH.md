@@ -104,4 +104,10 @@ spWAVE](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/ma
 下游分析与可视化: [Visualization of spWAVE
 results](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/main/tutorial/Visualization.html)
 
-下游分析: “spWAVE/tutorial/Downstream.html” (待完成)
+轨迹分析: [Downstream analysis I: genes differentially expressed along a
+ligand-receptor field
+trajectory](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Trajectory_analysis.html)
+
+模块发现: [Downstream analysis II: communication modules from the
+interaction
+fields](https://htmlpreview.github.io/?https://github.com/liuhuoz/spWAVE/blob/dev/tutorial/Module_discovery.html)

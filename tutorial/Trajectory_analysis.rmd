@@ -1,0 +1,238 @@
+---
+title: "Downstream analysis I: genes differentially expressed along a ligand-receptor field trajectory"
+output:
+  rmarkdown::html_document:
+    theme: journal
+    toc: yes
+author: Kai Li
+date: "2026-10-15"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+The previous tutorials stop at the field: they show how to estimate the ligand-receptor
+interaction as a spatial vector field, and how to score and visualise it. This one asks a
+transcriptional question:
+
+**Along the direction in which a ligand-receptor pair signals, which genes change their
+expression?**
+
+Answering it means treating a field quantity as a trajectory. Take one LR pair and look at
+its field potential `U`: every spot now sits at some position on the ligand-to-receptor axis,
+and gene expression can be modelled as a function of that position. We use
+[tradeSeq](https://github.com/statOmics/tradeSeq) to fit that function, which is why it is
+listed as a suggested dependency of spWAVE.
+
+## Setup
+
+```{r setup, message = FALSE}
+library(magrittr)
+library(dplyr)
+
+library(Seurat)
+library(ggplot2)
+library(spWAVE)
+```
+
+## Rebuild the field
+
+We reuse the 10x Visium mouse brain dataset and the small TGFb/FGF database from the
+[first tutorial](Field_est2.html), so the field values here are the same ones. The field
+takes a few seconds; the trajectory fit below takes several minutes.
+
+```{r field, cache = TRUE, message = FALSE}
+#** folder holding the tutorial dataset, adjust it to your local copy
+data_dir <- "../../data"
+brain <- readRDS(file.path(data_dir, "mouse_brain_anno_clu.rds"))
+
+mouse_db <-
+  load_database(db_source = "CellChat", db_species = "mouse", filter_type = "Secreted")
+#** a smaller subset, as in the field tutorials
+mouse_db %<>% dplyr::filter(Family %in% c("TGFb", "FGF"))
+
+brain_spWAVE <- create_spWAVE_object(brain, mouse_db, assay = "SCT")
+brain_spWAVE <- brain_spWAVE %>% perform_LR_field_calc()
+```
+
+## The trajectory is the field itself
+
+Extracting one LR pair gives a data.frame with the field vector (`Ex`, `Ey`), the field
+potential (`U`), the ligand and receptor expression, and their difference.
+
+```{r extract}
+fgf1 <- perform_field_extract(brain_spWAVE, "Fgf1.Fgfr1")
+fgf1 %>% head
+```
+
+`U` is what we will use as the trajectory: the question is which genes, in the space
+the field potential lays out, are expressed along the way that space is arranged -- so
+`U` goes in as the trajectory variable. Two things are worth being explicit about:
+
+- **it is not a lineage pseudotime.** Nothing is inferred about cell state ordering;
+  `U` is a spatial quantity, and cells with the same potential are simply "equally far"
+  along the ligand-to-receptor direction. Every cell joins the same single trajectory,
+  which is why the cell weights are all 1.
+- **the sign has a direction.** A ligand field contributes positively to the potential and
+  the receptor field negatively, so genes going up along `U` are the ones tracking the
+  ligand side of the interaction.
+
+The column name is itself an argument: `traj_arg` accepts any column of this data.frame,
+so `Ex`, `Ey` or `E_strength` can be used the same way. Which of them to hand it is a
+question about how you read the field space -- the direction of the field, or only how
+strong it is -- rather than about the method.
+
+## Fit the trajectory
+
+The fit is the expensive step of this tutorial, so the call is shown here rather than run.
+The chunk after it loads a result computed in advance.
+
+```{r tradeseq, eval = FALSE, message = FALSE}
+brain_fgf1 <- run_LR_tradeSeq(
+  seurat_obj = brain,
+  database_result = brain_spWAVE,
+  LR = "Fgf1.Fgfr1",
+  kept_db = brain_spWAVE@kept_db,
+  traj_arg = "U",
+  nknots = 6,
+  parallel = TRUE,
+  paral_workers = 2
+)
+```
+
+Two things decide the cost: the fit covers every gene of the assay, not only the ligand and
+the receptor, and `paral_workers` trades memory for time rather than being a free speedup.
+
+```{r load fit, message = FALSE}
+#** the object the call above returns
+brain_fgf1 <- readRDS(file.path(data_dir, "fgf1_trade_res.rds"))
+```
+
+The returned list carries both the fitted model and the `field_df` it was built from;
+the second is not optional, because the plotting step below needs it.
+
+## Test genes along the trajectory
+
+```{r gene test, message = FALSE}
+fgf1_test <- run_tradeSeq_gene_test(brain_fgf1$trade_res, method_use = "association")
+fgf1_test %>% head
+```
+
+`run_tradeSeq_gene_test` wraps the two tradeSeq tests: `"association"` asks whether a
+gene's expression changes at all along the trajectory, `"startvsend"` only asks whether
+the two ends of the trajectory differ. Both fill the genes whose GAM did not converge
+with neutral values instead of dropping them, and both report BH-adjusted p-values.
+
+The test here is deliberately permissive -- thousands of genes come back significant --
+because it tests a spatial gradient over a few thousand spots, not a designed contrast.
+Rank genes by `waldStat`, rather than reading the p-value column as a list of
+discoveries. The table comes back sorted by it, so the top of it is the ranking; we carry
+the first 200 genes into the figures below.
+
+```{r top genes}
+top_genes <- head(rownames(fgf1_test), 200)
+```
+
+## Visualise the trajectory genes
+
+```{r heatmap, fig.retina = 2, fig.width = 12, fig.height = 9, fig.align = "center", message = FALSE}
+ht_main <- plot_tradeTest_heatmap(
+  brain_fgf1$trade_res,
+  fgf1_test,
+  brain_fgf1$field_df,
+  select_genes = top_genes,
+  n_split_row = 4,
+  title = "Fgf1 -> Fgfr1 along the field potential"
+)
+```
+
+Rows are genes, columns are positions along the trajectory, and the colour is expression
+after `predictSmooth` has evaluated each gene's GAM at 100 points and each row has been
+scaled. So a row is not "expression in a cell" but "the shape of this gene's response".
+The `Potential` annotation bar underneath is the trajectory itself: mid grey is `U = 0`,
+blue is negative, red is positive. That is what makes the figure readable -- a gene block
+that brightens towards the red end is induced on the ligand side.
+
+The rows are split into `n_split_row` blocks (4 by default) by k-means on the response
+shapes, and that is where the biology shows up: with these 200 genes the two largest
+blocks -- 75 and 62 genes -- run in opposite directions, one rising towards the ligand
+side, one falling towards the receptor side. The rows carry no labels because 200 gene
+names do not fit; the two blocks are read back out of this figure below and drawn on
+their own, with their names shown.
+
+`select_genes` takes any gene list, so the same call shows an arbitrary set of genes by
+name -- it masks both `top_n_gene` and `order_by`. The two block figures below are drawn
+that way.
+
+## What the trajectory genes are
+
+Each block is a group of genes with the same response shape, so the blocks are the natural
+unit to test. They do not have to be recovered by clustering again: the split is already
+in the figure, and `row_order()` reads the members of each block straight off it.
+
+```{r blocks}
+#** row_order() indexes the rows of the matrix the heatmap was drawn from, which is the
+#** gene vector that was passed in -- so the block members are read off by position
+block_genes <- ComplexHeatmap::row_order(ht_main) %>% lapply(function(i) top_genes[i])
+lengths(block_genes)
+
+#** the two largest blocks, labelled by the direction their mean response runs in
+yhat   <- tradeSeq::predictSmooth(brain_fgf1$trade_res, gene = top_genes, nPoints = 100, tidy = FALSE)
+scaled <- t(scale(t(yhat)))
+big <- names(sort(lengths(block_genes), decreasing = TRUE))[1:2]
+rise <- sapply(big, function(b) { p <- colMeans(scaled[block_genes[[b]], , drop = FALSE]); p[100] - p[1] })
+big <- big[order(-rise)]
+names(big) <- ifelse(sort(rise, decreasing = TRUE) > 0, "rising (ligand side)", "falling (receptor side)")
+names(big)
+```
+
+The two blocks run in opposite directions, so each is worth looking at on its own. One
+figure per block, with the members of that block as `select_genes` and their names shown;
+the two are drawn side by side.
+
+```{r block heatmaps, fig.retina = 2, fig.width = 9, fig.height = 9, fig.show = "hold", out.width = "50%", message = FALSE}
+block_ht <- Map(function(genes, label)
+  plot_tradeTest_heatmap(
+    brain_fgf1$trade_res,
+    fgf1_test,
+    brain_fgf1$field_df,
+    select_genes  = genes,
+    show_rownames = TRUE,
+    n_split_row   = 1,
+    title         = paste0("Block: ", label)
+  ),
+  block_genes[big], names(big))
+```
+
+Then a plain over-representation test per block. The universe is the set of genes that were
+actually fitted, not the genome: a whole-genome background would report the expression
+filter as if it were enrichment.
+
+```{r enrich, message = FALSE}
+library(clusterProfiler)
+library(org.Mm.eg.db)   # Bioconductor mouse annotation
+
+block_enrich <- lapply(big, function(b)
+  enrichGO(block_genes[[b]], OrgDb = org.Mm.eg.db, keyType = "SYMBOL", ont = "BP",
+           universe = rownames(fgf1_test), pAdjustMethod = "BH",
+           pvalueCutoff = 0.05, qvalueCutoff = 0.2, readable = TRUE))
+```
+
+```{r enrich plot, fig.retina = 2, fig.width = 18, fig.height = 9, fig.align = "center"}
+library(enrichplot)
+library(patchwork)
+wrap_plots(Map(function(eg, l) dotplot(eg, showCategory = 15) + ggtitle(l),
+               block_enrich, names(big)), ncol = 2)
+```
+
+Each block comes back as one family and no term appears in both: the rising block is myelin
+and oligodendrocyte terms (ensheathment of neurons, myelination, oligodendrocyte
+differentiation), the falling block is synaptic terms (synapse organization, postsynaptic
+membrane potential, glutamate receptor signalling). `U` is a spatial axis, so a block that
+tracks it also tracks anatomy -- here the positive end is hindbrain, the negative end
+hippocampus and cortex.

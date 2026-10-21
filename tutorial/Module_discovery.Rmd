@@ -1,0 +1,395 @@
+---
+title: "Downstream analysis II: communication modules from the interaction fields"
+output:
+  rmarkdown::html_document:
+    theme: journal
+    toc: yes
+author: Kai Li
+date: "2026-10-20"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  comment = "#>",
+  root.dir = './',
+  eval = FALSE
+)
+```
+
+This tutorial shows how to use tensor decomposition and module extraction on the fields the
+previous tutorials produce: the field of every ligand-receptor pair is stacked into a
+third-order tensor -- cells x components x LR pairs -- and factorised by CP (PARAFAC)
+decomposition. The decomposition returns a set of components, each of which is a pattern of
+LR-pair loadings; components whose loadings agree are then grouped into communication
+modules, and every cell is scored against those modules.
+
+Because a module is defined on the LR axis rather than on the cells, it is shared: the
+same module can be scored in every sample of a study, which is what makes the module maps
+of different samples comparable.
+
+## About the data
+
+The dataset behind this tutorial is not distributed. It is far too large to be shipped
+through this channel, and it carries privacy and authorization constraints that neither
+this tutorial nor this repository is in a position to take on. It starts from an expression
+matrix imputed by an external tool, together with the cell metadata carrying the annotation
+and the coordinates.
+
+The chunks below are therefore shown rather than executed. They are the pipeline in the
+order it runs, with the parameters it was run with, and every call in them is a function of
+spWAVE -- none of it is pseudo-code. To run them on your own data, supply the field object
+described in the next section.
+
+## Setup
+
+```{r setup, message = FALSE}
+library(magrittr)
+library(dplyr)
+library(parallel)
+
+library(Seurat)
+library(spWAVE)
+```
+
+## Compute the field of each sample
+
+The pipeline starts from the object `perform_LR_field_hole_calc()` returns: cells
+aggregated into meta-cells, and the field of every LR pair of the database estimated on
+them. The [third tutorial](Field_est3.html) covers that step in detail; what matters here
+is only what comes out of it, the `LR_pair_field` slot, an array of
+
+```
+cells  x  3  x  LR pairs        #  Ex, Ey, U
+```
+
+Samples are not listed by hand: the sample ids are read off the field objects present in
+the data folder, so a sample is picked up by placing its files there.
+
+```{r field objects}
+#** folder holding the tutorial dataset, adjust it to your local copy
+data_dir <- "../../data"
+
+sample_ids <- sub(
+  "_spwave_field\\.rds$", "",
+  list.files(data_dir, pattern = "_spwave_field\\.rds$")
+)
+```
+
+For reference, the per-sample half of the pipeline that produces those files is short --
+the field estimation itself is the only expensive part, and it is the part the field
+tutorials already walk through.
+
+```{r field calculation}
+lr_db <- load_database(db_source = "CellChat", db_species = "human")
+
+#** the field of every LR pair is computed independently, so the work is spread over cores
+future::plan("multicore", workers = 16)
+
+for (id in sample_ids) {
+  #** imputed expression, cells x genes, and the metadata holding x/y and the annotation
+  imputed <- data.table::fread(
+    file.path(data_dir, paste0(id, "_imputed.tsv")),
+    sep = "\t", data.table = FALSE
+  )
+  rownames(imputed) <- imputed[, 1]
+  imputed <- as.matrix(imputed[, -1])
+  meta <- readRDS(file.path(data_dir, paste0(id, "_meta.rds")))
+
+  #** keep the cells the metadata describes, in its order
+  cells   <- rownames(meta)
+  imputed <- imputed[cells, , drop = FALSE]
+  coord   <- data.frame(x = meta$x, y = meta$y, barcode = cells, row.names = cells)
+
+  #** CreateSeuratObject() wants features x cells, hence the transpose
+  srt <- CreateSeuratObject(counts = t(imputed), assay = "SCT", meta.data = meta)
+
+  #** the metadata column holding the cell-type annotation is sample-specific
+  cluster_colname <- "ct3"
+
+  spwave <- create_spWAVE_object(
+    seurat_obj = srt,
+    database   = lr_db,
+    cluster    = cluster_colname,
+    coord      = coord
+  )
+
+  #** aggregating cells into meta-cells of about thirty cells each is what keeps the
+  #** field estimation tractable on a large sample
+  spwave <- generate_kmeans_coord(spwave, centers = ncol(srt) / 30,
+                                  iter.max = 15, nstart = 3)
+  spwave <- generate_meta_expr(spwave)
+  spwave <- perform_LR_field_hole_calc(spwave)
+
+  saveRDS(spwave, file.path(data_dir, paste0(id, "_spwave_field.rds")))
+  rm(spwave, srt, meta, coord, imputed)
+  gc()
+}
+```
+
+## Build the tensor
+
+`prep_TD_data()` turns that array into the tensor the decomposition runs on. It keeps two
+of the three field components, and it keeps them on a log scale:
+
+```{r tensor}
+tnsr_list <- list()
+
+for (id in sample_ids) {
+  spwave <- readRDS(file.path(data_dir, paste0(id, "_spwave_field.rds")))
+  tnsr_list[[id]] <- prep_TD_data(spwave, low_quantile = 0.1)
+}
+```
+
+What is left is
+
+```
+cells  x  2  x  LR pairs        #  logEx, logEy
+```
+
+The pair is not `Ex` and `Ey` but the **magnitude and the direction of the field, kept
+apart**: the field strength goes into a log, and the direction is re-applied as a cosine
+and a sine. Splitting them is what makes the tensor decomposable at all -- a raw `Ex` and
+`Ey` mix strength and direction in the same number, so two cells with the same field
+pointing in opposite directions look as different as two cells with different strengths.
+
+`low_quantile` is the only other thing this step does: field magnitudes below the 10th
+percentile of the sample are set to zero, so that the decomposition is not spent on
+values that are numerically indistinguishable from noise.
+
+## Align the LR axis across samples
+
+The decomposition is run one sample at a time, but the samples cannot be treated in
+complete isolation: their components are pooled in the next section, which only works if
+every sample sits on the **same LR axis**. The tensor is therefore trimmed before anything
+is decomposed.
+
+```{r lr axis}
+#** a pair is dropped when its maximum field magnitude is an outlier within a sample,
+#** here beyond three standard deviations from the mean. the components of all samples
+#** are pooled further down, which requires every sample to sit on one common LR axis,
+#** so a pair that is an outlier in any sample is dropped from all of them
+keep_lr <- dimnames(tnsr_list[[sample_ids[1]]])[[3]]
+
+for (id in sample_ids) {
+  lr_max  <- apply(tnsr_list[[id]], 3, function(x) max(abs(x)))
+  lr_z    <- abs(lr_max - mean(lr_max)) / sd(lr_max)
+  keep_lr <- intersect(keep_lr, names(lr_max)[lr_z <= 3])
+}
+```
+
+## Run the CP decomposition
+
+Each sample is decomposed on its own, over a range of ranks, several times per rank. The
+decomposition is not deterministic -- the alternating least squares it runs converges to a
+local optimum -- so what is kept is not one answer but a population of them: `num_rep`
+accepted decompositions per rank, where a decomposition is accepted once its CORCONDIA
+reaches `corcondia_cutoff`.
+
+```{r cpd}
+cl <- parallel::makeCluster(8, setup_strategy = "sequential")
+
+CP_decomp_all <- list()
+
+for (id in sample_ids) {
+  tnsr_ft <- tnsr_list[[id]][, , keep_lr]
+  saveRDS(tnsr_ft, file.path(data_dir, paste0(id, "_tensor.rds")))
+
+  #** NOTE: the cache is only valid while keep_lr stays the same. adding or removing a
+  #** sample can shrink keep_lr, which would mix decompositions computed on different
+  #** LR axes, so clear the *_cp_decomp.rds files whenever the sample set changes
+  cp_file <- file.path(data_dir, paste0(id, "_cp_decomp.rds"))
+
+  if (file.exists(cp_file)) {
+    CP_decomp <- readRDS(cp_file)
+  } else {
+    CP_decomp <- repeat_tensor_CPD(
+      tensor           = tnsr_ft,
+      num_rep          = 10,
+      rank_range       = 10:15,
+      const            = c("uncons", "uncons", "orthog"),
+      corcondia_cutoff = 10,
+      parallel         = TRUE,
+      cl               = cl
+    )
+    saveRDS(CP_decomp, cp_file)
+  }
+
+  CP_decomp_all <- c(CP_decomp_all, unlist(CP_decomp, recursive = FALSE))
+}
+```
+
+Three of those arguments carry the method:
+
+- **`const`** sets one constraint per tensor mode. The cells are unconstrained, the two
+  field components are unconstrained, and the **LR mode is orthogonal** -- the loadings of
+  one component must be uncorrelated with those of the next, which is what makes a
+  component readable as a set of LR pairs rather than as a mixture of all of them.
+- **`rank_range = 10:15`** is a range rather than a rank because the right rank is not
+  known in advance; the components of every rank are pooled, and the module clustering
+  decides afterwards which of them describe the same thing.
+- **`corcondia_cutoff = 10`** is the acceptance bar. CORCONDIA compares the fitted
+  decomposition against the original tensor, and a decomposition below the cutoff is
+  discarded rather than returned, up to `attempts` restarts.
+
+The decompositions of a given rank are independent of each other, hence the cluster: this
+is the expensive step of the whole tutorial, which is also why the result is cached per
+sample.
+
+## Correlate the components across samples
+
+This is the part that runs **once, over every sample together**, unlike the two halves
+around it. The LR-pair loadings of every component of every sample are correlated against
+each other; two components are linked only where the correlation is strong and survives
+multiple testing, and a component linked to too few others is dropped as an isolated one.
+
+```{r correlation}
+cor_mat_list <- construct_cor_mat(
+  TD_result   = CP_decomp_all,
+  R_cutoff    = 0.5,
+  p_cutoff    = 0.05,
+  link_cutoff = 10,
+  return_raw  = TRUE
+)
+```
+
+`R_cutoff` and `p_cutoff` are applied to the correlations and to their FDR-adjusted
+p-values; `link_cutoff = 10` then removes the components left with ten or fewer links,
+which is what keeps a component that agrees with nothing from becoming a module of its
+own.
+
+`return_raw = TRUE` returns both the filtered matrix and the unfiltered one. The
+clustering uses the filtered matrix; the figure below uses the raw one, so that the
+structure is not flattened by the threshold that was used to define it.
+
+## Cluster the components into modules
+
+```{r clustering}
+module_list <- perform_dynamic_module_clustering(
+  cor_mat        = cor_mat_list$cor_ft,
+  linkage_method = "average",
+  offset         = NULL,
+  MIN_THRESHOLD  = 15,
+  Z_THRESHOLD    = NULL
+)
+
+ft_names <- rownames(cor_mat_list$cor_ft)
+ht <- plot_cor_module_heatmap(
+  cor_mat     = cor_mat_list$cor_raw[ft_names, ft_names],
+  module_list = module_list
+)
+
+pdf(file.path(data_dir, "module_cor_heatmap.pdf"), width = 8, height = 8)
+ComplexHeatmap::draw(ht)
+dev.off()
+```
+
+The components are hierarchically clustered on `1 - correlation`, and the tree is cut
+dynamically rather than at a fixed height. Two arguments control that cut, and they pull
+in opposite directions:
+
+- **`MIN_THRESHOLD = 15`** is a size guarantee. Two subtrees of at least fifteen
+  components are never merged into one another, however similar they look, so a module
+  that has grown large cannot swallow the next one.
+- **`Z_THRESHOLD`** is the strictness of the cut itself. Left at `NULL` it falls at the
+  median of the dendrogram heights; a smaller value cuts higher and yields fewer, larger
+  modules.
+
+`plot_cor_module_heatmap()` draws the result, with the modules as an annotation bar. The
+components that end up in no module are not an error: they are the ones the cut left
+unassigned, and they stay out of the modules rather than being forced into one.
+
+## Extract the LR pairs of each module
+
+A module is a set of components, and each component is a set of LR-pair loadings. Turning
+that into the LR pairs a module stands for means ranking the pairs within each of its
+components and combining those rankings.
+
+```{r module members}
+#** any sample's tensor can be passed here: the function only reads its LR axis, and all
+#** samples share the one defined above
+module_LR_list <- extract_module_topLR(
+  TD_result   = CP_decomp_all,
+  tensor      = tnsr_list[[sample_ids[1]]][, , keep_lr],
+  module_list = module_list,
+  top_n       = 50
+)
+```
+
+`top_n` is how many LR pairs are taken from each component before the rankings are
+combined, so a module ends up holding the pairs that recur across the components assigned
+to it rather than the pairs that happen to load highest in one of them.
+
+```{r modules out}
+saveRDS(
+  list(
+    cor_mat        = cor_mat_list,
+    module_list    = module_list,
+    module_LR_list = module_LR_list
+  ),
+  file.path(data_dir, "modules.rds")
+)
+```
+
+This file is the shared half of the output: the module definition that every sample is
+scored against, and therefore the one object a study has to keep.
+
+## Score the cells
+
+Scoring goes back to one sample at a time, but the modules stay shared, so the module
+assignments of different samples are comparable.
+
+```{r scoring}
+rm(tnsr_list)
+gc()
+
+for (id in sample_ids) {
+  tnsr_ft <- readRDS(file.path(data_dir, paste0(id, "_tensor.rds")))
+
+  #** ssGSEA of every module over the field magnitudes of that sample
+  ssGSEA_scores <- scoring_cell_module(
+    tensor         = tnsr_ft,
+    module_LR_list = module_LR_list,
+    BPPARAM        = BiocParallel::MulticoreParam(workers = 8, progressbar = TRUE),
+    verbose        = TRUE
+  )
+
+  cell_assign <- assign_cell_module(
+    ssGSEA_result     = ssGSEA_scores,
+    score_cutoff      = 0.1,
+    score_diff_cutoff = 0.03,
+    min_cells         = 0.075 * ncol(ssGSEA_scores)
+  )
+
+  saveRDS(
+    list(ssGSEA_scores = ssGSEA_scores, cell_assign = cell_assign),
+    file.path(data_dir, paste0(id, "_cell_assign.rds"))
+  )
+}
+
+parallel::stopCluster(cl)
+```
+
+The score of a cell on a module is an ssGSEA enrichment of that module's LR pairs over the
+cell's field magnitudes -- the module is treated as a gene set and the field strength as
+the quantity being enriched. It is a per-cell number, so the module of a cell is the one
+it scores highest on.
+
+Two corrections are applied on top of that, both aimed at the same failure mode: a cell
+whose assignment is barely decided.
+
+- **`score_cutoff = 0.1`** leaves a cell unassigned (`"other"`) when even its best score
+  stays below it, rather than assigning it to whichever module happens to lead.
+- **`score_diff_cutoff` and `min_cells`** act together. A module covering fewer than
+  `min_cells` cells is a candidate for being absorbed, and a cell of such a module moves
+  to its runner-up module when the two scores are within `score_diff_cutoff` of each
+  other. A cell that is clearly its module's, or that belongs to a module of a reasonable
+  size, keeps its assignment.
+
+## Outputs
+
+Per sample, `{sample}_cell_assign.rds` holds the ssGSEA scores of every cell against every
+module and the resulting per-cell module assignment, which is what the spatial module maps
+are drawn from: one map per module, coloured by the cells assigned to it.
+

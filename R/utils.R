@@ -796,6 +796,13 @@ extract_LR_field_result <- function(database_result,LR,kept_db){
       dplyr::pull(Receptor) %>%
       unique()
 
+  # A field can exist without being in kept_db (a dieted object). Say so: with no gene
+  # sets the Rel_LR_Exp computed below is a rowSums over nothing, i.e. 0 for every cell.
+  if (length(L_info) == 0 || length(R_info) == 0) {
+    warning("'", LR, "' is not in kept_db, so there is no ligand/receptor expression: ",
+            "the computed Rel_LR_Exp is 0 and unreliable.", call. = FALSE)
+  }
+
   #** 数据库计算的单分子向量场结果df内，基因表达量都在第4列，所以这里直接提取第4列就行
   #** 使用array后再次修改,直接进行切片操作，丢弃维度2即可。
   LR_expr_df <- 
